@@ -55,7 +55,7 @@ button.danger{color:var(--bad)}
 .shelf-wrap{flex:none}
 .shelf-body{position:relative;display:flex;align-items:flex-end;background:var(--back)}
 .k-wall .shelf-body{background:repeating-linear-gradient(to bottom,rgba(0,0,0,.13) 0 2px,transparent 2px calc(var(--cm)*7.5)),var(--back)}
-.k-gondola .shelf-body,.k-endcap .shelf-body{background:radial-gradient(circle,rgba(0,0,0,.2) 1.6px,transparent 2.2px) 0 0/calc(var(--cm)*2.5) calc(var(--cm)*2.5),var(--back)}
+.k-gondola .shelf-body,.k-endcap .shelf-body{background:linear-gradient(90deg,rgba(0,0,0,.07),rgba(0,0,0,0) 8%,rgba(0,0,0,0) 92%,rgba(0,0,0,.07)),linear-gradient(180deg,rgba(255,255,255,.55),rgba(0,0,0,.04)),var(--back)}
 .k-pallet .shelf-body,.k-table .shelf-body{background:linear-gradient(180deg,#f7f8fa,#e9edf3)}
 .shelf-body.over{outline:2px dashed var(--accent);outline-offset:-2px}
 .shelf-body.full{box-shadow:inset 0 0 0 2px var(--bad)}
@@ -81,13 +81,22 @@ button.danger{color:var(--bad)}
 .item.sel{outline:3px solid #f59e0b;outline-offset:-2px;z-index:3}
 .item.tall{box-shadow:inset 0 0 0 3px var(--bad)}
 .item .fc{position:absolute;right:1px;top:1px;background:rgba(0,0,0,.6);padding:0 3px;border-radius:3px;font-size:9px;z-index:2}
-.shelf-body.hook{align-items:flex-start;background:radial-gradient(circle,rgba(0,0,0,.3) 2px,transparent 2.7px) 0 0/calc(var(--cm)*3) calc(var(--cm)*3),var(--back)!important}
-.shelf-body.hook::before{content:'GANTUNGAN';position:absolute;right:8px;bottom:4px;font-size:10px;font-weight:700;letter-spacing:.14em;color:rgba(0,0,0,.35);pointer-events:none}
-.shelf-body.hook::after{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(180deg,var(--up1),var(--up2));box-shadow:0 1px 2px rgba(0,0,0,.3);pointer-events:none}
-.board.hookline{height:5px}
-.board.hookline .plank{background:linear-gradient(180deg,var(--up2),var(--up1));box-shadow:none}
-.item.hang{margin-top:7px}
-.peg{position:absolute;top:3px;left:50%;margin-left:-3px;width:6px;height:6px;border-radius:50%;background:#2b2f38;box-shadow:0 0 0 2px rgba(255,255,255,.6);z-index:2}
+.shelf-body.hook{align-items:flex-start;border-bottom:1px dashed rgba(0,0,0,.14)}
+.shelf-body.hook::before{content:'GANTUNGAN';position:absolute;right:8px;bottom:4px;font-size:10px;font-weight:700;letter-spacing:.14em;color:rgba(40,50,66,.55);background:rgba(255,255,255,.75);padding:0 5px;border-radius:3px;pointer-events:none}
+.shelf-body.hook::after{content:'';position:absolute;left:-5px;right:-5px;top:0;height:20px;pointer-events:none;z-index:4;
+  background:linear-gradient(180deg,#f6f8fb 0%,#b4bcc8 35%,#eef1f5 55%,#6c7584 100%) 0 0/100% 9px no-repeat,
+  linear-gradient(90deg,#4a525e,#7c8594,#4a525e) 14px 0/8px 20px no-repeat,
+  linear-gradient(90deg,#4a525e,#7c8594,#4a525e) calc(100% - 22px) 0/8px 20px no-repeat;
+  filter:drop-shadow(0 3px 2px rgba(0,0,0,.35))}
+.board.hookline{display:none}
+.item.hang{margin-top:26px}
+.item.hang::after{border-radius:inherit}
+.item.hang.pot{overflow:visible;border-radius:50% 50% 46% 46%/40% 40% 60% 60%}
+.item.hang.pot::before{top:-13px;left:46%;right:auto;width:8%;height:15px;background:linear-gradient(90deg,#8a919c,#4b525e);border-radius:2px 2px 0 0}
+.hk{position:absolute;top:9px;width:2px;height:20px;margin-left:-1px;background:linear-gradient(90deg,#aab1bc,#4a525e);border-radius:1px;z-index:4;pointer-events:none}
+.hk::before{content:'';position:absolute;top:-3px;left:-3px;width:8px;height:6px;border:2px solid #566070;border-bottom:0;border-radius:8px 8px 0 0}
+.hk::after{content:'';position:absolute;bottom:-3px;left:-3px;width:8px;height:6px;border:2px solid #566070;border-top:0;border-radius:0 0 8px 8px}
+.peg{display:none}
 .ind{position:absolute;top:0;bottom:0;width:3px;background:var(--accent);pointer-events:none;z-index:5}
 
 /* library */
@@ -324,12 +333,16 @@ function renderFixture() {
       const k = sku(it.sku), iw = k.w * it.f * sc, d = document.createElement('div');
       d.className = `item ${shapeOf(k)}${sh.t === 'hook' ? ' hang' : ''}` + (sel && sel.shelf === si && sel.idx === ii ? ' sel' : '') + (k.h * it.s > sh.h ? ' tall' : '');
       d.draggable = true; d.dataset.shelf = si; d.dataset.idx = ii;
-      d.style.width = iw + 'px'; d.style.height = Math.min(k.h * it.s, sh.h) * sc + 'px'; d.style.background = color(k);
+      d.style.width = iw + 'px'; d.style.height = Math.min(k.h * it.s * sc, sh.h * sc - (sh.t === 'hook' ? 28 : 0)) + 'px'; d.style.background = color(k);
       d.title = `${k.name} (${k.brand}) • ${k.w}×${k.h} cm • ${it.f} facing × ${it.s} susun`;
       d.innerHTML = (sh.t === 'hook' ? '<b class="peg"></b>' : '') + `<span class="t">${esc(k.name)}</span>` + (it.f > 1 || it.s > 1 ? `<span class="fc">${it.f}×${it.s}</span>` : '');
       body.appendChild(d);
       if (sh.t !== 'hook') { const seg = document.createElement('i'); seg.style.width = iw + 'px'; seg.style.background = brandCol(k); rail.appendChild(seg); }
     });
+    if (sh.t === 'hook') { let hx = 0;                                   // satu pengait (hook) per facing
+      sh.items.forEach(it => { const k = sku(it.sku), iw = k.w * it.f * sc;
+        for (let q = 0; q < it.f; q++) { const hk = document.createElement('div'); hk.className = 'hk'; hk.style.left = hx + iw / it.f * (q + .5) + 'px'; body.appendChild(hk); }
+        hx += iw; }); }
     const board = document.createElement('div'); board.className = 'board' + (sh.t === 'hook' ? ' hookline' : '');
     const plank = document.createElement('div'); plank.className = 'plank'; sh.t === 'hook' ? board.append(plank) : board.append(rail, plank);
     wrap.append(body, board);
@@ -618,7 +631,7 @@ $('#btnPng').onclick = () => {
   const f = S.fixture, kind = kindOf(f), M = MATS[matOf(f)];
   const sc = 10, W = f.width * sc, lab = 100, pad = 30, up = 24, plank = 28, titleH = 70;
   const head = { endcap: 76, wall: 50, gondola: 24 }[kind] || 0;
-  const base = (kind === 'pallet' ? 12 : BASE) * sc, zb = s => kind === 'pallet' ? 0 : s.t === 'hook' ? 10 : plank;
+  const base = (kind === 'pallet' ? 12 : BASE) * sc, zb = s => kind === 'pallet' || s.t === 'hook' ? 0 : plank;
   const H = f.shelves.reduce((a, s) => a + s.h * sc + zb(s), 0);
   const c = document.createElement('canvas'); c.width = pad + lab + up * 2 + W + pad; c.height = titleH + head + H + base + 50;
   const g = c.getContext('2d'), x0 = pad + lab + up;
@@ -637,22 +650,22 @@ $('#btnPng').onclick = () => {
   f.shelves.forEach((sh, si) => {
     const hh = sh.h * sc, bh = zb(sh), hook = sh.t === 'hook';
     g.fillStyle = kind === 'pallet' || kind === 'table' ? '#eef1f5' : M.back; g.fillRect(x0, y, W, hh);
-    if (hook) { g.fillStyle = 'rgba(0,0,0,.3)'; for (let gy = 15; gy < hh; gy += 30) for (let gx = 15; gx < W; gx += 30) { g.beginPath(); g.arc(x0 + gx, y + gy, 3.5, 0, 7); g.fill(); }
-      g.fillStyle = lg(0, y, 0, y + 12, M.u1, M.u2); g.fillRect(x0, y, W, 12); }
-    else if (kind === 'wall') { g.fillStyle = 'rgba(0,0,0,.13)'; for (let gy = 0; gy < hh; gy += 75) g.fillRect(x0, y + gy, W, 3); }
-    else if (kind === 'gondola' || kind === 'endcap') { g.fillStyle = 'rgba(0,0,0,.2)'; for (let gy = 12; gy < hh; gy += 25) for (let gx = 12; gx < W; gx += 25) { g.beginPath(); g.arc(x0 + gx, y + gy, 3, 0, 7); g.fill(); } }
+    if (kind === 'wall') { g.fillStyle = 'rgba(0,0,0,.13)'; for (let gy = 0; gy < hh; gy += 75) g.fillRect(x0, y + gy, W, 3); }
+    else if (kind === 'gondola' || kind === 'endcap') { g.fillStyle = lg(0, y, 0, y + hh, 'rgba(255,255,255,.5)', 'rgba(0,0,0,.04)'); g.fillRect(x0, y, W, hh); }
+    if (hook) { g.strokeStyle = 'rgba(0,0,0,.18)'; g.setLineDash([8, 6]); g.lineWidth = 1.5; g.beginPath(); g.moveTo(x0, y + hh); g.lineTo(x0 + W, y + hh); g.stroke(); g.setLineDash([]); }
     if (kind !== 'pallet' && kind !== 'table')
       for (const ux of [x0 - up, x0 + W]) { g.fillStyle = lg(ux, 0, ux + up, 0, M.u1, M.u2); g.fillRect(ux, y, up, hh + bh);
         g.fillStyle = 'rgba(0,0,0,.3)'; for (let gy = 10; gy < hh + bh; gy += 40) { g.beginPath(); g.arc(ux + up / 2, y + gy, 3, 0, 7); g.fill(); } }
     let x = x0;
     sh.items.forEach(it => {
-      const k = sku(it.sku), w = k.w * it.f * sc, h = Math.min(k.h * it.s, sh.h) * sc, top = hook ? y + 16 : y + hh - h, shp = shapeOf(k);
-      g.fillStyle = color(k); rr(x, top, w, h, shp === 'jar' ? [14, 14, 5, 5] : shp === 'pot' ? [5, 5, w * .3, w * .3] : 3); g.fill();
+      const k = sku(it.sku), w = k.w * it.f * sc, h = Math.min(k.h * it.s, sh.h) * sc, top = hook ? y + 44 : y + hh - h, shp = shapeOf(k);
+      if (hook) { g.strokeStyle = '#566070'; g.lineWidth = 3; for (let q = 0; q < it.f; q++) { const cx = x + w / it.f * (q + .5); g.beginPath(); g.moveTo(cx, y + 20); g.lineTo(cx, top - 4); g.arc(cx - 6, top - 4, 6, 0, Math.PI); g.stroke(); } }
+      g.fillStyle = color(k); rr(x, top, w, h, shp === 'jar' ? [14, 14, 5, 5] : shp === 'pot' ? (hook ? [w * .5, w * .5, w * .46, w * .46] : [5, 5, w * .3, w * .3]) : 3); g.fill();
       g.fillStyle = lg(x, 0, x + w, 0, 'rgba(255,255,255,.3)', 'rgba(0,0,0,.25)'); g.fill();
       g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1.5; g.stroke();
       if (shp === 'jar') { g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(x + w * .1, top, w * .8, Math.max(6, h * .14)); }
       else if (shp === 'box') { g.fillStyle = 'rgba(255,255,255,.34)'; g.fillRect(x, top + h * .1, w, h * .09); }
-      if (hook) { g.fillStyle = '#2b2f38'; g.beginPath(); g.arc(x + w / 2, top + 10, 6, 0, 7); g.fill(); g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 3; g.stroke(); }
+      if (hook && shp === 'pot') { g.fillStyle = '#5a6270'; g.fillRect(x + w / 2 - 5, top - 22, 10, 26); }
       g.fillStyle = '#fff'; g.font = '16px system-ui,sans-serif';
       let line = '', ly = top + h * .3 + 6;
       for (const wd of k.name.split(' ')) { const tx = line ? line + ' ' + wd : wd;
@@ -661,7 +674,8 @@ $('#btnPng').onclick = () => {
       if (it.f > 1 || it.s > 1) { g.font = 'bold 15px system-ui,sans-serif'; g.fillText(`${it.f}×${it.s}`, x + 4, y + hh - 8); }
       x += w;
     });
-    if (bh && hook) { g.fillStyle = lg(0, y + hh, 0, y + hh + bh, M.u2, M.u1); g.fillRect(x0 - up, y + hh, W + up * 2, bh); }
+    if (hook) { g.fillStyle = '#4f5763'; g.fillRect(x0 + 18, y, 14, 40); g.fillRect(x0 + W - 32, y, 14, 40);
+      g.fillStyle = lg(0, y, 0, y + 20, '#f6f8fb', '#6c7584'); rr(x0 - 6, y, W + 12, 20, 10); g.fill(); }
     else if (bh) {
       g.fillStyle = '#fff'; g.fillRect(x0, y + hh, W, 14);
       let rx = x0; sh.items.forEach(it => { const k = sku(it.sku), w = k.w * it.f * sc; g.fillStyle = brandCol(k); g.fillRect(rx, y + hh, w, 14); rx += w; });
