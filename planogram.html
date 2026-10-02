@@ -81,6 +81,13 @@ button.danger{color:var(--bad)}
 .item.sel{outline:3px solid #f59e0b;outline-offset:-2px;z-index:3}
 .item.tall{box-shadow:inset 0 0 0 3px var(--bad)}
 .item .fc{position:absolute;right:1px;top:1px;background:rgba(0,0,0,.6);padding:0 3px;border-radius:3px;font-size:9px;z-index:2}
+.shelf-body.hook{align-items:flex-start;background:radial-gradient(circle,rgba(0,0,0,.3) 2px,transparent 2.7px) 0 0/calc(var(--cm)*3) calc(var(--cm)*3),var(--back)!important}
+.shelf-body.hook::before{content:'GANTUNGAN';position:absolute;right:8px;bottom:4px;font-size:10px;font-weight:700;letter-spacing:.14em;color:rgba(0,0,0,.35);pointer-events:none}
+.shelf-body.hook::after{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(180deg,var(--up1),var(--up2));box-shadow:0 1px 2px rgba(0,0,0,.3);pointer-events:none}
+.board.hookline{height:5px}
+.board.hookline .plank{background:linear-gradient(180deg,var(--up2),var(--up1));box-shadow:none}
+.item.hang{margin-top:7px}
+.peg{position:absolute;top:3px;left:50%;margin-left:-3px;width:6px;height:6px;border-radius:50%;background:#2b2f38;box-shadow:0 0 0 2px rgba(255,255,255,.6);z-index:2}
 .ind{position:absolute;top:0;bottom:0;width:3px;background:var(--accent);pointer-events:none;z-index:5}
 
 /* library */
@@ -120,13 +127,15 @@ button.danger{color:var(--bad)}
   <div id="side-left">
     <section class="panel">
       <h2>Fixture</h2>
+      <label>Fixture</label>
+      <select id="fxFam"></select>
+      <label>Jenis</label>
+      <select id="fxVar"></select>
       <div class="row">
-        <div><label>Sumber</label><select id="fxSrc"></select></div>
         <div><label>Ukuran standar</label><select id="fxPreset"></select></div>
+        <div><label>Bahan</label><select id="fxMat"></select></div>
       </div>
-      <label>Jenis fixture</label>
-      <select id="fxType"></select>
-      <label>Nama (format nama file)</label>
+      <label>Nama</label>
       <input id="fxName">
       <div class="row">
         <div><label>Lebar</label><input id="fxWidth" type="number" min="30" max="400"></div>
@@ -134,17 +143,8 @@ button.danger{color:var(--bad)}
         <div><label>Tinggi</label><input id="fxHeight" type="number" min="30" max="400"></div>
       </div>
       <div class="muted">Ukuran dalam cm (L × D × T)</div>
-      <div id="shCtl">
-        <label>Jumlah rak</label>
-        <div class="row">
-          <button id="shMinus">− Rak</button>
-          <button id="shPlus">+ Rak</button>
-        </div>
-        <label>Tinggi default rak baru (cm)</label>
-        <input id="shDefH" type="number" min="5" max="100" value="25">
-      </div>
       <div id="shLock" class="muted" style="margin-top:8px"></div>
-      <button id="shEven" style="width:100%;margin-top:6px">Bagi rata tinggi rak</button>
+      <button id="shEven" style="width:100%;margin-top:6px">Reset tinggi sesuai layout</button>
       <div id="heightInfo" class="muted" style="margin-top:6px"></div>
       <label>Zoom</label>
       <input id="zoom" type="range" min="2" max="9" step="0.5">
@@ -182,6 +182,8 @@ button.danger{color:var(--bad)}
       <div class="row"><div><label>Lebar (cm)</label><input id="fW" type="number" step="0.5" min="1"></div>
       <div><label>Tinggi (cm)</label><input id="fH" type="number" step="0.5" min="1"></div>
       <div><label>Dalam (cm)</label><input id="fD" type="number" step="0.5" min="0" placeholder="opsional"></div></div>
+      <label>Ditampilkan di</label>
+      <select id="fMode"><option value="any">Bebas (rak atau gantungan)</option><option value="rack">Rak</option><option value="hook">Gantungan</option></select>
       <div class="btns" style="margin-top:10px">
         <button class="primary" id="fSave">Simpan SKU</button>
         <button id="fCancel">Batal</button>
@@ -192,7 +194,7 @@ button.danger{color:var(--bad)}
         <button id="btnTpl">Template CSV</button>
       </div>
       <input type="file" id="fileCsv" accept=".csv,.txt" hidden>
-      <div class="muted" style="margin-top:6px">Kolom: nama, brand, lebar_cm, tinggi_cm, prioritas (1-3), kedalaman_cm (opsional)</div>
+      <div class="muted" style="margin-top:6px">Kolom: nama, brand, lebar_cm, tinggi_cm, prioritas (1-3), kedalaman_cm (opsional), tampil (rak / gantung, opsional)</div>
     </section>
   </div>
 </main>
@@ -200,51 +202,68 @@ button.danger{color:var(--bad)}
 
 <script>
 const $ = s => document.querySelector(s);
-const KEY = 'planogram-v2';
+const KEY = 'planogram-v3';
 const BASE = 10; // asumsi tinggi kaki/dasar fixture (cm), bisa diubah lewat tinggi rak
-const FIXTURES = {
-  CHINA: ['GONDOLA H SHAPED', 'GONDOLA T SHAPED', 'ENDCAP', 'TD-03', 'TD-04', 'PALLET 90x90', 'HANGER', 'CROSS BAR', 'NESTING TABLE FX-03/A & B', 'NESTING TABLE FX-03/AG'],
-  KIAN: ['GONDOLA NATURAL ASH', 'ENDCAP NATURAL ASH', 'GONDOLA SHELVING WOOD + BRACKET', 'ENDCAP SHELVING WOOD + BRACKET', 'WALL SHELVING WOOD + BRACKET', 'SHELVING METAL + BRACKET', 'GONDOLA SHELVING GLASS + BRACKET', 'ENDCAP SHELVING GLASS + BRACKET', 'CROSS BAR', 'HANGER W/PRICE TAG HOLDER', 'SHELVING PRICE TAG HOLDER', 'GONDOLA BURNT STRAND', 'ENDCAP BURNT STRAND', 'WALL NATURAL ASH'],
-  CUSTOM: ['MEJA C COOKWARE/TABLEWARE', 'MEJA COOKWARE', 'MEJA CANISTER', 'MEJA PLASTICWARE', 'WALL CANISTER'],
-};
-// ukuran umum (L×D×T cm); jumlah rak (n) adalah asumsi awal, bisa diubah
+// ukuran umum (L×D×T cm)
 const PRESETS = {
-  wall270: { label: 'Wall 120×50×270', w: 120, d: 50, h: 270, n: 6 },
-  wall240: { label: 'Wall 120×50×240', w: 120, d: 50, h: 240, n: 6 },
-  gondola: { label: 'Gondola 120×50×150 (1 sisi)', w: 120, d: 50, h: 150, n: 4 },
-  endcap: { label: 'Endcap 100×50×150', w: 100, d: 50, h: 150, n: 4 },
-  pallet: { label: 'Pallet 90×90 (tampak depan)', w: 90, d: 90, h: 100, n: 1 },
+  wall270: { label: 'Wall 120×50×270', w: 120, d: 50, h: 270 },
+  wall240: { label: 'Wall 120×50×240', w: 120, d: 50, h: 240 },
+  gondola: { label: 'Gondola 120×50×150 (1 sisi)', w: 120, d: 50, h: 150 },
+  endcap: { label: 'Endcap 100×50×150', w: 100, d: 50, h: 150 },
+  pallet: { label: 'Pallet 90×90 (tampak depan)', w: 90, d: 90, h: 100 },
 };
-const guessPreset = name => { const n = name.toUpperCase();
-  return n.includes('WALL') ? 'wall270' : n.includes('ENDCAP') ? 'endcap' : n.includes('GONDOLA') ? 'gondola' : n.includes('PALLET') ? 'pallet' : ''; };
-const evenH = (H, n, preset) => Math.max(5, Math.floor((H - (preset === 'pallet' ? 0 : BASE)) / n));
+// layout zona atas→bawah: R = rak, H = gantungan, angka = tinggi relatif
+const FAMILIES = {
+  WALL: { label: 'Wall', sizes: ['wall270', 'wall240'], mat: 'ash', variants: {
+    w6: { label: 'Wall 6 Rack', z: 'R1 R1 R1 R1 R1 R1' },
+    w4: { label: 'Wall 4 Rack', z: 'R2 R2 R1 R1' },
+    w3h2: { label: 'Wall 3 Rack + 2 Gantungan', z: 'H1 H1 R2 R1 R1' } } },
+  GONDOLA: { label: 'Gondola', sizes: ['gondola'], mat: 'steel', variants: {
+    g4: { label: 'Gondola 4 Rack', z: 'R1 R1 R1 R1' },
+    gfull: { label: 'Gondola Full Gantungan', z: 'H1 H1 H1 R1' },
+    g1h2: { label: 'Gondola 1 Rack + 2 Gantungan', z: 'R1 H1 H1 R1' } } },
+  ENDCAP: { label: 'Endcap', sizes: ['endcap'], mat: 'ash', variants: { e4: { label: 'Endcap 4 Rack', z: 'R1 R1 R1 R1' } } },
+  PALLET: { label: 'Pallet', sizes: ['pallet'], mat: 'ash', variants: { p1: { label: 'Pallet 90x90', z: 'R1' } } },
+};
+const MATNAMES = { ash: 'Kayu terang', burnt: 'Kayu gelap', glass: 'Kaca', steel: 'Logam' };
+const ZNAME = { rack: 'Rak', hook: 'Gantungan' };
+const zonesOf = v => v.z.split(' ').map(t => ({ t: t[0] === 'H' ? 'hook' : 'rack', u: +t.slice(1) }));
+const zoneH = (H, zones, pallet) => { const avail = H - (pallet ? 0 : BASE), tu = zones.reduce((a, z) => a + z.u, 0);
+  return zones.map(z => Math.max(5, Math.floor(avail * z.u / tu))); };
 const uid = () => Math.random().toString(36).slice(2, 9);
 const num = (v, d) => { const n = parseFloat(v); return isFinite(n) && n > 0 ? n : d; };
 
 function sample() {   // contoh SKU Homeware (nama, brand, lebar, tinggi, kedalaman, prioritas)
-  const mk = (name, brand, w, h, d, pri) => ({ id: uid(), name, brand, w, h, d, pri });
+  const mk = (name, brand, w, h, d, pri, mode = 'any') => ({ id: uid(), name, brand, w, h, d, pri, mode });
   return [
     mk('Panci Stainless 20cm', 'MasakPro', 22, 12, 22, 2), mk('Wajan Anti Lengket 26cm', 'MasakPro', 28, 10, 28, 2),
-    mk('Set Spatula 5pcs', 'MasakPro', 12, 26, 6, 1),
+    mk('Set Spatula 5pcs', 'MasakPro', 12, 26, 6, 1, 'hook'), mk('Sendok Sayur 3pcs', 'MasakPro', 12, 28, 4, 2, 'hook'), mk('Pisau Dapur Set', 'MasakPro', 14, 28, 4, 2, 'hook'),
     mk('Canister 1L', 'Keepy', 12, 16, 12, 3), mk('Canister 2L', 'Keepy', 14, 20, 14, 2), mk('Toples Kaca 800ml', 'Keepy', 11, 15, 11, 2),
     mk('Container Plastik 1.5L', 'Clear', 16, 10, 16, 3), mk('Lunch Box', 'Clear', 18, 8, 13, 2), mk('Botol Minum 1L', 'Clear', 8, 26, 8, 2),
     mk('Gelas Set 6pcs', 'Servo', 20, 11, 14, 2), mk('Piring Makan 20cm (set)', 'Servo', 21, 14, 21, 1), mk('Mangkok Set', 'Servo', 18, 12, 18, 1),
   ];
 }
-function defaultFixture(src, type, preset) {
-  const p = PRESETS[preset], hh = evenH(p.h, p.n, preset);
-  return { src, type, name: `BN - Fixture ${src} - ${type}`, preset, width: p.w, depth: p.d, height: p.h,
-    shelves: Array.from({ length: p.n }, () => ({ h: hh, items: [] })) };
+function buildShelves(fam, key, H, pallet, old) {
+  const zones = zonesOf(FAMILIES[fam].variants[key]), hs = zoneH(H, zones, pallet);
+  return zones.map((z, i) => ({ t: z.t, u: z.u, h: hs[i], items: old && old[i] ? old[i].items : [] }));
+}
+function defaultFixture(fam, key, preset) {
+  const p = PRESETS[preset], F = FAMILIES[fam];
+  return { family: fam, variant: key, name: F.variants[key].label, preset, mat: F.mat, width: p.w, depth: p.d, height: p.h,
+    shelves: buildShelves(fam, key, p.h, preset === 'pallet') };
 }
 const scaleFor = h => h > 200 ? 3.5 : h > 120 ? 4.5 : 5;
 function fresh() {
-  return { fixture: defaultFixture('KIAN', 'GONDOLA NATURAL ASH', 'gondola'), skus: sample(), scale: scaleFor(150) };
+  return { fixture: defaultFixture('GONDOLA', 'g4', 'gondola'), skus: sample(), scale: scaleFor(150) };
 }
 function patch(s) {   // lengkapi field baru pada data lama
   const f = s.fixture;
-  f.depth = f.depth || 50; f.preset = f.preset || ''; f.src = f.src || ''; f.type = f.type || '';
+  f.depth = f.depth || 50; f.preset = f.preset || '';
+  if (!FAMILIES[f.family]) { f.family = kindOf(f).toUpperCase(); f.variant = ''; }
+  f.mat = f.mat || FAMILIES[f.family].mat;
   f.height = f.height || Math.round(f.shelves.reduce((a, x) => a + x.h, 0) + BASE);
-  s.skus.forEach(k => k.d = k.d || 0); s.scale = s.scale || 5; return s;
+  f.shelves.forEach(sh => { sh.t = sh.t || 'rack'; sh.u = sh.u || 1; });
+  s.skus.forEach(k => { k.d = k.d || 0; k.mode = k.mode || 'any'; }); s.scale = s.scale || 5; return s;
 }
 let S = (() => { try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && j.fixture) return patch(j); } catch (e) {} return fresh(); })();
 let sel = null;        // {shelf, idx}
@@ -267,8 +286,8 @@ function normalize() {
 
 /* ---------- render ---------- */
 function updateLock() {
-  const l = locked(); $('#shCtl').hidden = l;
-  $('#shLock').innerHTML = l ? `🔒 <b>${S.fixture.shelves.length} rak</b> — terkunci sesuai standar fixture.` : '';
+  const f = S.fixture;
+  $('#shLock').innerHTML = `🔒 <b>${f.shelves.length} zona</b> terkunci sesuai jenis fixture<br>Susunan atas→bawah: ${f.shelves.map(x => ZNAME[x.t]).join(' · ')}`;
 }
 function render() {
   normalize(); renderFixture(); renderLib(); renderInspector(); renderStats(); updateLock(); save();
@@ -276,19 +295,13 @@ function render() {
 
 const shapeOf = k => /canister|toples|botol|jar|bottle|gelas|tumbler/i.test(k.name) ? 'jar' : /panci|wajan|pot\b|pan\b/i.test(k.name) ? 'pot' : 'box';
 const brandCol = k => `hsl(${hue(k.brand || k.name)} 60% 42%)`;
-const kindOf = f => { const n = (f.type || f.name || '').toUpperCase();
-  if ((f.preset || '').startsWith('wall') || n.includes('WALL')) return 'wall';
-  if (f.preset === 'endcap' || n.includes('ENDCAP')) return 'endcap';
-  if (f.preset === 'pallet' || n.includes('PALLET')) return 'pallet';
-  if (/MEJA|TD-0|NESTING/.test(n)) return 'table';
-  return 'gondola'; };
-const matOf = f => { const n = (f.type || f.name || '').toUpperCase();
-  return n.includes('BURNT') ? 'burnt' : n.includes('GLASS') ? 'glass' : (n.includes('METAL') || f.src === 'CHINA') ? 'steel' : 'ash'; };
+const kindOf = f => { if (FAMILIES[f.family]) return f.family.toLowerCase(); const n = (f.name || '').toUpperCase();
+  return n.includes('WALL') ? 'wall' : n.includes('ENDCAP') ? 'endcap' : n.includes('PALLET') ? 'pallet' : 'gondola'; };
+const matOf = f => f.mat || 'ash';
 const MATS = { ash: { b1: '#e8d3ae', b2: '#c9a877', u1: '#dcc59c', u2: '#b99a6a', back: '#f6efdf', ink: '#4a3a22' },
   burnt: { b1: '#7a5740', b2: '#47301f', u1: '#6e4e39', u2: '#3b281b', back: '#a8917f', ink: '#f3e6d8' },
   glass: { b1: '#c4e8f3', b2: '#7abace', u1: '#d0d5dd', u2: '#8d97a6', back: '#eef5f8', ink: '#2a3a44' },
   steel: { b1: '#d9dde4', b2: '#8f98a6', u1: '#c7ccd5', u2: '#808996', back: '#eef0f4', ink: '#2a313b' } };
-const locked = () => !!S.fixture.preset || !!guessPreset(S.fixture.type || '');
 
 function renderFixture() {
   const fx = $('#fixture'), sc = S.scale, f = S.fixture, W = f.width * sc, kind = kindOf(f);
@@ -296,29 +309,29 @@ function renderFixture() {
   const t = document.createElement('div'); t.className = 'fx-title';
   t.textContent = `${f.name} — ${f.width}×${f.depth}×${f.height} cm`; fx.appendChild(t);
   const head = document.createElement('div'); head.className = 'fx-head'; head.style.width = W + 24 + 'px';
-  head.textContent = kind === 'endcap' ? (f.type || 'ENDCAP') : kind === 'wall' ? (f.type || 'WALL') : ''; fx.appendChild(head);
+  head.textContent = kind === 'endcap' || kind === 'wall' ? f.name : ''; fx.appendChild(head);
   f.shelves.forEach((sh, si) => {
     const row = document.createElement('div'); row.className = 'shelf';
     const u = used(sh), pct = Math.round(u / f.width * 100);
     const lab = document.createElement('div'); lab.className = 'shelf-label';
-    lab.innerHTML = `Rak ${si + 1}<br><input type="number" min="5" max="120" value="${sh.h}" data-h="${si}"> cm<span class="u${u > f.width ? ' bad' : ''}">${pct}% terisi</span>`;
+    lab.innerHTML = `${sh.t === 'hook' ? 'Gantung' : 'Rak'} ${si + 1}<br><input type="number" min="5" max="120" value="${sh.h}" data-h="${si}"> cm<span class="u${u > f.width ? ' bad' : ''}">${pct}% terisi</span>`;
     const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
-    const body = document.createElement('div'); body.className = 'shelf-body';
+    const body = document.createElement('div'); body.className = 'shelf-body' + (sh.t === 'hook' ? ' hook' : '');
     body.dataset.shelf = si; body.style.width = W + 'px'; body.style.height = sh.h * sc + 'px';
     if (u > f.width) body.classList.add('full');
     const rail = document.createElement('div'); rail.className = 'rail'; rail.style.width = W + 'px';
     sh.items.forEach((it, ii) => {
       const k = sku(it.sku), iw = k.w * it.f * sc, d = document.createElement('div');
-      d.className = `item ${shapeOf(k)}` + (sel && sel.shelf === si && sel.idx === ii ? ' sel' : '') + (k.h * it.s > sh.h ? ' tall' : '');
+      d.className = `item ${shapeOf(k)}${sh.t === 'hook' ? ' hang' : ''}` + (sel && sel.shelf === si && sel.idx === ii ? ' sel' : '') + (k.h * it.s > sh.h ? ' tall' : '');
       d.draggable = true; d.dataset.shelf = si; d.dataset.idx = ii;
       d.style.width = iw + 'px'; d.style.height = Math.min(k.h * it.s, sh.h) * sc + 'px'; d.style.background = color(k);
       d.title = `${k.name} (${k.brand}) • ${k.w}×${k.h} cm • ${it.f} facing × ${it.s} susun`;
-      d.innerHTML = `<span class="t">${esc(k.name)}</span>` + (it.f > 1 || it.s > 1 ? `<span class="fc">${it.f}×${it.s}</span>` : '');
+      d.innerHTML = (sh.t === 'hook' ? '<b class="peg"></b>' : '') + `<span class="t">${esc(k.name)}</span>` + (it.f > 1 || it.s > 1 ? `<span class="fc">${it.f}×${it.s}</span>` : '');
       body.appendChild(d);
-      const seg = document.createElement('i'); seg.style.width = iw + 'px'; seg.style.background = brandCol(k); rail.appendChild(seg);
+      if (sh.t !== 'hook') { const seg = document.createElement('i'); seg.style.width = iw + 'px'; seg.style.background = brandCol(k); rail.appendChild(seg); }
     });
-    const board = document.createElement('div'); board.className = 'board';
-    const plank = document.createElement('div'); plank.className = 'plank'; board.append(rail, plank);
+    const board = document.createElement('div'); board.className = 'board' + (sh.t === 'hook' ? ' hookline' : '');
+    const plank = document.createElement('div'); plank.className = 'plank'; sh.t === 'hook' ? board.append(plank) : board.append(rail, plank);
     wrap.append(body, board);
     const upL = document.createElement('div'); upL.className = 'up'; const upR = upL.cloneNode();
     row.append(lab, upL, wrap, upR); fx.appendChild(row);
@@ -334,7 +347,7 @@ function renderLib() {
   $('#lib').innerHTML = list.map(k => `
     <div class="sku ${placed.has(k.id) ? 'placed' : ''}" draggable="true" data-sku="${k.id}" title="Klik dua kali untuk menambah ke rak">
       <div class="sw" style="background:${color(k)}"></div>
-      <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.brand)} • ${k.w}×${k.h} cm • P${k.pri}</div></div>
+      <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.brand)} • ${k.w}×${k.h} cm • P${k.pri}${k.mode === 'hook' ? ' • Gantung' : k.mode === 'rack' ? ' • Rak' : ''}</div></div>
       <button data-edit="${k.id}" title="Ubah">✎</button>
       <button data-del="${k.id}" class="danger" title="Hapus">×</button>
     </div>`).join('') || '<div class="muted">Tidak ada SKU.</div>';
@@ -347,7 +360,7 @@ function renderInspector() {
   if (!it) { el.className = 'muted'; el.textContent = 'Klik produk di rak untuk mengatur facing / susunan.'; return; }
   const k = sku(it.sku), sh = S.fixture.shelves[sel.shelf];
   el.className = '';
-  el.innerHTML = `<b>${esc(k.name)}</b><div class="muted">${esc(k.brand)} • ${k.w}×${k.h} cm • Rak ${sel.shelf + 1}</div>
+  el.innerHTML = `<b>${esc(k.name)}</b><div class="muted">${esc(k.brand)} • ${k.w}×${k.h} cm • ${ZNAME[sh.t]} ${sel.shelf + 1}</div>
     <div class="row" style="margin-top:8px"><div><label>Facing (lebar)</label><input type="number" min="1" max="30" id="iF" value="${it.f}"></div>
     <div><label>Susun (tinggi)</label><input type="number" min="1" max="10" id="iS" value="${it.s}"></div></div>
     <div class="muted" style="margin-top:6px">Lebar terpakai ${(k.w * it.f).toFixed(1)} cm • tinggi ${(k.h * it.s).toFixed(1)} cm / rak ${sh.h} cm
@@ -367,15 +380,15 @@ function renderStats() {
   const tall = sh.reduce((a, s) => a + s.items.filter(i => sku(i.sku).h * i.s > s.h).length, 0);
   const unplaced = S.skus.length - uniq;
   const units = items.reduce((a, i) => a + cap(i), 0);
-  const tot = sh.reduce((a, s) => a + s.h, 0) + (S.fixture.preset === 'pallet' ? 0 : BASE), tooHigh = tot > S.fixture.height;
+  const tot = sh.reduce((a, s) => a + s.h, 0) + (kindOf(S.fixture) === 'pallet' ? 0 : BASE), tooHigh = tot > S.fixture.height;
   $('#stats').innerHTML = `
     <div class="stat"><b>${uniq}/${S.skus.length}</b>SKU terpasang</div>
     <div class="stat"><b>${facings}</b>Total facing</div>
     <div class="stat"><b>${util.toFixed(0)}%</b>Utilisasi lebar</div>
     <div class="stat"><b>${units}</b>Kapasitas unit</div>
     <div class="stat"><b class="${over + tall + tooHigh ? 'bad' : 'ok'}">${over + tall + tooHigh}</b>Peringatan</div>
-    <div class="stat"><b>${sh.length}</b>Jumlah rak</div>`;
-  $('#heightInfo').innerHTML = `Total tinggi rak ${tot - (S.fixture.preset === 'pallet' ? 0 : BASE)} cm + dasar ${S.fixture.preset === 'pallet' ? 0 : BASE} cm = ${tot} / ${S.fixture.height} cm`
+    <div class="stat"><b>${sh.filter(x => x.t !== 'hook').length} + ${sh.filter(x => x.t === 'hook').length}</b>Rak + gantungan</div>`;
+  $('#heightInfo').innerHTML = `Total tinggi zona ${tot - (kindOf(S.fixture) === 'pallet' ? 0 : BASE)} cm + dasar ${kindOf(S.fixture) === 'pallet' ? 0 : BASE} cm = ${tot} / ${S.fixture.height} cm`
     + (tooHigh ? ' <b class="bad">melebihi tinggi fixture</b>' : '');
   const w = [];
   if (tooHigh) w.push('<span class="bad">Total tinggi rak melebihi tinggi fixture.</span>');
@@ -475,14 +488,14 @@ function startEdit(id) {
   const k = id && sku(id); editId = id || null;
   $('#formTitle').textContent = k ? 'Ubah SKU' : 'Tambah SKU';
   $('#fName').value = k ? k.name : ''; $('#fBrand').value = k ? k.brand : '';
-  $('#fW').value = k ? k.w : ''; $('#fH').value = k ? k.h : ''; $('#fD').value = k && k.d ? k.d : ''; $('#fPri').value = k ? k.pri : 2;
+  $('#fW').value = k ? k.w : ''; $('#fH').value = k ? k.h : ''; $('#fD').value = k && k.d ? k.d : ''; $('#fMode').value = k ? k.mode || 'any' : 'any'; $('#fPri').value = k ? k.pri : 2;
   if (k) $('#fName').focus();
 }
 $('#fCancel').onclick = () => startEdit(null);
 $('#fSave').onclick = () => {
   const name = $('#fName').value.trim(), w = num($('#fW').value), h = num($('#fH').value);
   if (!name || !w || !h) return toast('Nama, lebar, dan tinggi wajib diisi.');
-  const data = { name, brand: $('#fBrand').value.trim() || '-', w, h, d: num($('#fD').value, 0), pri: +$('#fPri').value };
+  const data = { name, brand: $('#fBrand').value.trim() || '-', w, h, d: num($('#fD').value, 0), pri: +$('#fPri').value, mode: $('#fMode').value };
   if (editId) Object.assign(sku(editId), data); else S.skus.push({ id: uid(), ...data });
   startEdit(null); render();
 };
@@ -490,59 +503,52 @@ $('#fSave').onclick = () => {
 /* fixture */
 const opts = (arr, sel) => arr.map(([v, l]) => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(l)}</option>`).join('');
 function syncFixtureForm() {
-  const f = S.fixture;
-  $('#fxSrc').innerHTML = opts([['', '—'], ...Object.keys(FIXTURES).map(s => [s, s])], f.src);
-  $('#fxType').innerHTML = opts([['', '— pilih jenis —'], ...(FIXTURES[f.src] || []).map(t => [t, t])], f.type);
-  $('#fxPreset').innerHTML = opts([['', 'Custom'], ...Object.entries(PRESETS).map(([k, p]) => [k, p.label])], f.preset);
+  const f = S.fixture, F = FAMILIES[f.family];
+  $('#fxFam').innerHTML = opts(Object.entries(FAMILIES).map(([k, x]) => [k, x.label]), f.family);
+  $('#fxVar').innerHTML = opts(Object.entries(F.variants).map(([k, v]) => [k, v.label]), f.variant);
+  $('#fxPreset').innerHTML = opts([...F.sizes.map(k => [k, PRESETS[k].label]), ...(F.sizes.includes(f.preset) ? [] : [['', 'Custom']])], f.preset);
+  $('#fxMat').innerHTML = opts(Object.entries(MATNAMES), f.mat);
   $('#fxName').value = f.name; $('#fxWidth').value = f.width; $('#fxDepth').value = f.depth; $('#fxHeight').value = f.height;
   $('#zoom').value = S.scale;
 }
-function applyPreset(key) {                       // ganti ukuran + jumlah rak sesuai preset
-  const p = PRESETS[key], old = S.fixture.shelves;
-  if (old.slice(p.n).some(s => s.items.length) && !confirm('Sebagian rak yang berisi item akan dihapus. Lanjutkan?')) return false;
-  const hh = evenH(p.h, p.n, key);
-  Object.assign(S.fixture, { preset: key, width: p.w, depth: p.d, height: p.h });
-  S.fixture.shelves = Array.from({ length: p.n }, (_, i) => ({ h: hh, items: old[i] ? old[i].items : [] }));
+function applyLayout(fam, key, preset) {          // ganti jenis/ukuran; item dipertahankan per urutan zona
+  const F = FAMILIES[fam], old = S.fixture.shelves, p = PRESETS[preset], n = zonesOf(F.variants[key]).length;
+  if (old.slice(n).some(x => x.items.length) && !confirm('Zona berkurang: item pada zona paling bawah akan dihapus. Lanjutkan?')) return false;
+  Object.assign(S.fixture, { family: fam, variant: key, preset, name: F.variants[key].label, mat: F.mat, width: p.w, depth: p.d, height: p.h });
+  S.fixture.shelves = buildShelves(fam, key, p.h, preset === 'pallet', old);
   S.scale = scaleFor(p.h); sel = null; return true;
 }
-$('#fxSrc').onchange = e => { S.fixture.src = e.target.value; S.fixture.type = ''; syncFixtureForm(); };
-$('#fxType').onchange = e => {
-  const t = e.target.value; if (!t) return;
-  const old = { ...S.fixture, shelves: S.fixture.shelves }, g = guessPreset(t);
-  S.fixture.type = t; S.fixture.name = `BN - Fixture ${S.fixture.src} - ${t}`;
-  if (!g) S.fixture.preset = '';
-  if (g && !applyPreset(g)) { Object.assign(S.fixture, { type: old.type, name: old.name }); }
-  syncFixtureForm(); render();
-  if (!g) toast('Ukuran jenis ini belum ada di preset. Isi L × D × T secara manual.');
-};
-$('#fxPreset').onchange = e => { if (e.target.value && !applyPreset(e.target.value)) e.target.value = S.fixture.preset; syncFixtureForm(); render(); };
+const sizeOf = (fam, cur) => FAMILIES[fam].sizes.includes(cur) ? cur : FAMILIES[fam].sizes[0];
+$('#fxFam').onchange = e => { const F = FAMILIES[e.target.value]; applyLayout(e.target.value, Object.keys(F.variants)[0], F.sizes[0]); syncFixtureForm(); render(); };
+$('#fxVar').onchange = e => { applyLayout(S.fixture.family, e.target.value, sizeOf(S.fixture.family, S.fixture.preset)); syncFixtureForm(); render(); };
+$('#fxPreset').onchange = e => { if (e.target.value) applyLayout(S.fixture.family, S.fixture.variant, e.target.value); syncFixtureForm(); render(); };
+$('#fxMat').onchange = e => { S.fixture.mat = e.target.value; render(); };
 $('#fxName').oninput = e => { S.fixture.name = e.target.value; renderFixture(); save(); };
 for (const [id, key] of [['fxWidth', 'width'], ['fxDepth', 'depth'], ['fxHeight', 'height']])
   $('#' + id).onchange = e => { S.fixture[key] = num(e.target.value, S.fixture[key]); S.fixture.preset = ''; syncFixtureForm(); render(); };
-$('#shEven').onclick = () => { const f = S.fixture, h = evenH(f.height, f.shelves.length, f.preset); f.shelves.forEach(s => s.h = h); render(); };
+$('#shEven').onclick = () => { const f = S.fixture, hs = zoneH(f.height, f.shelves.map(x => ({ u: x.u || 1 })), kindOf(f) === 'pallet'); f.shelves.forEach((x, i) => x.h = hs[i]); render(); };
 $('#zoom').oninput = e => { S.scale = +e.target.value; renderFixture(); save(); };
-$('#shPlus').onclick = () => { if (locked()) return; S.fixture.shelves.push({ h: num($('#shDefH').value, 25), items: [] }); render(); };
-$('#shMinus').onclick = () => {
-  const sh = S.fixture.shelves; if (locked() || sh.length <= 1) return;
-  if (sh[sh.length - 1].items.length && !confirm('Rak terakhir berisi item. Hapus rak beserta isinya?')) return;
-  sh.pop(); sel = null; render();
-};
-
 /* auto-susun */
 $('#btnAuto').onclick = () => {
   const sh = S.fixture.shelves, W = S.fixture.width;
-  if (sh.some(s => s.items.length) && !confirm('Susunan saat ini akan diganti hasil Auto-susun. Lanjutkan?')) return;
-  sh.forEach(s => s.items = []); sel = null;
-  const eye = Math.round((sh.length - 1) * 0.35);                       // rak setinggi mata ~ 35% dari atas
-  const order = [...sh.keys()].sort((a, b) => Math.abs(a - eye) - Math.abs(b - eye) || a - b);
+  if (sh.some(x => x.items.length) && !confirm('Susunan saat ini akan diganti hasil Auto-susun. Lanjutkan?')) return;
+  sh.forEach(x => x.items = []); sel = null;
+  const racks = [...sh.keys()].filter(i => sh[i].t !== 'hook'), hooks = [...sh.keys()].filter(i => sh[i].t === 'hook');
+  const eye = Math.round((racks.length - 1) * 0.35);                    // rak setinggi mata ~ 35% dari atas
+  const rackOrder = racks.map((si, pos) => [si, pos]).sort((a, b) => Math.abs(a[1] - eye) - Math.abs(b[1] - eye) || a[1] - b[1]).map(x => x[0]);
   const list = [...S.skus].sort((a, b) => b.pri - a.pri || a.brand.localeCompare(b.brand) || a.name.localeCompare(b.name));
   const u = sh.map(() => 0), skipped = [];
-  const need = list.reduce((a, k) => a + k.w * (k.pri >= 3 ? 2 : 1), 0);
-  const soft = Math.min(W, need / sh.length * 1.2);                      // batas isi per rak agar tersebar merata
+  const wid = k => k.w * (k.pri >= 3 ? 2 : 1);
+  const needH = list.filter(k => k.mode === 'hook').reduce((a, k) => a + wid(k), 0), needR = list.reduce((a, k) => a + wid(k), 0) - needH;
+  const softR = racks.length ? Math.min(W, needR / racks.length * 1.2) : W;   // batas isi per zona agar tersebar merata
+  const softH = hooks.length ? Math.min(W, needH / hooks.length * 1.2) : W;
   for (const k of list) {
+    const cand = k.mode === 'hook' ? [...hooks, ...rackOrder] : k.mode === 'rack' ? (rackOrder.length ? rackOrder : hooks) : [...rackOrder, ...hooks];
+    const first = k.mode === 'hook' && hooks.length ? hooks : rackOrder.length ? rackOrder : hooks;   // pass 1 hanya zona utama; pass 2 boleh zona lain
     let ok = false;
-    for (const cap of [soft, W]) {                                       // pass 1: batas lunak, pass 2: lebar penuh
-      for (const si of order) {
+    for (const pass of [0, 1, 2]) {                                      // 0: batas lunak zona utama, 1: lebar penuh zona utama, 2: semua zona
+      const cap = pass === 0 ? (k.mode === 'hook' ? softH : softR) : W;
+      for (const si of pass < 2 ? first : cand) {
         if (k.h > sh[si].h) continue;
         for (let f = k.pri >= 3 ? 2 : 1; f >= 1 && !ok; f--)
           if (u[si] + k.w * f <= cap) { sh[si].items.push({ sku: k.id, f, s: 1 }); u[si] += k.w * f; ok = true; }
@@ -552,9 +558,9 @@ $('#btnAuto').onclick = () => {
     }
     if (!ok) skipped.push(k.name);
   }
-  sh.forEach(s => s.items.sort((a, b) => sku(a.sku).brand.localeCompare(sku(b.sku).brand) || sku(a.sku).name.localeCompare(sku(b.sku).name)));
+  sh.forEach(x => x.items.sort((a, b) => sku(a.sku).brand.localeCompare(sku(b.sku).brand) || sku(a.sku).name.localeCompare(sku(b.sku).name)));
   render();
-  toast(skipped.length ? `Tidak muat: ${skipped.join(', ')}` : 'Auto-susun selesai: prioritas tinggi di rak setinggi mata, dikelompokkan per brand.');
+  toast(skipped.length ? `Tidak muat: ${skipped.join(', ')}` : 'Auto-susun selesai: prioritas tinggi di rak setinggi mata, barang gantung di gantungan, dikelompokkan per brand.');
 };
 $('#btnClear').onclick = () => {
   if (!confirm('Kosongkan semua rak?')) return;
@@ -571,11 +577,11 @@ const fname = ext => `planogram_${S.fixture.name.replace(/[^\w-]+/g, '_')}.${ext
 const q = v => `"${String(v).replace(/"/g, '""')}"`;
 
 $('#btnCsv').onclick = () => {
-  const rows = [['fixture', 'ukuran_LxDxT_cm', 'rak', 'tinggi_rak_cm', 'urutan', 'sku', 'brand', 'facing', 'susun', 'kapasitas_unit', 'posisi_x_cm', 'lebar_cm']];
+  const rows = [['fixture', 'ukuran_LxDxT_cm', 'jenis_zona', 'zona_no', 'tinggi_rak_cm', 'urutan', 'sku', 'brand', 'facing', 'susun', 'kapasitas_unit', 'posisi_x_cm', 'lebar_cm']];
   const dim = `${S.fixture.width}x${S.fixture.depth}x${S.fixture.height}`;
   S.fixture.shelves.forEach((sh, si) => { let x = 0;
     sh.items.forEach((it, ii) => { const k = sku(it.sku), w = k.w * it.f;
-      rows.push([S.fixture.name, dim, si + 1, sh.h, ii + 1, k.name, k.brand, it.f, it.s, cap(it) || '', +x.toFixed(1), +w.toFixed(1)]); x += w; }); });
+      rows.push([S.fixture.name, dim, ZNAME[sh.t], si + 1, sh.h, ii + 1, k.name, k.brand, it.f, it.s, cap(it) || '', +x.toFixed(1), +w.toFixed(1)]); x += w; }); });
   download(fname('csv'), '﻿' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
 };
 $('#btnSave').onclick = () => download(fname('json'), JSON.stringify(S, null, 2), 'application/json');
@@ -591,7 +597,7 @@ $('#fileJson').onchange = async e => {
 $('#btnPrint').onclick = () => window.print();
 
 $('#btnTpl').onclick = () => download('template_sku.csv',
-  '﻿nama,brand,lebar_cm,tinggi_cm,prioritas,kedalaman_cm\nCanister 1L,Keepy,12,16,3,12\nPanci Stainless 20cm,MasakPro,22,12,2,22\n', 'text/csv');
+  '﻿nama,brand,lebar_cm,tinggi_cm,prioritas,kedalaman_cm,tampil\nCanister 1L,Keepy,12,16,3,12,rak\nSet Spatula 5pcs,MasakPro,12,26,1,6,gantung\n', 'text/csv');
 $('#btnImport').onclick = () => $('#fileCsv').click();
 $('#fileCsv').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
@@ -603,7 +609,7 @@ $('#fileCsv').onchange = async e => {
     const c = l.split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
     const w = num(c[2].replace(',', '.')), h = num((c[3] || '').replace(',', '.'));
     if (!c[0] || !w || !h) { bad++; continue; }
-    S.skus.push({ id: uid(), name: c[0], brand: c[1] || '-', w, h, pri: Math.min(3, Math.max(1, parseInt(c[4]) || 2)), d: num((c[5] || '').replace(',', '.'), 0) }); n++;
+    S.skus.push({ id: uid(), name: c[0], brand: c[1] || '-', w, h, pri: Math.min(3, Math.max(1, parseInt(c[4]) || 2)), d: num((c[5] || '').replace(',', '.'), 0), mode: /gantung|hook/i.test(c[6] || '') ? 'hook' : /rak|rack/i.test(c[6] || '') ? 'rack' : 'any' }); n++;
   }
   render(); toast(`${n} SKU diimpor` + (bad ? `, ${bad} baris dilewati (data tidak lengkap).` : '.'));
 };
@@ -612,8 +618,8 @@ $('#btnPng').onclick = () => {
   const f = S.fixture, kind = kindOf(f), M = MATS[matOf(f)];
   const sc = 10, W = f.width * sc, lab = 100, pad = 30, up = 24, plank = 28, titleH = 70;
   const head = { endcap: 76, wall: 50, gondola: 24 }[kind] || 0;
-  const base = (kind === 'pallet' ? 12 : kind === 'table' ? 20 : BASE) * sc;
-  const H = f.shelves.reduce((a, s) => a + s.h * sc + (kind === 'pallet' ? 0 : plank), 0);
+  const base = (kind === 'pallet' ? 12 : BASE) * sc, zb = s => kind === 'pallet' ? 0 : s.t === 'hook' ? 10 : plank;
+  const H = f.shelves.reduce((a, s) => a + s.h * sc + zb(s), 0);
   const c = document.createElement('canvas'); c.width = pad + lab + up * 2 + W + pad; c.height = titleH + head + H + base + 50;
   const g = c.getContext('2d'), x0 = pad + lab + up;
   const lg = (xa, ya, xb, yb, a, b) => { const q = g.createLinearGradient(xa, ya, xb, yb); q.addColorStop(0, a); q.addColorStop(1, b); return q; };
@@ -624,26 +630,29 @@ $('#btnPng').onclick = () => {
   if (head) {
     g.fillStyle = kind === 'endcap' ? lg(x0 - up, y, x0 + W + up, y, '#1d4fd0', '#5b93ff') : lg(0, y, 0, y + head, M.u1, M.u2);
     rr(x0 - up, y, W + up * 2, head, 8); g.fill();
-    const txt = kind === 'endcap' ? (f.type || 'ENDCAP') : kind === 'wall' ? (f.type || 'WALL') : '';
+    const txt = kind === 'endcap' || kind === 'wall' ? f.name : '';
     g.fillStyle = kind === 'endcap' ? '#fff' : M.ink; g.font = 'bold 22px system-ui,sans-serif'; g.textAlign = 'center';
     g.fillText(txt, x0 + W / 2, y + head / 2 + 8); g.textAlign = 'left'; y += head;
   }
   f.shelves.forEach((sh, si) => {
-    const hh = sh.h * sc, bh = kind === 'pallet' ? 0 : plank;
+    const hh = sh.h * sc, bh = zb(sh), hook = sh.t === 'hook';
     g.fillStyle = kind === 'pallet' || kind === 'table' ? '#eef1f5' : M.back; g.fillRect(x0, y, W, hh);
-    if (kind === 'wall') { g.fillStyle = 'rgba(0,0,0,.13)'; for (let gy = 0; gy < hh; gy += 75) g.fillRect(x0, y + gy, W, 3); }
+    if (hook) { g.fillStyle = 'rgba(0,0,0,.3)'; for (let gy = 15; gy < hh; gy += 30) for (let gx = 15; gx < W; gx += 30) { g.beginPath(); g.arc(x0 + gx, y + gy, 3.5, 0, 7); g.fill(); }
+      g.fillStyle = lg(0, y, 0, y + 12, M.u1, M.u2); g.fillRect(x0, y, W, 12); }
+    else if (kind === 'wall') { g.fillStyle = 'rgba(0,0,0,.13)'; for (let gy = 0; gy < hh; gy += 75) g.fillRect(x0, y + gy, W, 3); }
     else if (kind === 'gondola' || kind === 'endcap') { g.fillStyle = 'rgba(0,0,0,.2)'; for (let gy = 12; gy < hh; gy += 25) for (let gx = 12; gx < W; gx += 25) { g.beginPath(); g.arc(x0 + gx, y + gy, 3, 0, 7); g.fill(); } }
     if (kind !== 'pallet' && kind !== 'table')
       for (const ux of [x0 - up, x0 + W]) { g.fillStyle = lg(ux, 0, ux + up, 0, M.u1, M.u2); g.fillRect(ux, y, up, hh + bh);
         g.fillStyle = 'rgba(0,0,0,.3)'; for (let gy = 10; gy < hh + bh; gy += 40) { g.beginPath(); g.arc(ux + up / 2, y + gy, 3, 0, 7); g.fill(); } }
     let x = x0;
     sh.items.forEach(it => {
-      const k = sku(it.sku), w = k.w * it.f * sc, h = Math.min(k.h * it.s, sh.h) * sc, top = y + hh - h, shp = shapeOf(k);
+      const k = sku(it.sku), w = k.w * it.f * sc, h = Math.min(k.h * it.s, sh.h) * sc, top = hook ? y + 16 : y + hh - h, shp = shapeOf(k);
       g.fillStyle = color(k); rr(x, top, w, h, shp === 'jar' ? [14, 14, 5, 5] : shp === 'pot' ? [5, 5, w * .3, w * .3] : 3); g.fill();
       g.fillStyle = lg(x, 0, x + w, 0, 'rgba(255,255,255,.3)', 'rgba(0,0,0,.25)'); g.fill();
       g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1.5; g.stroke();
       if (shp === 'jar') { g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(x + w * .1, top, w * .8, Math.max(6, h * .14)); }
       else if (shp === 'box') { g.fillStyle = 'rgba(255,255,255,.34)'; g.fillRect(x, top + h * .1, w, h * .09); }
+      if (hook) { g.fillStyle = '#2b2f38'; g.beginPath(); g.arc(x + w / 2, top + 10, 6, 0, 7); g.fill(); g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 3; g.stroke(); }
       g.fillStyle = '#fff'; g.font = '16px system-ui,sans-serif';
       let line = '', ly = top + h * .3 + 6;
       for (const wd of k.name.split(' ')) { const tx = line ? line + ' ' + wd : wd;
@@ -652,19 +661,19 @@ $('#btnPng').onclick = () => {
       if (it.f > 1 || it.s > 1) { g.font = 'bold 15px system-ui,sans-serif'; g.fillText(`${it.f}×${it.s}`, x + 4, y + hh - 8); }
       x += w;
     });
-    if (bh) {
+    if (bh && hook) { g.fillStyle = lg(0, y + hh, 0, y + hh + bh, M.u2, M.u1); g.fillRect(x0 - up, y + hh, W + up * 2, bh); }
+    else if (bh) {
       g.fillStyle = '#fff'; g.fillRect(x0, y + hh, W, 14);
       let rx = x0; sh.items.forEach(it => { const k = sku(it.sku), w = k.w * it.f * sc; g.fillStyle = brandCol(k); g.fillRect(rx, y + hh, w, 14); rx += w; });
       g.fillStyle = lg(0, y + hh + 14, 0, y + hh + bh, M.b1, M.b2); g.fillRect(x0 - up, y + hh + 14, W + up * 2, bh - 14);
     }
     g.fillStyle = '#6b7280'; g.font = '18px system-ui,sans-serif'; g.textAlign = 'right';
-    g.fillText(`Rak ${si + 1}`, x0 - up - 12, y + hh - 22); g.font = '15px system-ui,sans-serif';
+    g.fillText(`${hook ? 'Gantung' : 'Rak'} ${si + 1}`, x0 - up - 12, y + hh - 22); g.font = '15px system-ui,sans-serif';
     g.fillText(`${used(sh).toFixed(0)}/${f.width} cm`, x0 - up - 12, y + hh - 4); g.textAlign = 'left';
     y += hh + bh;
   });
   if (kind === 'pallet') { g.fillStyle = '#c79a62'; g.fillRect(x0, y, W, base); g.fillStyle = 'rgba(60,38,18,.55)';
     for (let i = 1; i < 5; i++) g.fillRect(x0 + W * i / 5 - 3, y, 6, base); g.fillRect(x0, y + base * .32, W, base * .08); g.fillRect(x0, y + base * .68, W, base * .08); }
-  else if (kind === 'table') { g.fillStyle = M.u2; g.fillRect(x0 - up, y, 24, base); g.fillRect(x0 + W, y, 24, base); }
   else { g.fillStyle = lg(0, y, 0, y + base, M.u2, M.u1); g.fillRect(x0 - up, y, W + up * 2, base); }
   g.fillStyle = '#9aa3b2'; g.font = '16px system-ui,sans-serif'; g.fillText(`Dibuat ${new Date().toLocaleDateString('id-ID')}`, pad, c.height - 14);
   download(fname('png'), c.toDataURL('image/png'));
