@@ -716,11 +716,6 @@ $('#btnPng').onclick = async () => {
       g.fillStyle = 'rgba(40,50,66,.65)'; g.font = 'bold 26px system-ui,sans-serif'; g.textAlign = 'center'; g.fillText('S T O C K', x0 + W / 2, by + bh / 2 + 9); g.textAlign = 'left';
     }
     const tw = gm.tw * sc - 4, th = gm.th * sc, blockH = gm.rows * th, top0 = hook ? y + hookPx : y + hh - blockH;
-    if (!z.items.length) {                            // zona tanpa item = tempat STOCK: karton + papan label
-      const sw = Math.min(W - 10, 100), carton = std(0xc9a46a, { roughness: 0.9 }), cz = hook ? zc : D / 2 - 14;
-      if (!hook) for (let i = 0; i < 3; i++) { const bh = Math.min(h - 4, 22 + (i % 2) * 6); box(sw / 3 - 2, bh, 24, carton, (i - 1) * sw / 3, yBase + bh / 2, cz); }
-      const lt = labelTex('STOCK', 100, 26, '#ffffff', '#3b4456'), sign = add(new THREE.PlaneGeometry(40, 10.4), new THREE.MeshBasicMaterial({ map: lt }), 0, hook ? zTop - h / 2 : yBase + Math.min(h - 4, 22) / 2 + 2, (hook ? zc : cz + 12) + 0.8, false);
-    }
     z.items.forEach((code, ii) => {
       const r = Math.floor(ii / gm.perRow), cIdx = ii % gm.perRow, inRow = Math.min(gm.perRow, gm.n - r * gm.perRow), x = x0 + (W - inRow * gm.tw * sc) / 2 + cIdx * gm.tw * sc + 2, ty = top0 + r * th + (hook && r ? hookPx * r : 0);
       const s = S.skus[code] || { name: code };
@@ -931,6 +926,11 @@ function build3d() {
     if (hook) {                                       // bar gantungan + 2 penyangga
       const bar = add(new THREE.CylinderGeometry(0.8, 0.8, W + 2, 12), mMetal, 0, zTop - 1.5, zc); bar.rotation.z = Math.PI / 2;
       for (const sx of [-1, 1]) box(1.6, 1.6, zc + D / 2, mMetal, sx * (W / 2 - 8), zTop - 1.5, (zc - D / 2) / 2);
+    }
+    if (!z.items.length) {                            // zona tanpa item = tempat STOCK: karton + papan label
+      const sw = Math.min(W - 10, 100), carton = std(0xc9a46a, { roughness: 0.9 }), cz = hook ? zc : D / 2 - 14;
+      if (!hook) for (let i = 0; i < 3; i++) { const bh = Math.min(h - 4, 22 + (i % 2) * 6); box(sw / 3 - 2, bh, 24, carton, (i - 1) * sw / 3, yBase + bh / 2, cz); }
+      const lt = labelTex('STOCK', 100, 26, '#ffffff', '#3b4456'), sign = add(new THREE.PlaneGeometry(40, 10.4), new THREE.MeshBasicMaterial({ map: lt }), 0, hook ? zTop - h / 2 : yBase + Math.min(h - 4, 22) / 2 + 2, (hook ? zc : cz + 12) + 0.8, false);
     }
     z.items.forEach((code, ii) => {
       const r = Math.floor(ii / gm.perRow), c = ii % gm.perRow, inRow = Math.min(gm.perRow, gm.n - r * gm.perRow);
