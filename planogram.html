@@ -89,6 +89,8 @@ button.danger{color:var(--bad)}
 .item.sel .card{outline:3px solid #f59e0b;outline-offset:-1px}
 .hkx{position:absolute;left:50%;top:calc(var(--hk)*-1);width:2px;margin-left:-1px;height:var(--hk);background:linear-gradient(90deg,#aab1bc,#4a525e);border-radius:1px;z-index:4;pointer-events:none}
 .hkx::after{content:'';position:absolute;bottom:-3px;left:-3px;width:8px;height:6px;border:2px solid #566070;border-top:0;border-radius:0 0 8px 8px}
+.stk{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:6px 22px;border:2px dashed rgba(60,70,90,.45);border-radius:6px;font-weight:700;letter-spacing:.4em;font-size:13px;color:rgba(40,50,66,.65);background:rgba(255,255,255,.6);pointer-events:none;white-space:nowrap}
+.shelf-body.hook .stk{top:calc(50% + 10px)}
 .ind{position:absolute;width:3px;background:var(--accent);pointer-events:none;z-index:5}
 
 /* library */
@@ -170,7 +172,7 @@ button.danger{color:var(--bad)}
 
   <section class="panel" style="padding:8px">
     <div id="stage"><div id="fixture"></div></div>
-    <div class="muted" style="padding:0 6px 4px">Urutan item dari kiri ke kanan mengikuti urutan baris di Excel. Seret item untuk memindah atau mengubah urutan. Delete = hapus item terpilih.</div>
+    <div class="muted" style="padding:0 6px 4px">Urutan item dari kiri ke kanan mengikuti urutan baris di Excel. Zona tanpa item dianggap tempat STOCK. Seret item untuk memindah atau mengubah urutan. Delete = hapus item terpilih.</div>
   </section>
 
   <div id="side-right">
@@ -306,7 +308,7 @@ function renderFixture() {
     const g = geom(plan, zi, hs), hookPx = Math.max(20, Math.round(HOOK_CM * sc));
     const row = document.createElement('div'); row.className = 'shelf';
     const lab = document.createElement('div'); lab.className = 'shelf-label';
-    lab.innerHTML = `${z.t === 'hook' ? 'Gantung' : 'Rak'} ${zi + 1}<span class="u">${g.n} item</span>`;
+    lab.innerHTML = `${z.t === 'hook' ? 'Gantung' : 'Rak'} ${zi + 1}<span class="u">${g.n ? g.n + ' item' : 'stock'}</span>`;
     const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
     const body = document.createElement('div'); body.className = 'shelf-body' + (z.t === 'hook' ? ' hook' : '');
     body.dataset.zone = zi; body.style.width = W + 'px'; body.style.height = hs[zi] * sc + 'px';
@@ -326,6 +328,7 @@ function renderFixture() {
       if (z.t === 'hook') { const hk = document.createElement('i'); hk.className = 'hkx'; d.appendChild(hk); }
       d.appendChild(card); body.appendChild(d);
     });
+    if (!z.items.length) { const st = document.createElement('div'); st.className = 'stk'; st.textContent = 'STOCK'; body.appendChild(st); }
     const board = document.createElement('div'); board.className = 'board' + (z.t === 'hook' ? ' hookline' : '');
     const rail = document.createElement('div'); rail.className = 'rail'; const plank = document.createElement('div'); plank.className = 'plank'; board.append(rail, plank);
     wrap.append(body, board);
@@ -371,7 +374,7 @@ function renderStats() {
     <div class="stat"><b>${plan.zones.length - empty}/${plan.zones.length}</b>Zona terisi</div>
     <div class="stat"><b>${S.plans.length}</b>Planogram</div>`;
   const noImg = new Set(items.filter(c => !imgFor(c))).size;
-  $('#warnList').innerHTML = [empty ? `${empty} zona masih kosong.` : '', noImg ? `<span class="warn">${noImg} SKU belum punya link gambar.</span>` : ''].filter(Boolean).join('<br>');
+  $('#warnList').innerHTML = [empty ? `${empty} zona tanpa item = tempat <b>STOCK</b>.` : '', noImg ? `<span class="warn">${noImg} SKU belum punya link gambar.</span>` : ''].filter(Boolean).join('<br>');
 }
 
 /* ---------- drag & drop ---------- */
@@ -584,7 +587,8 @@ function importRows(rows, daftar) {
     const old = S.plans.findIndex(p => p.id === id);
     if (old >= 0) S.plans[old] = plan; else S.plans.push(plan);
     added.push(id); nPlans++; nItems += cnt;
-    rep.push({ t: 'ok', m: `${id} — ${VARIANTS[key].label}: ${cnt} item di ${plan.zones.filter(z => z.items.length).length}/${plan.zones.length} zona.` });
+    const nStock = plan.zones.filter(z => !z.items.length).length;
+    rep.push({ t: 'ok', m: `${id} — ${VARIANTS[key].label}: ${cnt} item di ${plan.zones.length - nStock}/${plan.zones.length} zona` + (nStock ? `, ${nStock} zona STOCK.` : '.') });
   }
   if (added.length) { S.cur = added[0]; S.scale = scaleFor(PRESETS[cur().size].h); sel = null; }
   if (nMaster) rep.push({ t: 'ok', m: `${nMaster} SKU tanpa ID FIXTURE masuk daftar SKU (belum ditempatkan).` });
@@ -676,6 +680,11 @@ $('#btnPng').onclick = async () => {
     if (kind !== 'pallet')
       for (const ux of [x0 - up, x0 + W]) { g.fillStyle = lg(ux, 0, ux + up, 0, M.u1, M.u2); g.fillRect(ux, y, up, hh + bh);
         g.fillStyle = 'rgba(0,0,0,.3)'; for (let gy = 10; gy < hh + bh; gy += 40) { g.beginPath(); g.arc(ux + up / 2, y + gy, 3, 0, 7); g.fill(); } }
+    if (!gm.n) {                                    // zona tanpa item = STOCK
+      const bw = 200, bh = 54, bx = x0 + W / 2 - bw / 2, by = y + hh / 2 - bh / 2 + (hook ? 10 : 0);
+      g.save(); g.setLineDash([10, 7]); g.lineWidth = 3; g.strokeStyle = 'rgba(60,70,90,.45)'; g.fillStyle = 'rgba(255,255,255,.6)'; rr(bx, by, bw, bh, 10); g.fill(); g.stroke(); g.restore();
+      g.fillStyle = 'rgba(40,50,66,.65)'; g.font = 'bold 26px system-ui,sans-serif'; g.textAlign = 'center'; g.fillText('S T O C K', x0 + W / 2, by + bh / 2 + 9); g.textAlign = 'left';
+    }
     const tw = gm.tw * sc - 4, th = gm.th * sc, blockH = gm.rows * th, top0 = hook ? y + hookPx : y + hh - blockH;
     z.items.forEach((code, ii) => {
       const r = Math.floor(ii / gm.perRow), cIdx = ii % gm.perRow, inRow = Math.min(gm.perRow, gm.n - r * gm.perRow), x = x0 + (W - inRow * gm.tw * sc) / 2 + cIdx * gm.tw * sc + 2, ty = top0 + r * th + (hook && r ? hookPx * r : 0);
