@@ -8,9 +8,9 @@
 :root{--bg:#f4f5f7;--panel:#fff;--ink:#1f2430;--muted:#6b7280;--line:#dfe3e8;--accent:#2563eb;--bad:#dc2626;--ok:#16a34a;--warn:#d97706}
 *{box-sizing:border-box}
 body{margin:0;font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
 header h1{font-size:16px;margin:0 8px 0 0}
-main{display:grid;grid-template-columns:270px minmax(0,1fr) 310px;gap:12px;padding:12px;align-items:start}
+main{display:grid;grid-template-columns:280px minmax(0,1fr) 300px;gap:12px;padding:12px;align-items:start}
 @media(max-width:1100px){main{grid-template-columns:1fr}}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
 .panel h2{font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
@@ -31,6 +31,8 @@ button.danger{color:var(--bad)}
 .stat{background:var(--bg);border-radius:6px;padding:6px 8px}
 .stat b{display:block;font-size:16px}
 .bad{color:var(--bad)} .ok{color:var(--ok)} .warn{color:var(--warn)}
+#report{max-height:220px;overflow:auto;font-size:12px}
+#report div{padding:2px 0;border-bottom:1px solid var(--line)}
 
 /* fixture */
 #stage{overflow:auto;padding:8px 4px 16px}
@@ -39,49 +41,36 @@ button.danger{color:var(--bad)}
 #fixture.m-burnt{--board1:#7a5740;--board2:#47301f;--up1:#6e4e39;--up2:#3b281b;--back:#a8917f;--ink2:#f3e6d8}
 #fixture.m-glass{--board1:rgba(196,232,243,.95);--board2:rgba(122,186,206,.95);--up1:#d0d5dd;--up2:#8d97a6;--back:#eef5f8;--ink2:#2a3a44}
 #fixture.m-steel{--board1:#d9dde4;--board2:#8f98a6;--up1:#c7ccd5;--up2:#808996;--back:#eef0f4;--ink2:#2a313b}
+#fixture .empty{padding:30px 40px 30px 0;margin-left:-60px;color:var(--muted);max-width:420px}
 .fx-title{margin:0 0 8px -76px;font-weight:600}
 .fx-head{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);
   background:linear-gradient(180deg,var(--up1),var(--up2));border-radius:5px 5px 0 0;box-shadow:0 2px 5px rgba(0,0,0,.22);overflow:hidden;white-space:nowrap}
 .k-wall .fx-head{height:26px}
 .k-gondola .fx-head{height:12px;font-size:0}
 .k-endcap .fx-head{height:38px;font-size:13px;color:#fff;background:linear-gradient(135deg,#1d4fd0,#2563eb 60%,#5b93ff);border-radius:7px 7px 0 0}
-.k-pallet .fx-head,.k-table .fx-head{display:none}
+.k-pallet .fx-head{display:none}
 .shelf{position:relative;display:flex;align-items:stretch}
 .up{width:12px;flex:none;background:radial-gradient(circle,rgba(0,0,0,.32) 1.6px,transparent 2.1px) 0 0/12px 20px,linear-gradient(90deg,var(--up1),var(--up2))}
-.k-pallet .up,.k-table .up{visibility:hidden}
+.k-pallet .up{visibility:hidden}
 .shelf-label{position:absolute;right:100%;margin-right:8px;bottom:4px;width:74px;text-align:right;font-size:11px;color:var(--muted);line-height:1.3}
-.shelf-label input{width:52px;padding:2px 4px;font-size:11px;text-align:right}
 .shelf-label .u{display:block;font-size:10px}
 .shelf-wrap{flex:none}
-.shelf-body{position:relative;display:flex;align-items:flex-end;background:var(--back)}
+.shelf-body{position:relative;display:flex;flex-wrap:wrap;align-content:flex-end;align-items:flex-end;background:var(--back)}
 .k-wall .shelf-body{background:repeating-linear-gradient(to bottom,rgba(0,0,0,.13) 0 2px,transparent 2px calc(var(--cm)*7.5)),var(--back)}
 .k-gondola .shelf-body,.k-endcap .shelf-body{background:linear-gradient(90deg,rgba(0,0,0,.07),rgba(0,0,0,0) 8%,rgba(0,0,0,0) 92%,rgba(0,0,0,.07)),linear-gradient(180deg,rgba(255,255,255,.55),rgba(0,0,0,.04)),var(--back)}
-.k-pallet .shelf-body,.k-table .shelf-body{background:linear-gradient(180deg,#f7f8fa,#e9edf3)}
+.k-pallet .shelf-body{background:linear-gradient(180deg,#f7f8fa,#e9edf3)}
 .shelf-body.over{outline:2px dashed var(--accent);outline-offset:-2px}
-.shelf-body.full{box-shadow:inset 0 0 0 2px var(--bad)}
 .board{display:flex;flex-direction:column;height:15px}
-.rail{height:7px;display:flex;background:#fff;border-bottom:1px solid rgba(0,0,0,.25)}
-.rail i{display:block;height:100%}
+.rail{height:7px;background:#fff;border-bottom:1px solid rgba(0,0,0,.25)}
 .plank{flex:1;background:linear-gradient(180deg,var(--board1),var(--board2));box-shadow:0 3px 4px rgba(0,0,0,.28)}
 .k-pallet .board{display:none}
 .fx-base{height:calc(var(--cm)*10);background:linear-gradient(180deg,var(--up2),var(--up1));border-top:2px solid rgba(0,0,0,.25);box-shadow:0 5px 9px rgba(0,0,0,.22);border-radius:0 0 3px 3px}
 .k-pallet .fx-base{height:calc(var(--cm)*12);border-top:0;
   background:repeating-linear-gradient(90deg,transparent 0 calc(20% - 3px),rgba(60,38,18,.55) calc(20% - 3px) 20%),
   linear-gradient(180deg,#cf9f66 0 30%,#5e4023 30% 38%,#b98a54 38% 68%,#5e4023 68% 76%,#cf9f66 76%)}
-.k-table .fx-base{height:calc(var(--cm)*20);border:0;box-shadow:none;background:linear-gradient(90deg,var(--up2) 0 16px,transparent 16px calc(100% - 16px),var(--up2) 0)}
 
-.item{flex:none;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;line-height:1.15;overflow:hidden;border:1px solid rgba(0,0,0,.4);cursor:grab;position:relative;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5);user-select:none;box-shadow:2px 0 3px rgba(0,0,0,.22);border-radius:2px}
-.item::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.3),rgba(255,255,255,0) 32%,rgba(0,0,0,.24));pointer-events:none}
-.item .t{position:relative;z-index:1;padding:0 2px}
-.item.jar{border-radius:7px 7px 3px 3px}
-.item.jar::before{content:'';position:absolute;left:10%;right:10%;top:0;height:14%;min-height:3px;background:rgba(0,0,0,.42);border-radius:0 0 3px 3px;z-index:1}
-.item.pot{border-radius:3px 3px 45% 45%/3px 3px 28% 28%}
-.item.pot::before{content:'';position:absolute;left:5%;right:5%;top:9%;height:2px;background:rgba(255,255,255,.55);z-index:1}
-.item.box::before{content:'';position:absolute;left:0;right:0;top:10%;height:9%;background:rgba(255,255,255,.34);z-index:1}
-.item.sel{outline:3px solid #f59e0b;outline-offset:-2px;z-index:3}
-.item.tall{box-shadow:inset 0 0 0 3px var(--bad)}
-.item .fc{position:absolute;right:1px;top:1px;background:rgba(0,0,0,.6);padding:0 3px;border-radius:3px;font-size:9px;z-index:2}
-.shelf-body.hook{align-items:flex-start;border-bottom:1px dashed rgba(0,0,0,.14)}
+/* gantungan: bar di atas */
+.shelf-body.hook{align-content:flex-start;align-items:flex-start;border-bottom:1px dashed rgba(0,0,0,.14)}
 .shelf-body.hook::before{content:'GANTUNGAN';position:absolute;right:8px;bottom:4px;font-size:10px;font-weight:700;letter-spacing:.14em;color:rgba(40,50,66,.55);background:rgba(255,255,255,.75);padding:0 5px;border-radius:3px;pointer-events:none}
 .shelf-body.hook::after{content:'';position:absolute;left:-5px;right:-5px;top:0;height:20px;pointer-events:none;z-index:4;
   background:linear-gradient(180deg,#f6f8fb 0%,#b4bcc8 35%,#eef1f5 55%,#6c7584 100%) 0 0/100% 9px no-repeat,
@@ -89,30 +78,34 @@ button.danger{color:var(--bad)}
   linear-gradient(90deg,#4a525e,#7c8594,#4a525e) calc(100% - 22px) 0/8px 20px no-repeat;
   filter:drop-shadow(0 3px 2px rgba(0,0,0,.35))}
 .board.hookline{display:none}
-.item.hang{margin-top:26px}
-.item.hang::after{border-radius:inherit}
-.item.hang.pot{overflow:visible;border-radius:50% 50% 46% 46%/40% 40% 60% 60%}
-.item.hang.pot::before{top:-13px;left:46%;right:auto;width:8%;height:15px;background:linear-gradient(90deg,#8a919c,#4b525e);border-radius:2px 2px 0 0}
-.hk{position:absolute;top:9px;width:2px;height:20px;margin-left:-1px;background:linear-gradient(90deg,#aab1bc,#4a525e);border-radius:1px;z-index:4;pointer-events:none}
-.hk::before{content:'';position:absolute;top:-3px;left:-3px;width:8px;height:6px;border:2px solid #566070;border-bottom:0;border-radius:8px 8px 0 0}
-.hk::after{content:'';position:absolute;bottom:-3px;left:-3px;width:8px;height:6px;border:2px solid #566070;border-top:0;border-radius:0 0 8px 8px}
-.peg{display:none}
-.ind{position:absolute;top:0;bottom:0;width:3px;background:var(--accent);pointer-events:none;z-index:5}
+
+/* item = kartu produk bergambar */
+.item{flex:none;position:relative;margin:0 1px;cursor:grab;user-select:none}
+.item .card{position:absolute;inset:0;display:flex;flex-direction:column;background:#fff;border:1px solid rgba(0,0,0,.28);border-radius:3px;overflow:hidden;box-shadow:1px 2px 4px rgba(0,0,0,.22)}
+.item .card img{flex:1;min-height:0;width:100%;object-fit:contain;background:#fff;padding:2px}
+.item .card .ph{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9px;line-height:1.15;padding:3px;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5);overflow:hidden}
+.item .cap{flex:none;height:22px;font-size:9px;line-height:1.1;padding:1px 3px;background:#f3f4f7;color:#222;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;border-top:1px solid #e0e3e8}
+.item.sel{z-index:3}
+.item.sel .card{outline:3px solid #f59e0b;outline-offset:-1px}
+.hkx{position:absolute;left:50%;top:calc(var(--hk)*-1);width:2px;margin-left:-1px;height:var(--hk);background:linear-gradient(90deg,#aab1bc,#4a525e);border-radius:1px;z-index:4;pointer-events:none}
+.hkx::after{content:'';position:absolute;bottom:-3px;left:-3px;width:8px;height:6px;border:2px solid #566070;border-top:0;border-radius:0 0 8px 8px}
+.ind{position:absolute;width:3px;background:var(--accent);pointer-events:none;z-index:5}
 
 /* library */
 .sku{display:flex;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;cursor:grab;background:#fff}
 .sku:hover{background:#f7f9fc}
-.sku .sw{width:14px;height:30px;border-radius:3px;flex:none}
+.sku .th{width:38px;height:38px;flex:none;border:1px solid var(--line);border-radius:4px;background:#fff;object-fit:contain}
 .sku .nm{flex:1;min-width:0}
 .sku .nm div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sku .nm .muted{font-size:11px}
 .sku button{padding:2px 6px;font-size:12px}
-.sku.placed{opacity:.55}
+.sku.placed{background:#f1f7ff}
 #lib{max-height:420px;overflow:auto}
+#inspector img{width:100%;max-height:150px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px}
 #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1f2430;color:#fff;padding:8px 14px;border-radius:8px;display:none;max-width:90vw;z-index:50}
 
 @media print{
-  header,.panel.noprint,#side-left,#side-right{display:none!important}
+  header,#side-left,#side-right{display:none!important}
   main{display:block;padding:0}
   body{background:#fff}
 }
@@ -121,8 +114,9 @@ button.danger{color:var(--bad)}
 <body>
 <header>
   <h1>Planogram Generator</h1>
-  <button class="primary" id="btnAuto" title="Susun otomatis semua SKU berdasarkan prioritas">Auto-susun</button>
-  <button id="btnClear">Kosongkan rak</button>
+  <button class="primary" id="btnImport">Impor Excel / CSV</button>
+  <input type="file" id="fileData" accept=".xlsx,.csv,.txt" hidden>
+  <button id="btnTpl">Template CSV</button>
   <span style="flex:1"></span>
   <button id="btnPng">Ekspor PNG</button>
   <button id="btnCsv">Ekspor CSV</button>
@@ -135,26 +129,24 @@ button.danger{color:var(--bad)}
 <main>
   <div id="side-left">
     <section class="panel">
+      <h2>Planogram</h2>
+      <label>Pilih ID fixture</label>
+      <select id="planSel"></select>
+      <div class="btns" style="margin-top:8px"><button id="planDel" class="danger">Hapus planogram ini</button></div>
+      <label>Tambah planogram baru</label>
+      <div class="row"><input id="newId" placeholder="ID, mis. GND-04"><select id="newVar"></select></div>
+      <button id="planAdd" style="width:100%;margin-top:6px">+ Tambah</button>
+    </section>
+
+    <section class="panel">
       <h2>Fixture</h2>
-      <label>Fixture</label>
-      <select id="fxFam"></select>
       <label>Jenis</label>
       <select id="fxVar"></select>
       <div class="row">
-        <div><label>Ukuran standar</label><select id="fxPreset"></select></div>
+        <div><label>Ukuran standar</label><select id="fxSize"></select></div>
         <div><label>Bahan</label><select id="fxMat"></select></div>
       </div>
-      <label>Nama</label>
-      <input id="fxName">
-      <div class="row">
-        <div><label>Lebar</label><input id="fxWidth" type="number" min="30" max="400"></div>
-        <div><label>Dalam</label><input id="fxDepth" type="number" min="10" max="200"></div>
-        <div><label>Tinggi</label><input id="fxHeight" type="number" min="30" max="400"></div>
-      </div>
-      <div class="muted">Ukuran dalam cm (L × D × T)</div>
       <div id="shLock" class="muted" style="margin-top:8px"></div>
-      <button id="shEven" style="width:100%;margin-top:6px">Reset tinggi sesuai layout</button>
-      <div id="heightInfo" class="muted" style="margin-top:6px"></div>
       <label>Zoom</label>
       <input id="zoom" type="range" min="2" max="9" step="0.5">
     </section>
@@ -167,43 +159,34 @@ button.danger{color:var(--bad)}
 
     <section class="panel">
       <h2>Item terpilih</h2>
-      <div id="inspector" class="muted">Klik produk di rak untuk mengatur facing / susunan.</div>
+      <div id="inspector" class="muted">Klik produk di rak untuk melihat detail dan memindahkannya.</div>
+    </section>
+
+    <section class="panel" id="reportBox" hidden>
+      <h2>Laporan impor</h2>
+      <div id="report"></div>
     </section>
   </div>
 
   <section class="panel" style="padding:8px">
     <div id="stage"><div id="fixture"></div></div>
-    <div class="muted" style="padding:0 6px 4px">Seret SKU dari daftar ke rak. Seret item di rak untuk memindah. Tekan Delete untuk menghapus item terpilih.</div>
+    <div class="muted" style="padding:0 6px 4px">Urutan item dari kiri ke kanan mengikuti urutan baris di Excel. Seret item untuk memindah atau mengubah urutan. Delete = hapus item terpilih.</div>
   </section>
 
   <div id="side-right">
     <section class="panel">
       <h2>Daftar SKU <span class="muted" id="libCount"></span></h2>
-      <input id="libSearch" placeholder="Cari SKU / brand…" style="margin-bottom:8px">
+      <input id="libSearch" placeholder="Cari kode / nama…" style="margin-bottom:8px">
       <div id="lib"></div>
     </section>
-
     <section class="panel">
-      <h2 id="formTitle">Tambah SKU</h2>
+      <h2>Tambah SKU</h2>
+      <label>Kode SKU</label><input id="fCode">
       <label>Nama</label><input id="fName">
-      <div class="row"><div><label>Brand</label><input id="fBrand"></div>
-      <div><label>Prioritas</label><select id="fPri"><option value="3">3 – Tinggi</option><option value="2" selected>2 – Sedang</option><option value="1">1 – Rendah</option></select></div></div>
-      <div class="row"><div><label>Lebar (cm)</label><input id="fW" type="number" step="0.5" min="1"></div>
-      <div><label>Tinggi (cm)</label><input id="fH" type="number" step="0.5" min="1"></div>
-      <div><label>Dalam (cm)</label><input id="fD" type="number" step="0.5" min="0" placeholder="opsional"></div></div>
-      <label>Ditampilkan di</label>
-      <select id="fMode"><option value="any">Bebas (rak atau gantungan)</option><option value="rack">Rak</option><option value="hook">Gantungan</option></select>
-      <div class="btns" style="margin-top:10px">
-        <button class="primary" id="fSave">Simpan SKU</button>
-        <button id="fCancel">Batal</button>
-      </div>
-      <hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
-      <div class="btns">
-        <button id="btnImport">Impor SKU (CSV)</button>
-        <button id="btnTpl">Template CSV</button>
-      </div>
-      <input type="file" id="fileCsv" accept=".csv,.txt" hidden>
-      <div class="muted" style="margin-top:6px">Kolom: nama, brand, lebar_cm, tinggi_cm, prioritas (1-3), kedalaman_cm (opsional), tampil (rak / gantung, opsional)</div>
+      <label>Link gambar (kosong = otomatis dari pola)</label><input id="fImg">
+      <label>Pola link gambar otomatis</label><input id="imgPat">
+      <div class="muted">Gunakan {kode} sebagai pengganti kode SKU.</div>
+      <button class="primary" id="fSave" style="width:100%;margin-top:8px">Simpan SKU</button>
     </section>
   </div>
 </main>
@@ -211,9 +194,13 @@ button.danger{color:var(--bad)}
 
 <script>
 const $ = s => document.querySelector(s);
-const KEY = 'planogram-v3';
-const BASE = 10; // asumsi tinggi kaki/dasar fixture (cm), bisa diubah lewat tinggi rak
-// ukuran umum (L×D×T cm)
+const KEY = 'planogram-v4';
+const BASE = 10;                       // tinggi dasar fixture (cm)
+const HOOK_CM = 6.5;                   // jarak bar gantungan ke kartu (cm)
+const MAXTILE = 26, MINTILE = 10;      // lebar kartu maksimum / minimum (cm)
+const DEFAULT_PAT = 'https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/{kode}_1.jpg';
+
+// ukuran standar (L×D×T cm)
 const PRESETS = {
   wall270: { label: 'Wall 120×50×270', w: 120, d: 50, h: 270 },
   wall240: { label: 'Wall 120×50×240', w: 120, d: 50, h: 240 },
@@ -222,130 +209,109 @@ const PRESETS = {
   pallet: { label: 'Pallet 90×90 (tampak depan)', w: 90, d: 90, h: 100 },
 };
 // layout zona atas→bawah: R = rak, H = gantungan, angka = tinggi relatif
-const FAMILIES = {
-  WALL: { label: 'Wall', sizes: ['wall270', 'wall240'], mat: 'ash', variants: {
-    w6: { label: 'Wall 6 Rack', z: 'R1 R1 R1 R1 R1 R1' },
-    w4: { label: 'Wall 4 Rack', z: 'R2 R2 R1 R1' },
-    w3h2: { label: 'Wall 3 Rack + 2 Gantungan', z: 'H1 H1 R2 R1 R1' } } },
-  GONDOLA: { label: 'Gondola', sizes: ['gondola'], mat: 'steel', variants: {
-    g4: { label: 'Gondola 4 Rack', z: 'R1 R1 R1 R1' },
-    gfull: { label: 'Gondola Full Gantungan', z: 'H1 H1 H1 H1' },
-    g1h3: { label: 'Gondola 1 Rack + 3 Gantungan', z: 'R1 H1 H1 H1' } } },
-  ENDCAP: { label: 'Endcap', sizes: ['endcap'], mat: 'ash', variants: { e4: { label: 'Endcap 4 Rack', z: 'R1 R1 R1 R1' } } },
-  PALLET: { label: 'Pallet', sizes: ['pallet'], mat: 'ash', variants: { p1: { label: 'Pallet 90x90', z: 'R1' } } },
+const VARIANTS = {
+  w6:   { fam: 'WALL', label: 'Wall 6 Rack', z: 'R1 R1 R1 R1 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
+  w4:   { fam: 'WALL', label: 'Wall 4 Rack', z: 'R2 R2 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
+  w3h2: { fam: 'WALL', label: 'Wall 3 Rack + 2 Gantungan', z: 'H1 H1 R2 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
+  g4:   { fam: 'GONDOLA', label: 'Gondola 4 Rack', z: 'R1 R1 R1 R1', sizes: ['gondola'], mat: 'steel' },
+  gfull:{ fam: 'GONDOLA', label: 'Gondola Full Gantungan', z: 'H1 H1 H1 H1', sizes: ['gondola'], mat: 'steel' },
+  g1h3: { fam: 'GONDOLA', label: 'Gondola 1 Rack + 3 Gantungan', z: 'R1 H1 H1 H1', sizes: ['gondola'], mat: 'steel' },
+  e4:   { fam: 'ENDCAP', label: 'Endcap 4 Rack', z: 'R1 R1 R1 R1', sizes: ['endcap'], mat: 'ash' },
+  p1:   { fam: 'PALLET', label: 'Pallet 90x90', z: 'R1', sizes: ['pallet'], mat: 'ash' },
 };
 const MATNAMES = { ash: 'Kayu terang', burnt: 'Kayu gelap', glass: 'Kaca', steel: 'Logam' };
-const ZNAME = { rack: 'Rak', hook: 'Gantungan' };
-const zonesOf = v => v.z.split(' ').map(t => ({ t: t[0] === 'H' ? 'hook' : 'rack', u: +t.slice(1) }));
-const zoneH = (H, zones, pallet) => { const avail = H - (pallet ? 0 : BASE), tu = zones.reduce((a, z) => a + z.u, 0);
-  return zones.map(z => Math.max(5, Math.floor(avail * z.u / tu))); };
-const uid = () => Math.random().toString(36).slice(2, 9);
-const num = (v, d) => { const n = parseFloat(v); return isFinite(n) && n > 0 ? n : d; };
-
-function sample() {   // contoh SKU Homeware (nama, brand, lebar, tinggi, kedalaman, prioritas)
-  const mk = (name, brand, w, h, d, pri, mode = 'any') => ({ id: uid(), name, brand, w, h, d, pri, mode });
-  return [
-    mk('Panci Stainless 20cm', 'MasakPro', 22, 12, 22, 2), mk('Wajan Anti Lengket 26cm', 'MasakPro', 28, 10, 28, 2),
-    mk('Set Spatula 5pcs', 'MasakPro', 12, 26, 6, 1, 'hook'), mk('Sendok Sayur 3pcs', 'MasakPro', 12, 28, 4, 2, 'hook'), mk('Pisau Dapur Set', 'MasakPro', 14, 28, 4, 2, 'hook'),
-    mk('Canister 1L', 'Keepy', 12, 16, 12, 3), mk('Canister 2L', 'Keepy', 14, 20, 14, 2), mk('Toples Kaca 800ml', 'Keepy', 11, 15, 11, 2),
-    mk('Container Plastik 1.5L', 'Clear', 16, 10, 16, 3), mk('Lunch Box', 'Clear', 18, 8, 13, 2), mk('Botol Minum 1L', 'Clear', 8, 26, 8, 2),
-    mk('Gelas Set 6pcs', 'Servo', 20, 11, 14, 2), mk('Piring Makan 20cm (set)', 'Servo', 21, 14, 21, 1), mk('Mangkok Set', 'Servo', 18, 12, 18, 1),
-  ];
-}
-function buildShelves(fam, key, H, pallet, old) {
-  const zones = zonesOf(FAMILIES[fam].variants[key]), hs = zoneH(H, zones, pallet);
-  return zones.map((z, i) => ({ t: z.t, u: z.u, h: hs[i], items: old && old[i] ? old[i].items : [] }));
-}
-function defaultFixture(fam, key, preset) {
-  const p = PRESETS[preset], F = FAMILIES[fam];
-  return { family: fam, variant: key, name: F.variants[key].label, preset, mat: F.mat, width: p.w, depth: p.d, height: p.h,
-    shelves: buildShelves(fam, key, p.h, preset === 'pallet') };
-}
-const scaleFor = h => h > 200 ? 3.5 : h > 120 ? 4.5 : 5;
-function fresh() {
-  return { fixture: defaultFixture('GONDOLA', 'g4', 'gondola'), skus: sample(), scale: scaleFor(150) };
-}
-function patch(s) {   // lengkapi field baru pada data lama
-  const f = s.fixture;
-  f.depth = f.depth || 50; f.preset = f.preset || '';
-  if (!FAMILIES[f.family]) { f.family = kindOf(f).toUpperCase(); f.variant = ''; }
-  if (f.variant === 'g1h2' || f.variant === 'gfull') f.variant = '';   // layout lama diganti
-  f.mat = f.mat || FAMILIES[f.family].mat;
-  f.height = f.height || Math.round(f.shelves.reduce((a, x) => a + x.h, 0) + BASE);
-  f.shelves.forEach(sh => { sh.t = sh.t || 'rack'; sh.u = sh.u || 1; });
-  s.skus.forEach(k => { k.d = k.d || 0; k.mode = k.mode || 'any'; }); s.scale = s.scale || 5; return s;
-}
-let S = (() => { try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && j.fixture) return patch(j); } catch (e) {} return fresh(); })();
-let sel = null;        // {shelf, idx}
-let drag = null;       // {type:'sku',id} | {type:'item',shelf,idx}
-let editId = null;
-
-const sku = id => S.skus.find(k => k.id === id);
-const hue = str => { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
-const color = k => `hsl(${hue(k.brand || k.name)} 45% ${38 + (hue(k.name) % 5) * 4}%)`;
-const used = sh => sh.items.reduce((a, it) => a + (sku(it.sku)?.w || 0) * it.f, 0);
-const cap = it => { const k = sku(it.sku); return k.d ? it.f * it.s * Math.floor(S.fixture.depth / k.d) : 0; };
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
-function toast(msg) {
-  const t = $('#toast'); t.textContent = msg; t.style.display = 'block';
-  clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 3500);
-}
-function normalize() {
-  S.fixture.shelves.forEach(sh => sh.items = sh.items.filter(it => sku(it.sku)));
-}
-
-/* ---------- render ---------- */
-function updateLock() {
-  const f = S.fixture;
-  $('#shLock').innerHTML = `🔒 <b>${f.shelves.length} zona</b> terkunci sesuai jenis fixture<br>Susunan atas→bawah: ${f.shelves.map(x => ZNAME[x.t]).join(' · ')}`;
-}
-function render() {
-  normalize(); renderFixture(); renderLib(); renderInspector(); renderStats(); updateLock(); save();
-}
-
-const shapeOf = k => /canister|toples|botol|jar|bottle|gelas|tumbler/i.test(k.name) ? 'jar' : /panci|wajan|pot\b|pan\b/i.test(k.name) ? 'pot' : 'box';
-const brandCol = k => `hsl(${hue(k.brand || k.name)} 60% 42%)`;
-const kindOf = f => { if (FAMILIES[f.family]) return f.family.toLowerCase(); const n = (f.name || '').toUpperCase();
-  return n.includes('WALL') ? 'wall' : n.includes('ENDCAP') ? 'endcap' : n.includes('PALLET') ? 'pallet' : 'gondola'; };
-const matOf = f => f.mat || 'ash';
 const MATS = { ash: { b1: '#e8d3ae', b2: '#c9a877', u1: '#dcc59c', u2: '#b99a6a', back: '#f6efdf', ink: '#4a3a22' },
   burnt: { b1: '#7a5740', b2: '#47301f', u1: '#6e4e39', u2: '#3b281b', back: '#a8917f', ink: '#f3e6d8' },
   glass: { b1: '#c4e8f3', b2: '#7abace', u1: '#d0d5dd', u2: '#8d97a6', back: '#eef5f8', ink: '#2a3a44' },
   steel: { b1: '#d9dde4', b2: '#8f98a6', u1: '#c7ccd5', u2: '#808996', back: '#eef0f4', ink: '#2a313b' } };
+const ZNAME = { rack: 'Rak', hook: 'Gantungan' };
+const zonesOf = v => v.z.split(' ').map(t => ({ t: t[0] === 'H' ? 'hook' : 'rack', u: +t.slice(1) }));
+const zoneH = (H, zones, pallet) => { const avail = H - (pallet ? 0 : BASE), tu = zones.reduce((a, z) => a + z.u, 0);
+  return zones.map(z => Math.max(5, Math.floor(avail * z.u / tu))); };
+const scaleFor = h => h > 200 ? 3.5 : h > 120 ? 4.5 : 5;
+const norm = s => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
+const VAR_BY_LABEL = Object.fromEntries(Object.entries(VARIANTS).map(([k, v]) => [norm(v.label), k]));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const hue = str => { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
+const phColor = code => `hsl(${hue(code)} 45% 42%)`;
+
+/* ---------- state ---------- */
+function newPlan(id, variant) {
+  const v = VARIANTS[variant];
+  return { id, variant, size: v.sizes[0], mat: v.mat, zones: zonesOf(v).map(z => ({ t: z.t, items: [] })) };
+}
+function fresh() { return { plans: [], cur: null, skus: {}, scale: 4, pat: DEFAULT_PAT }; }
+let S = (() => { try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && Array.isArray(j.plans)) return Object.assign(fresh(), j); } catch (e) {} return fresh(); })();
+let sel = null, drag = null;
+const cur = () => S.plans.find(p => p.id === S.cur) || null;
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.style.display = 'block';
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 4200);
+}
+const imgFor = code => (S.skus[code] && S.skus[code].img) || '';
+const patUrl = code => (S.pat || '').replace('{kode}', code);
+
+/* ---------- geometri kartu (dipakai layar & PNG) ---------- */
+function geom(plan, zi, hs) {
+  const p = PRESETS[plan.size], z = plan.zones[zi], n = z.items.length, hook = z.t === 'hook';
+  const perRow = Math.max(1, Math.floor(p.w / MINTILE));
+  const cols = Math.max(1, Math.min(n, perRow)), rows = Math.max(1, Math.ceil(n / perRow));
+  const tw = Math.min(MAXTILE, p.w / cols);
+  const th = Math.max(4, Math.min(tw * 1.15, (hs[zi] - (hook ? HOOK_CM * rows : 1.5)) / rows));
+  return { n, perRow, cols, rows, tw, th, hook };
+}
+
+/* ---------- render ---------- */
+function render() { renderPlanSel(); renderFixture(); renderLib(); renderInspector(); renderStats(); save(); }
+
+function renderPlanSel() {
+  const el = $('#planSel');
+  el.innerHTML = S.plans.map(p => `<option value="${esc(p.id)}"${p.id === S.cur ? ' selected' : ''}>${esc(p.id)} — ${esc(VARIANTS[p.variant].label)} (${p.zones.reduce((a, z) => a + z.items.length, 0)} item)</option>`).join('') || '<option value="">(belum ada)</option>';
+  const p = cur();
+  $('#planDel').disabled = !p;
+  $('#fxVar').innerHTML = Object.entries(VARIANTS).map(([k, v]) => `<option value="${k}"${p && p.variant === k ? ' selected' : ''}>${esc(v.label)}</option>`).join('');
+  $('#fxSize').innerHTML = p ? VARIANTS[p.variant].sizes.map(k => `<option value="${k}"${p.size === k ? ' selected' : ''}>${esc(PRESETS[k].label)}</option>`).join('') : '';
+  $('#fxMat').innerHTML = Object.entries(MATNAMES).map(([k, n]) => `<option value="${k}"${p && p.mat === k ? ' selected' : ''}>${n}</option>`).join('');
+  $('#shLock').innerHTML = p ? `🔒 <b>${p.zones.length} zona</b> terkunci sesuai jenis fixture<br>Susunan atas→bawah: ${p.zones.map(z => ZNAME[z.t]).join(' · ')}` : '';
+  $('#zoom').value = S.scale; $('#imgPat').value = S.pat || '';
+}
 
 function renderFixture() {
-  const fx = $('#fixture'), sc = S.scale, f = S.fixture, W = f.width * sc, kind = kindOf(f);
-  fx.className = `k-${kind} m-${matOf(f)}`; fx.style.setProperty('--cm', sc + 'px'); fx.innerHTML = '';
-  const t = document.createElement('div'); t.className = 'fx-title';
-  t.textContent = `${f.name} — ${f.width}×${f.depth}×${f.height} cm`; fx.appendChild(t);
+  const fx = $('#fixture'), plan = cur();
+  if (!plan) { fx.className = ''; fx.innerHTML = '<div class="empty">Belum ada planogram.<br>Klik <b>Impor Excel / CSV</b> untuk memuat data, atau tambah planogram baru di panel kiri.</div>'; return; }
+  const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), sc = S.scale, W = p.w * sc;
+  const hs = zoneH(p.h, zonesOf(v), kind === 'pallet');
+  fx.className = `k-${kind} m-${plan.mat}`; fx.style.setProperty('--cm', sc + 'px'); fx.innerHTML = '';
+  const t = document.createElement('div'); t.className = 'fx-title'; t.textContent = `${plan.id} — ${v.label} — ${p.w}×${p.d}×${p.h} cm`; fx.appendChild(t);
   const head = document.createElement('div'); head.className = 'fx-head'; head.style.width = W + 24 + 'px';
-  head.textContent = kind === 'endcap' || kind === 'wall' ? f.name : ''; fx.appendChild(head);
-  f.shelves.forEach((sh, si) => {
+  head.textContent = kind === 'endcap' || kind === 'wall' ? v.label : ''; fx.appendChild(head);
+  plan.zones.forEach((z, zi) => {
+    const g = geom(plan, zi, hs), hookPx = Math.max(26, Math.round(HOOK_CM * sc));
     const row = document.createElement('div'); row.className = 'shelf';
-    const u = used(sh), pct = Math.round(u / f.width * 100);
     const lab = document.createElement('div'); lab.className = 'shelf-label';
-    lab.innerHTML = `${sh.t === 'hook' ? 'Gantung' : 'Rak'} ${si + 1}<br><input type="number" min="5" max="120" value="${sh.h}" data-h="${si}"> cm<span class="u${u > f.width ? ' bad' : ''}">${pct}% terisi</span>`;
+    lab.innerHTML = `${z.t === 'hook' ? 'Gantung' : 'Rak'} ${zi + 1}<span class="u">${g.n} item</span>`;
     const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
-    const body = document.createElement('div'); body.className = 'shelf-body' + (sh.t === 'hook' ? ' hook' : '');
-    body.dataset.shelf = si; body.style.width = W + 'px'; body.style.height = sh.h * sc + 'px';
-    if (u > f.width) body.classList.add('full');
-    const rail = document.createElement('div'); rail.className = 'rail'; rail.style.width = W + 'px';
-    sh.items.forEach((it, ii) => {
-      const k = sku(it.sku), iw = k.w * it.f * sc, d = document.createElement('div');
-      d.className = `item ${shapeOf(k)}${sh.t === 'hook' ? ' hang' : ''}` + (sel && sel.shelf === si && sel.idx === ii ? ' sel' : '') + (k.h * it.s > sh.h ? ' tall' : '');
-      d.draggable = true; d.dataset.shelf = si; d.dataset.idx = ii;
-      d.style.width = iw + 'px'; d.style.height = Math.min(k.h * it.s * sc, sh.h * sc - (sh.t === 'hook' ? 28 : 0)) + 'px'; d.style.background = color(k);
-      d.title = `${k.name} (${k.brand}) • ${k.w}×${k.h} cm • ${it.f} facing × ${it.s} susun`;
-      d.innerHTML = (sh.t === 'hook' ? '<b class="peg"></b>' : '') + `<span class="t">${esc(k.name)}</span>` + (it.f > 1 || it.s > 1 ? `<span class="fc">${it.f}×${it.s}</span>` : '');
-      body.appendChild(d);
-      if (sh.t !== 'hook') { const seg = document.createElement('i'); seg.style.width = iw + 'px'; seg.style.background = brandCol(k); rail.appendChild(seg); }
+    const body = document.createElement('div'); body.className = 'shelf-body' + (z.t === 'hook' ? ' hook' : '');
+    body.dataset.zone = zi; body.style.width = W + 'px'; body.style.height = hs[zi] * sc + 'px';
+    z.items.forEach((code, ii) => {
+      const s = S.skus[code] || { code, name: code, img: '' };
+      const d = document.createElement('div');
+      d.className = 'item' + (sel && sel.zone === zi && sel.idx === ii ? ' sel' : '');
+      d.draggable = true; d.dataset.zone = zi; d.dataset.idx = ii;
+      d.style.width = Math.floor(g.tw * sc) - 2 + 'px'; d.style.height = Math.floor(g.th * sc) + 'px';
+      if (z.t === 'hook') { d.style.marginTop = hookPx + 'px'; d.style.setProperty('--hk', hookPx - 8 + 'px'); }
+      d.title = `${code} — ${s.name}`;
+      const card = document.createElement('div'); card.className = 'card';
+      const ph = () => { const e = document.createElement('div'); e.className = 'ph'; e.style.background = phColor(code); e.textContent = s.name; return e; };
+      if (s.img) { const im = document.createElement('img'); im.loading = 'lazy'; im.alt = ''; im.src = s.img; im.draggable = false; im.onerror = () => im.replaceWith(ph()); card.appendChild(im); }
+      else card.appendChild(ph());
+      const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = s.name; card.appendChild(cap);
+      if (z.t === 'hook') { const hk = document.createElement('i'); hk.className = 'hkx'; d.appendChild(hk); }
+      d.appendChild(card); body.appendChild(d);
     });
-    if (sh.t === 'hook') { let hx = 0;                                   // satu pengait (hook) per facing
-      sh.items.forEach(it => { const k = sku(it.sku), iw = k.w * it.f * sc;
-        for (let q = 0; q < it.f; q++) { const hk = document.createElement('div'); hk.className = 'hk'; hk.style.left = hx + iw / it.f * (q + .5) + 'px'; body.appendChild(hk); }
-        hx += iw; }); }
-    const board = document.createElement('div'); board.className = 'board' + (sh.t === 'hook' ? ' hookline' : '');
-    const plank = document.createElement('div'); plank.className = 'plank'; sh.t === 'hook' ? board.append(plank) : board.append(rail, plank);
+    const board = document.createElement('div'); board.className = 'board' + (z.t === 'hook' ? ' hookline' : '');
+    const rail = document.createElement('div'); rail.className = 'rail'; const plank = document.createElement('div'); plank.className = 'plank'; board.append(rail, plank);
     wrap.append(body, board);
     const upL = document.createElement('div'); upL.className = 'up'; const upR = upL.cloneNode();
     row.append(lab, upL, wrap, upR); fx.appendChild(row);
@@ -354,348 +320,358 @@ function renderFixture() {
 }
 
 function renderLib() {
-  const q = $('#libSearch').value.trim().toLowerCase();
-  const placed = new Set(S.fixture.shelves.flatMap(s => s.items.map(i => i.sku)));
-  const list = S.skus.filter(k => !q || (k.name + ' ' + k.brand).toLowerCase().includes(q));
-  $('#libCount').textContent = `(${S.skus.length}, ${placed.size} terpasang)`;
+  const q = $('#libSearch').value.trim().toLowerCase(), plan = cur();
+  const inPlan = new Set(plan ? plan.zones.flatMap(z => z.items) : []);
+  const all = Object.values(S.skus), list = all.filter(k => !q || (k.code + ' ' + k.name).toLowerCase().includes(q));
+  $('#libCount').textContent = `(${all.length})`;
   $('#lib').innerHTML = list.map(k => `
-    <div class="sku ${placed.has(k.id) ? 'placed' : ''}" draggable="true" data-sku="${k.id}" title="Klik dua kali untuk menambah ke rak">
-      <div class="sw" style="background:${color(k)}"></div>
-      <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.brand)} • ${k.w}×${k.h} cm • P${k.pri}${k.mode === 'hook' ? ' • Gantung' : k.mode === 'rack' ? ' • Rak' : ''}</div></div>
-      <button data-edit="${k.id}" title="Ubah">✎</button>
-      <button data-del="${k.id}" class="danger" title="Hapus">×</button>
-    </div>`).join('') || '<div class="muted">Tidak ada SKU.</div>';
+    <div class="sku ${inPlan.has(k.code) ? 'placed' : ''}" draggable="true" data-sku="${esc(k.code)}" title="Klik dua kali untuk menambah ke zona terpilih">
+      ${k.img ? `<img class="th" src="${esc(k.img)}" loading="lazy" onerror="this.style.visibility='hidden'">` : '<div class="th"></div>'}
+      <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.code)}</div></div>
+      <button data-del="${esc(k.code)}" class="danger" title="Hapus SKU">×</button>
+    </div>`).join('') || '<div class="muted">Belum ada SKU. Impor data atau tambah SKU di bawah.</div>';
 }
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 function renderInspector() {
-  const el = $('#inspector');
-  const it = sel && S.fixture.shelves[sel.shelf]?.items[sel.idx];
-  if (!it) { el.className = 'muted'; el.textContent = 'Klik produk di rak untuk mengatur facing / susunan.'; return; }
-  const k = sku(it.sku), sh = S.fixture.shelves[sel.shelf];
-  el.className = '';
-  el.innerHTML = `<b>${esc(k.name)}</b><div class="muted">${esc(k.brand)} • ${k.w}×${k.h} cm • ${ZNAME[sh.t]} ${sel.shelf + 1}</div>
-    <div class="row" style="margin-top:8px"><div><label>Facing (lebar)</label><input type="number" min="1" max="30" id="iF" value="${it.f}"></div>
-    <div><label>Susun (tinggi)</label><input type="number" min="1" max="10" id="iS" value="${it.s}"></div></div>
-    <div class="muted" style="margin-top:6px">Lebar terpakai ${(k.w * it.f).toFixed(1)} cm • tinggi ${(k.h * it.s).toFixed(1)} cm / rak ${sh.h} cm
-    ${k.d ? `<br>Kapasitas ≈ <b>${cap(it)}</b> unit (${Math.floor(S.fixture.depth / k.d)} baris ke dalam, dalam fixture ${S.fixture.depth} cm)` : ''}
-    ${k.h * it.s > sh.h ? '<br><b class="bad">Terlalu tinggi untuk rak ini</b>' : ''}
-    ${k.d > S.fixture.depth ? '<br><b class="bad">Lebih dalam dari fixture</b>' : ''}</div>
+  const el = $('#inspector'), plan = cur();
+  const code = plan && sel && plan.zones[sel.zone] && plan.zones[sel.zone].items[sel.idx];
+  if (!code) { el.className = 'muted'; el.textContent = 'Klik produk di rak untuk melihat detail dan memindahkannya.'; return; }
+  const s = S.skus[code] || { code, name: code, img: '' }; el.className = '';
+  el.innerHTML = `${s.img ? `<img src="${esc(s.img)}" onerror="this.style.display='none'">` : ''}
+    <div style="margin-top:6px"><b>${esc(s.name)}</b></div><div class="muted">Kode ${esc(code)} • ${ZNAME[plan.zones[sel.zone].t]} ${sel.zone + 1}, urutan ${sel.idx + 1}</div>
+    <label>Pindah ke zona</label>
+    <select id="iZone">${plan.zones.map((z, i) => `<option value="${i}"${i === sel.zone ? ' selected' : ''}>${ZNAME[z.t]} ${i + 1}</option>`).join('')}</select>
     <div class="btns" style="margin-top:8px"><button data-move="-1">← Geser</button><button data-move="1">Geser →</button><button class="danger" id="iDel">Hapus</button></div>`;
 }
 
 function renderStats() {
-  const sh = S.fixture.shelves, W = S.fixture.width;
-  const items = sh.flatMap(s => s.items);
-  const uniq = new Set(items.map(i => i.sku)).size;
-  const facings = items.reduce((a, i) => a + i.f, 0);
-  const util = sh.length ? sh.reduce((a, s) => a + Math.min(used(s), W), 0) / (W * sh.length) * 100 : 0;
-  const over = sh.filter(s => used(s) > W).length;
-  const tall = sh.reduce((a, s) => a + s.items.filter(i => sku(i.sku).h * i.s > s.h).length, 0);
-  const unplaced = S.skus.length - uniq;
-  const units = items.reduce((a, i) => a + cap(i), 0);
-  const tot = sh.reduce((a, s) => a + s.h, 0) + (kindOf(S.fixture) === 'pallet' ? 0 : BASE), tooHigh = tot > S.fixture.height;
+  const plan = cur();
+  if (!plan) { $('#stats').innerHTML = ''; $('#warnList').innerHTML = ''; return; }
+  const items = plan.zones.flatMap(z => z.items), empty = plan.zones.filter(z => !z.items.length).length;
   $('#stats').innerHTML = `
-    <div class="stat"><b>${uniq}/${S.skus.length}</b>SKU terpasang</div>
-    <div class="stat"><b>${facings}</b>Total facing</div>
-    <div class="stat"><b>${util.toFixed(0)}%</b>Utilisasi lebar</div>
-    <div class="stat"><b>${units}</b>Kapasitas unit</div>
-    <div class="stat"><b class="${over + tall + tooHigh ? 'bad' : 'ok'}">${over + tall + tooHigh}</b>Peringatan</div>
-    <div class="stat"><b>${sh.filter(x => x.t !== 'hook').length} + ${sh.filter(x => x.t === 'hook').length}</b>Rak + gantungan</div>`;
-  $('#heightInfo').innerHTML = `Total tinggi zona ${tot - (kindOf(S.fixture) === 'pallet' ? 0 : BASE)} cm + dasar ${kindOf(S.fixture) === 'pallet' ? 0 : BASE} cm = ${tot} / ${S.fixture.height} cm`
-    + (tooHigh ? ' <b class="bad">melebihi tinggi fixture</b>' : '');
-  const w = [];
-  if (tooHigh) w.push('<span class="bad">Total tinggi rak melebihi tinggi fixture.</span>');
-  if (over) w.push(`<span class="bad">${over} rak melebihi lebar fixture.</span>`);
-  if (tall) w.push(`<span class="bad">${tall} item lebih tinggi dari rak.</span>`);
-  if (unplaced) w.push(`${unplaced} SKU belum ditempatkan.`);
-  $('#warnList').innerHTML = w.join('<br>');
+    <div class="stat"><b>${items.length}</b>Total item</div>
+    <div class="stat"><b>${new Set(items).size}</b>SKU unik</div>
+    <div class="stat"><b>${plan.zones.length - empty}/${plan.zones.length}</b>Zona terisi</div>
+    <div class="stat"><b>${S.plans.length}</b>Planogram</div>`;
+  const noImg = new Set(items.filter(c => !imgFor(c))).size;
+  $('#warnList').innerHTML = [empty ? `${empty} zona masih kosong.` : '', noImg ? `<span class="warn">${noImg} SKU belum punya link gambar.</span>` : ''].filter(Boolean).join('<br>');
 }
 
 /* ---------- drag & drop ---------- */
 const stage = $('#fixture');
 $('#lib').addEventListener('dragstart', e => {
   const el = e.target.closest('.sku'); if (!el) return;
-  drag = { type: 'sku', id: el.dataset.sku }; e.dataTransfer.setData('text/plain', 'sku'); e.dataTransfer.effectAllowed = 'copy';
+  drag = { type: 'sku', code: el.dataset.sku }; e.dataTransfer.setData('text/plain', 'sku'); e.dataTransfer.effectAllowed = 'copy';
 });
 stage.addEventListener('dragstart', e => {
   const el = e.target.closest('.item'); if (!el) return;
-  drag = { type: 'item', shelf: +el.dataset.shelf, idx: +el.dataset.idx };
+  drag = { type: 'item', zone: +el.dataset.zone, idx: +el.dataset.idx };
   e.dataTransfer.setData('text/plain', 'item'); e.dataTransfer.effectAllowed = 'move';
 });
-function dropIndex(body, x) {
+function dropIndex(body, x, y) {
   const els = [...body.querySelectorAll('.item')];
-  for (let i = 0; i < els.length; i++) { const r = els[i].getBoundingClientRect(); if (x < r.left + r.width / 2) return i; }
+  for (let i = 0; i < els.length; i++) {
+    const r = els[i].getBoundingClientRect();
+    if (y < r.top) return i;
+    if (y <= r.bottom && x < r.left + r.width / 2) return i;
+  }
   return els.length;
 }
 function clearInd() { document.querySelectorAll('.ind').forEach(n => n.remove()); document.querySelectorAll('.shelf-body.over').forEach(n => n.classList.remove('over')); }
 stage.addEventListener('dragover', e => {
   const body = e.target.closest('.shelf-body'); if (!body || !drag) return;
   e.preventDefault(); clearInd(); body.classList.add('over');
-  const idx = dropIndex(body, e.clientX), els = body.querySelectorAll('.item');
+  const idx = dropIndex(body, e.clientX, e.clientY), els = body.querySelectorAll('.item'), br = body.getBoundingClientRect();
   const ind = document.createElement('div'); ind.className = 'ind';
-  const br = body.getBoundingClientRect();
-  let left = 0;
-  if (els.length) left = (idx < els.length ? els[idx].getBoundingClientRect().left : els[els.length - 1].getBoundingClientRect().right) - br.left;
-  ind.style.left = Math.max(0, left - 1) + 'px'; body.appendChild(ind);
+  if (!els.length) { ind.style.left = '0px'; ind.style.top = '0px'; ind.style.height = br.height + 'px'; }
+  else {
+    const r = idx < els.length ? els[idx].getBoundingClientRect() : els[els.length - 1].getBoundingClientRect();
+    ind.style.left = Math.max(0, (idx < els.length ? r.left : r.right) - br.left - 1) + 'px'; ind.style.top = r.top - br.top + 'px'; ind.style.height = r.height + 'px';
+  }
+  body.appendChild(ind);
 });
 stage.addEventListener('dragleave', e => { if (!stage.contains(e.relatedTarget)) clearInd(); });
 document.addEventListener('dragend', () => { drag = null; clearInd(); });
 stage.addEventListener('drop', e => {
-  const body = e.target.closest('.shelf-body'); if (!body || !drag) return;
+  const body = e.target.closest('.shelf-body'), plan = cur(); if (!body || !drag || !plan) return;
   e.preventDefault();
-  const si = +body.dataset.shelf; let idx = dropIndex(body, e.clientX);
-  const items = S.fixture.shelves[si].items;
-  if (drag.type === 'sku') items.splice(idx, 0, { sku: drag.id, f: 1, s: 1 });
+  const zi = +body.dataset.zone; let idx = dropIndex(body, e.clientX, e.clientY); const items = plan.zones[zi].items;
+  if (drag.type === 'sku') items.splice(idx, 0, drag.code);
   else {
-    const it = S.fixture.shelves[drag.shelf].items.splice(drag.idx, 1)[0];
-    if (drag.shelf === si && drag.idx < idx) idx--;
-    items.splice(idx, 0, it);
+    const code = plan.zones[drag.zone].items.splice(drag.idx, 1)[0];
+    if (drag.zone === zi && drag.idx < idx) idx--;
+    items.splice(idx, 0, code);
   }
-  sel = { shelf: si, idx }; drag = null; clearInd(); render();
+  sel = { zone: zi, idx }; drag = null; clearInd(); render();
 });
 
 /* ---------- interaksi ---------- */
 stage.addEventListener('click', e => {
   const el = e.target.closest('.item');
-  sel = el ? { shelf: +el.dataset.shelf, idx: +el.dataset.idx } : null; render();
-});
-stage.addEventListener('change', e => {
-  const h = e.target.dataset.h;
-  if (h !== undefined) { S.fixture.shelves[+h].h = num(e.target.value, 25); render(); }
+  sel = el ? { zone: +el.dataset.zone, idx: +el.dataset.idx } : null; render();
 });
 document.addEventListener('keydown', e => {
   if ((e.key === 'Delete' || e.key === 'Backspace') && sel && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { removeSel(); e.preventDefault(); }
 });
-function removeSel() { if (!sel) return; S.fixture.shelves[sel.shelf].items.splice(sel.idx, 1); sel = null; render(); }
-$('#inspector').addEventListener('input', e => {
-  const it = sel && S.fixture.shelves[sel.shelf].items[sel.idx]; if (!it) return;
-  if (e.target.id === 'iF') it.f = Math.max(1, Math.round(num(e.target.value, 1)));
-  if (e.target.id === 'iS') it.s = Math.max(1, Math.round(num(e.target.value, 1)));
-  const a = document.activeElement.id; render(); if (a) { const n = $('#' + a); n.focus(); }
-});
+function removeSel() { const p = cur(); if (!p || !sel) return; p.zones[sel.zone].items.splice(sel.idx, 1); sel = null; render(); }
 $('#inspector').addEventListener('click', e => {
+  const p = cur(); if (!p || !sel) return;
   if (e.target.id === 'iDel') return removeSel();
-  const m = e.target.dataset.move; if (!m || !sel) return;
-  const arr = S.fixture.shelves[sel.shelf].items, j = sel.idx + +m;
+  const m = e.target.dataset.move; if (!m) return;
+  const arr = p.zones[sel.zone].items, j = sel.idx + +m;
   if (j < 0 || j >= arr.length) return;
   [arr[sel.idx], arr[j]] = [arr[j], arr[sel.idx]]; sel.idx = j; render();
 });
-
+$('#inspector').addEventListener('change', e => {
+  const p = cur(); if (!p || !sel || e.target.id !== 'iZone') return;
+  const to = +e.target.value, code = p.zones[sel.zone].items.splice(sel.idx, 1)[0];
+  p.zones[to].items.push(code); sel = { zone: to, idx: p.zones[to].items.length - 1 }; render();
+});
 $('#lib').addEventListener('dblclick', e => {
-  const el = e.target.closest('.sku'); if (!el) return;
-  const k = sku(el.dataset.sku);
-  const si = sel ? sel.shelf : S.fixture.shelves.findIndex(s => used(s) + k.w <= S.fixture.width && k.h <= s.h);
-  if (si < 0) return toast('Tidak ada rak yang cukup untuk SKU ini.');
-  S.fixture.shelves[si].items.push({ sku: k.id, f: 1, s: 1 }); sel = { shelf: si, idx: S.fixture.shelves[si].items.length - 1 }; render();
+  const el = e.target.closest('.sku'), p = cur(); if (!el || !p) return;
+  const zi = sel ? sel.zone : 0; p.zones[zi].items.push(el.dataset.sku); sel = { zone: zi, idx: p.zones[zi].items.length - 1 }; render();
 });
 $('#lib').addEventListener('click', e => {
-  if (e.target.dataset.del) {
-    const k = sku(e.target.dataset.del);
-    if (confirm(`Hapus SKU "${k.name}"? Item ini juga akan dihapus dari rak.`)) { S.skus = S.skus.filter(x => x !== k); sel = null; render(); }
-  } else if (e.target.dataset.edit) startEdit(e.target.dataset.edit);
+  const code = e.target.dataset.del; if (!code) return;
+  if (!confirm(`Hapus SKU ${code} (${S.skus[code] ? S.skus[code].name : ''})? Item ini juga dihapus dari semua planogram.`)) return;
+  delete S.skus[code]; S.plans.forEach(p => p.zones.forEach(z => z.items = z.items.filter(c => c !== code))); sel = null; render();
 });
 $('#libSearch').addEventListener('input', renderLib);
-
-/* form SKU */
-function startEdit(id) {
-  const k = id && sku(id); editId = id || null;
-  $('#formTitle').textContent = k ? 'Ubah SKU' : 'Tambah SKU';
-  $('#fName').value = k ? k.name : ''; $('#fBrand').value = k ? k.brand : '';
-  $('#fW').value = k ? k.w : ''; $('#fH').value = k ? k.h : ''; $('#fD').value = k && k.d ? k.d : ''; $('#fMode').value = k ? k.mode || 'any' : 'any'; $('#fPri').value = k ? k.pri : 2;
-  if (k) $('#fName').focus();
-}
-$('#fCancel').onclick = () => startEdit(null);
 $('#fSave').onclick = () => {
-  const name = $('#fName').value.trim(), w = num($('#fW').value), h = num($('#fH').value);
-  if (!name || !w || !h) return toast('Nama, lebar, dan tinggi wajib diisi.');
-  const data = { name, brand: $('#fBrand').value.trim() || '-', w, h, d: num($('#fD').value, 0), pri: +$('#fPri').value, mode: $('#fMode').value };
-  if (editId) Object.assign(sku(editId), data); else S.skus.push({ id: uid(), ...data });
-  startEdit(null); render();
+  const code = $('#fCode').value.trim(), name = $('#fName').value.trim();
+  if (!code || !name) return toast('Kode SKU dan nama wajib diisi.');
+  S.skus[code] = { code, name, img: $('#fImg').value.trim() || patUrl(code) };
+  ['#fCode', '#fName', '#fImg'].forEach(i => $(i).value = ''); render(); toast(`SKU ${code} disimpan.`);
 };
-
-/* fixture */
-const opts = (arr, sel) => arr.map(([v, l]) => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(l)}</option>`).join('');
-function syncFixtureForm() {
-  const f = S.fixture, F = FAMILIES[f.family];
-  $('#fxFam').innerHTML = opts(Object.entries(FAMILIES).map(([k, x]) => [k, x.label]), f.family);
-  $('#fxVar').innerHTML = opts(Object.entries(F.variants).map(([k, v]) => [k, v.label]), f.variant);
-  $('#fxPreset').innerHTML = opts([...F.sizes.map(k => [k, PRESETS[k].label]), ...(F.sizes.includes(f.preset) ? [] : [['', 'Custom']])], f.preset);
-  $('#fxMat').innerHTML = opts(Object.entries(MATNAMES), f.mat);
-  $('#fxName').value = f.name; $('#fxWidth').value = f.width; $('#fxDepth').value = f.depth; $('#fxHeight').value = f.height;
-  $('#zoom').value = S.scale;
-}
-function applyLayout(fam, key, preset) {          // ganti jenis/ukuran; item dipertahankan per urutan zona
-  const F = FAMILIES[fam], old = S.fixture.shelves, p = PRESETS[preset], n = zonesOf(F.variants[key]).length;
-  if (old.slice(n).some(x => x.items.length) && !confirm('Zona berkurang: item pada zona paling bawah akan dihapus. Lanjutkan?')) return false;
-  Object.assign(S.fixture, { family: fam, variant: key, preset, name: F.variants[key].label, mat: F.mat, width: p.w, depth: p.d, height: p.h });
-  S.fixture.shelves = buildShelves(fam, key, p.h, preset === 'pallet', old);
-  S.scale = scaleFor(p.h); sel = null; return true;
-}
-const sizeOf = (fam, cur) => FAMILIES[fam].sizes.includes(cur) ? cur : FAMILIES[fam].sizes[0];
-$('#fxFam').onchange = e => { const F = FAMILIES[e.target.value]; applyLayout(e.target.value, Object.keys(F.variants)[0], F.sizes[0]); syncFixtureForm(); render(); };
-$('#fxVar').onchange = e => { applyLayout(S.fixture.family, e.target.value, sizeOf(S.fixture.family, S.fixture.preset)); syncFixtureForm(); render(); };
-$('#fxPreset').onchange = e => { if (e.target.value) applyLayout(S.fixture.family, S.fixture.variant, e.target.value); syncFixtureForm(); render(); };
-$('#fxMat').onchange = e => { S.fixture.mat = e.target.value; render(); };
-$('#fxName').oninput = e => { S.fixture.name = e.target.value; renderFixture(); save(); };
-for (const [id, key] of [['fxWidth', 'width'], ['fxDepth', 'depth'], ['fxHeight', 'height']])
-  $('#' + id).onchange = e => { S.fixture[key] = num(e.target.value, S.fixture[key]); S.fixture.preset = ''; syncFixtureForm(); render(); };
-$('#shEven').onclick = () => { const f = S.fixture, hs = zoneH(f.height, f.shelves.map(x => ({ u: x.u || 1 })), kindOf(f) === 'pallet'); f.shelves.forEach((x, i) => x.h = hs[i]); render(); };
+$('#imgPat').onchange = e => { S.pat = e.target.value.trim(); save(); };
 $('#zoom').oninput = e => { S.scale = +e.target.value; renderFixture(); save(); };
-/* auto-susun */
-$('#btnAuto').onclick = () => {
-  const sh = S.fixture.shelves, W = S.fixture.width;
-  if (sh.some(x => x.items.length) && !confirm('Susunan saat ini akan diganti hasil Auto-susun. Lanjutkan?')) return;
-  sh.forEach(x => x.items = []); sel = null;
-  const racks = [...sh.keys()].filter(i => sh[i].t !== 'hook'), hooks = [...sh.keys()].filter(i => sh[i].t === 'hook');
-  const eye = Math.round((racks.length - 1) * 0.35);                    // rak setinggi mata ~ 35% dari atas
-  const rackOrder = racks.map((si, pos) => [si, pos]).sort((a, b) => Math.abs(a[1] - eye) - Math.abs(b[1] - eye) || a[1] - b[1]).map(x => x[0]);
-  const list = [...S.skus].sort((a, b) => b.pri - a.pri || a.brand.localeCompare(b.brand) || a.name.localeCompare(b.name));
-  const u = sh.map(() => 0), skipped = [];
-  const wid = k => k.w * (k.pri >= 3 ? 2 : 1);
-  const needH = list.filter(k => k.mode === 'hook').reduce((a, k) => a + wid(k), 0), needR = list.reduce((a, k) => a + wid(k), 0) - needH;
-  const softR = racks.length ? Math.min(W, needR / racks.length * 1.2) : W;   // batas isi per zona agar tersebar merata
-  const softH = hooks.length ? Math.min(W, needH / hooks.length * 1.2) : W;
-  for (const k of list) {
-    const cand = k.mode === 'hook' ? [...hooks, ...rackOrder] : k.mode === 'rack' ? (rackOrder.length ? rackOrder : hooks) : [...rackOrder, ...hooks];
-    const first = k.mode === 'hook' && hooks.length ? hooks : rackOrder.length ? rackOrder : hooks;   // pass 1 hanya zona utama; pass 2 boleh zona lain
-    let ok = false;
-    for (const pass of [0, 1, 2]) {                                      // 0: batas lunak zona utama, 1: lebar penuh zona utama, 2: semua zona
-      const cap = pass === 0 ? (k.mode === 'hook' ? softH : softR) : W;
-      for (const si of pass < 2 ? first : cand) {
-        if (k.h > sh[si].h) continue;
-        for (let f = k.pri >= 3 ? 2 : 1; f >= 1 && !ok; f--)
-          if (u[si] + k.w * f <= cap) { sh[si].items.push({ sku: k.id, f, s: 1 }); u[si] += k.w * f; ok = true; }
-        if (ok) break;
-      }
-      if (ok) break;
-    }
-    if (!ok) skipped.push(k.name);
-  }
-  sh.forEach(x => x.items.sort((a, b) => sku(a.sku).brand.localeCompare(sku(b.sku).brand) || sku(a.sku).name.localeCompare(sku(b.sku).name)));
-  render();
-  toast(skipped.length ? `Tidak muat: ${skipped.join(', ')}` : 'Auto-susun selesai: prioritas tinggi di rak setinggi mata, barang gantung di gantungan, dikelompokkan per brand.');
+
+/* ---------- planogram & fixture ---------- */
+$('#newVar').innerHTML = Object.entries(VARIANTS).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join('');
+$('#planSel').onchange = e => { S.cur = e.target.value; sel = null; render(); };
+$('#planAdd').onclick = () => {
+  const id = $('#newId').value.trim();
+  if (!id) return toast('Isi ID fixture dulu.');
+  if (S.plans.some(p => p.id === id)) return toast(`ID ${id} sudah ada.`);
+  S.plans.push(newPlan(id, $('#newVar').value)); S.cur = id; $('#newId').value = ''; sel = null; S.scale = scaleFor(PRESETS[cur().size].h); render();
 };
-$('#btnClear').onclick = () => {
-  if (!confirm('Kosongkan semua rak?')) return;
-  S.fixture.shelves.forEach(s => s.items = []); sel = null; render();
+$('#planDel').onclick = () => {
+  const p = cur(); if (!p || !confirm(`Hapus planogram ${p.id}?`)) return;
+  S.plans = S.plans.filter(x => x !== p); S.cur = S.plans[0] ? S.plans[0].id : null; sel = null; render();
+};
+$('#fxVar').onchange = e => {
+  const p = cur(); if (!p) return;
+  const key = e.target.value, v = VARIANTS[key], zs = zonesOf(v);
+  if (p.zones.slice(zs.length).some(z => z.items.length) && !confirm('Zona berkurang: item pada zona paling bawah akan dihapus. Lanjutkan?')) { render(); return; }
+  p.zones = zs.map((z, i) => ({ t: z.t, items: p.zones[i] ? p.zones[i].items : [] }));
+  p.variant = key; if (!v.sizes.includes(p.size)) p.size = v.sizes[0]; p.mat = v.mat; S.scale = scaleFor(PRESETS[p.size].h); sel = null; render();
+};
+$('#fxSize').onchange = e => { const p = cur(); if (!p) return; p.size = e.target.value; S.scale = scaleFor(PRESETS[p.size].h); render(); };
+$('#fxMat').onchange = e => { const p = cur(); if (!p) return; p.mat = e.target.value; render(); };
+
+/* ---------- impor Excel / CSV ---------- */
+function parseCSV(text) {
+  text = text.replace(/^﻿/, '');
+  const first = text.split(/\r?\n/)[0] || '';
+  const cnt = c => (first.match(new RegExp(c === '\t' ? '\t' : '\\' + c, 'g')) || []).length;
+  const sep = [',', ';', '\t'].sort((a, b) => cnt(b) - cnt(a))[0];
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === sep) { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+async function readXlsx(buf) {                       // pembaca .xlsx mandiri (tanpa pustaka luar)
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let e = u8.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('bukan berkas xlsx');
+  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const files = {};
+  for (let i = 0; i < n && dv.getUint32(p, true) === 0x02014b50; i++) {
+    const nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
+    files[new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nl))] = { method: dv.getUint16(p + 10, true), csize: dv.getUint32(p + 20, true), off: dv.getUint32(p + 42, true) };
+    p += 46 + nl + el + cl;
+  }
+  const get = async name => {
+    const f = files[name]; if (!f) return null;
+    const nl = dv.getUint16(f.off + 26, true), el = dv.getUint16(f.off + 28, true), st = f.off + 30 + nl + el, data = u8.subarray(st, st + f.csize);
+    if (f.method === 0) return new TextDecoder().decode(data);
+    return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+  };
+  const xml = async name => { const t = await get(name); return t ? new DOMParser().parseFromString(t, 'application/xml') : null; };
+  const wbx = await xml('xl/workbook.xml'), rels = await xml('xl/_rels/workbook.xml.rels');
+  const sheets = [...wbx.getElementsByTagName('sheet')].map(s => ({ name: s.getAttribute('name'), rid: s.getAttribute('r:id') }));
+  const sst = []; const ssx = await xml('xl/sharedStrings.xml');
+  if (ssx) for (const si of ssx.getElementsByTagName('si')) sst.push([...si.getElementsByTagName('t')].map(t => t.textContent).join(''));
+  const sheetRows = async sh => {
+    let target = [...rels.getElementsByTagName('Relationship')].find(r => r.getAttribute('Id') === sh.rid).getAttribute('Target');
+    target = target.startsWith('/') ? target.slice(1) : 'xl/' + target;
+    const sx = await xml(target), out = [];
+    for (const c of sx.getElementsByTagName('c')) {
+      const m = /^([A-Z]+)(\d+)$/.exec(c.getAttribute('r')); if (!m) continue;
+      let col = 0; for (const ch of m[1]) col = col * 26 + ch.charCodeAt(0) - 64; col--;
+      const r = +m[2] - 1, t = c.getAttribute('t'), v = c.getElementsByTagName('v')[0];
+      let val = '';
+      if (t === 'inlineStr') val = [...c.getElementsByTagName('t')].map(x => x.textContent).join('');
+      else if (v) val = t === 's' ? (sst[+v.textContent] || '') : v.textContent;
+      (out[r] = out[r] || [])[col] = val;
+    }
+    return Array.from(out, r => r || []);
+  };
+  const dsh = sheets.find(s => s.name.toUpperCase() === 'DATA') || sheets[0], fsh = sheets.find(s => s.name.toUpperCase() === 'DAFTAR_FIXTURE');
+  return { rows: await sheetRows(dsh), daftar: fsh ? await sheetRows(fsh) : null };
+}
+
+function importRows(rows, daftar) {
+  const rep = [];                                   // {t:'err'|'warn'|'ok', m}
+  const hdr = (rows[0] || []).map(h => norm(h).replace(/\(.*?\)/g, '').trim());
+  const col = name => hdr.indexOf(name);
+  const need = ['id_fixture', 'zona_no', 'kode_sku'].filter(n => col(n) < 0);
+  if (need.length) { toast('Kolom wajib tidak ditemukan: ' + need.join(', ')); return; }
+  const ci = { id: col('id_fixture'), jenis: col('jenis_fixture'), zona: col('zona_no'), jz: col('jenis_zona'), kode: col('kode_sku'), nama: col('nama'), img: col('link_image') };
+  const get = (r, i) => i < 0 || r[i] == null ? '' : String(r[i]).trim();
+  const dmap = {};                                  // fallback id → jenis dari sheet DAFTAR_FIXTURE
+  (daftar || []).slice(1).forEach(r => { if (r[0]) dmap[String(r[0]).trim()] = String(r[1] || '').trim(); });
+  const groups = new Map();
+  rows.slice(1).forEach((r, k) => {
+    const id = get(r, ci.id); if (!id) return;
+    if (!groups.has(id)) groups.set(id, { rows: [], line0: k + 2 });
+    groups.get(id).rows.push({ r, line: k + 2 });
+  });
+  let nPlans = 0, nItems = 0; const added = [], warned = new Set();
+  for (const [id, g] of groups) {
+    const jenis = get(g.rows[0].r, ci.jenis) || dmap[id] || '', key = VAR_BY_LABEL[norm(jenis)];
+    if (!key) { rep.push({ t: 'err', m: `${id}: jenis_fixture "${jenis || '(kosong)'}" tidak dikenal. Planogram dilewati.` }); continue; }
+    const plan = newPlan(id, key); let cnt = 0;
+    for (const { r, line } of g.rows) {
+      const zn = parseInt(get(r, ci.zona), 10);
+      if (!zn || zn < 1 || zn > plan.zones.length) { rep.push({ t: 'err', m: `${id} baris ${line}: zona_no "${get(r, ci.zona)}" di luar layout (1-${plan.zones.length}).` }); continue; }
+      const z = plan.zones[zn - 1], jz = norm(get(r, ci.jz));
+      if (jz && jz !== norm(ZNAME[z.t]) && !warned.has(id + '|' + zn)) { warned.add(id + '|' + zn); rep.push({ t: 'warn', m: `${id} zona ${zn}: di Excel "${get(r, ci.jz)}", di layout ${ZNAME[z.t]}. Dipakai: ${ZNAME[z.t]}.` }); }
+      const code = get(r, ci.kode); if (!code) continue;     // baris tanpa SKU = zona kosong
+      const nama = get(r, ci.nama) || code, img = get(r, ci.img) || patUrl(code);
+      S.skus[code] = { code, name: nama, img }; z.items.push(code); cnt++;
+    }
+    const old = S.plans.findIndex(p => p.id === id);
+    if (old >= 0) S.plans[old] = plan; else S.plans.push(plan);
+    added.push(id); nPlans++; nItems += cnt;
+    rep.push({ t: 'ok', m: `${id} — ${VARIANTS[key].label}: ${cnt} item di ${plan.zones.filter(z => z.items.length).length}/${plan.zones.length} zona.` });
+  }
+  if (added.length) { S.cur = added[0]; S.scale = scaleFor(PRESETS[cur().size].h); sel = null; }
+  $('#reportBox').hidden = false;
+  $('#report').innerHTML = rep.map(x => `<div class="${x.t === 'err' ? 'bad' : x.t === 'warn' ? 'warn' : 'ok'}">${x.t === 'err' ? '✖' : x.t === 'warn' ? '⚠' : '✔'} ${esc(x.m)}</div>`).join('');
+  render(); toast(`${nPlans} planogram, ${nItems} item diimpor.` + (rep.some(x => x.t === 'err') ? ' Ada baris yang dilewati, lihat Laporan impor.' : ''));
+}
+$('#btnImport').onclick = () => $('#fileData').click();
+$('#fileData').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    if (/\.xlsx$/i.test(f.name)) { const x = await readXlsx(await f.arrayBuffer()); importRows(x.rows, x.daftar); }
+    else importRows(parseCSV(await f.text()));
+  } catch (err) { toast('Gagal membaca berkas: ' + err.message + '. Coba simpan sheet DATA sebagai CSV.'); }
 };
 
-/* ---------- ekspor / impor ---------- */
+/* ---------- ekspor ---------- */
 function download(name, content, type) {
   const a = document.createElement('a');
-  a.href = typeof content === 'string' ? URL.createObjectURL(new Blob([content], { type })) : content;
+  a.href = type ? URL.createObjectURL(new Blob([content], { type })) : content;
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
-const fname = ext => `planogram_${S.fixture.name.replace(/[^\w-]+/g, '_')}.${ext}`;
-const q = v => `"${String(v).replace(/"/g, '""')}"`;
-
+const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+const CSV_HEAD = ['id_fixture', 'jenis_fixture', 'zona_no', 'jenis_zona', 'kode_sku', 'nama', 'link_image'];
 $('#btnCsv').onclick = () => {
-  const rows = [['fixture', 'ukuran_LxDxT_cm', 'jenis_zona', 'zona_no', 'tinggi_rak_cm', 'urutan', 'sku', 'brand', 'facing', 'susun', 'kapasitas_unit', 'posisi_x_cm', 'lebar_cm']];
-  const dim = `${S.fixture.width}x${S.fixture.depth}x${S.fixture.height}`;
-  S.fixture.shelves.forEach((sh, si) => { let x = 0;
-    sh.items.forEach((it, ii) => { const k = sku(it.sku), w = k.w * it.f;
-      rows.push([S.fixture.name, dim, ZNAME[sh.t], si + 1, sh.h, ii + 1, k.name, k.brand, it.f, it.s, cap(it) || '', +x.toFixed(1), +w.toFixed(1)]); x += w; }); });
-  download(fname('csv'), '﻿' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
+  if (!S.plans.length) return toast('Belum ada planogram.');
+  const rows = [CSV_HEAD];
+  for (const p of S.plans) p.zones.forEach((z, i) => {
+    if (!z.items.length) rows.push([p.id, VARIANTS[p.variant].label, i + 1, ZNAME[z.t], '', '', '']);
+    z.items.forEach(c => { const s = S.skus[c] || {}; rows.push([p.id, VARIANTS[p.variant].label, i + 1, ZNAME[z.t], c, s.name || '', s.img || '']); });
+  });
+  download('planogram_data.csv', '﻿' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
 };
-$('#btnSave').onclick = () => download(fname('json'), JSON.stringify(S, null, 2), 'application/json');
+$('#btnTpl').onclick = () => download('template_planogram.csv',
+  '﻿' + CSV_HEAD.join(',') + '\nGND-01,Gondola 4 Rack,1,Rak,10445959,CASSEROLE RECT GOLD MARBLE W/LID 33CM,\nGND-01,Gondola 4 Rack,1,Rak,10445960,CASSEROLE OVAL GOLD MARBLE W/LID 33CM,\nGND-01,Gondola 4 Rack,2,Rak,,,\n', 'text/csv');
+$('#btnSave').onclick = () => download('planogram.json', JSON.stringify(S, null, 2), 'application/json');
 $('#btnLoad').onclick = () => $('#fileJson').click();
 $('#fileJson').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try {
-    const j = JSON.parse(await f.text());
-    if (!j.fixture?.shelves || !Array.isArray(j.skus)) throw 0;
-    S = patch(j); sel = null; syncFixtureForm(); render(); toast('Berkas dimuat.');
-  } catch (err) { toast('Berkas .json tidak valid.'); }
+  try { const j = JSON.parse(await f.text()); if (!Array.isArray(j.plans)) throw 0; S = Object.assign(fresh(), j); sel = null; render(); toast('Berkas dimuat.'); }
+  catch (err) { toast('Berkas .json tidak valid.'); }
 };
 $('#btnPrint').onclick = () => window.print();
 
-$('#btnTpl').onclick = () => download('template_sku.csv',
-  '﻿nama,brand,lebar_cm,tinggi_cm,prioritas,kedalaman_cm,tampil\nCanister 1L,Keepy,12,16,3,12,rak\nSet Spatula 5pcs,MasakPro,12,26,1,6,gantung\n', 'text/csv');
-$('#btnImport').onclick = () => $('#fileCsv').click();
-$('#fileCsv').onchange = async e => {
-  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  const lines = (await f.text()).replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
-  const sep = (lines[0].match(/;/g) || []).length > (lines[0].match(/,/g) || []).length ? ';' : ',';
-  const head = /[a-z]/i.test(lines[0].split(sep)[2] || '') ? 1 : 0;
-  let n = 0, bad = 0;
-  for (const l of lines.slice(head)) {
-    const c = l.split(sep).map(s => s.trim().replace(/^"|"$/g, ''));
-    const w = num(c[2].replace(',', '.')), h = num((c[3] || '').replace(',', '.'));
-    if (!c[0] || !w || !h) { bad++; continue; }
-    S.skus.push({ id: uid(), name: c[0], brand: c[1] || '-', w, h, pri: Math.min(3, Math.max(1, parseInt(c[4]) || 2)), d: num((c[5] || '').replace(',', '.'), 0), mode: /gantung|hook/i.test(c[6] || '') ? 'hook' : /rak|rack/i.test(c[6] || '') ? 'rack' : 'any' }); n++;
-  }
-  render(); toast(`${n} SKU diimpor` + (bad ? `, ${bad} baris dilewati (data tidak lengkap).` : '.'));
-};
-
-$('#btnPng').onclick = () => {
-  const f = S.fixture, kind = kindOf(f), M = MATS[matOf(f)];
-  const sc = 10, W = f.width * sc, lab = 100, pad = 30, up = 24, plank = 28, titleH = 70;
-  const head = { endcap: 76, wall: 50, gondola: 24 }[kind] || 0;
-  const base = (kind === 'pallet' ? 12 : BASE) * sc, zb = s => kind === 'pallet' || s.t === 'hook' ? 0 : plank;
-  const H = f.shelves.reduce((a, s) => a + s.h * sc + zb(s), 0);
+$('#btnPng').onclick = async () => {
+  const plan = cur(); if (!plan) return toast('Belum ada planogram.');
+  const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), M = MATS[plan.mat];
+  const sc = 10, W = p.w * sc, lab = 100, pad = 30, up = 24, plankH = 28, titleH = 70, hookPx = HOOK_CM * sc;
+  const hs = zoneH(p.h, zonesOf(v), kind === 'pallet');
+  const head = { endcap: 76, wall: 50, gondola: 24 }[kind] || 0, base = (kind === 'pallet' ? 12 : BASE) * sc;
+  const zb = z => kind === 'pallet' || z.t === 'hook' ? 0 : plankH;
+  const H = plan.zones.reduce((a, z, i) => a + hs[i] * sc + zb(z), 0);
+  const imgs = {};
+  await Promise.all([...new Set(plan.zones.flatMap(z => z.items))].map(code => new Promise(res => {
+    const u = imgFor(code); if (!u) return res();
+    const im = new Image(); im.crossOrigin = 'anonymous'; const to = setTimeout(res, 8000);
+    im.onload = () => { imgs[code] = im; clearTimeout(to); res(); }; im.onerror = () => { clearTimeout(to); res(); }; im.src = u;
+  })));
   const c = document.createElement('canvas'); c.width = pad + lab + up * 2 + W + pad; c.height = titleH + head + H + base + 50;
   const g = c.getContext('2d'), x0 = pad + lab + up;
-  const lg = (xa, ya, xb, yb, a, b) => { const q = g.createLinearGradient(xa, ya, xb, yb); q.addColorStop(0, a); q.addColorStop(1, b); return q; };
+  const lg = (xa, ya, xb, yb, a, b) => { const gr = g.createLinearGradient(xa, ya, xb, yb); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; };
   const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
+  const lines = (txt, maxW, maxL) => { const out = []; let line = ''; for (const wd of String(txt).split(' ')) { const t = line ? line + ' ' + wd : wd; if (g.measureText(t).width > maxW && line) { out.push(line); line = wd; } else line = t; } out.push(line); return out.slice(0, maxL); };
   g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
-  g.fillStyle = '#1f2430'; g.font = 'bold 28px system-ui,sans-serif'; g.fillText(`${f.name} — ${f.width}×${f.depth}×${f.height} cm`, pad, 44);
+  g.fillStyle = '#1f2430'; g.font = 'bold 28px system-ui,sans-serif'; g.fillText(`${plan.id} — ${v.label} — ${p.w}×${p.d}×${p.h} cm`, pad, 44);
   let y = titleH;
   if (head) {
     g.fillStyle = kind === 'endcap' ? lg(x0 - up, y, x0 + W + up, y, '#1d4fd0', '#5b93ff') : lg(0, y, 0, y + head, M.u1, M.u2);
     rr(x0 - up, y, W + up * 2, head, 8); g.fill();
-    const txt = kind === 'endcap' || kind === 'wall' ? f.name : '';
     g.fillStyle = kind === 'endcap' ? '#fff' : M.ink; g.font = 'bold 22px system-ui,sans-serif'; g.textAlign = 'center';
-    g.fillText(txt, x0 + W / 2, y + head / 2 + 8); g.textAlign = 'left'; y += head;
+    g.fillText(kind === 'endcap' || kind === 'wall' ? v.label : '', x0 + W / 2, y + head / 2 + 8); g.textAlign = 'left'; y += head;
   }
-  f.shelves.forEach((sh, si) => {
-    const hh = sh.h * sc, bh = zb(sh), hook = sh.t === 'hook';
-    g.fillStyle = kind === 'pallet' || kind === 'table' ? '#eef1f5' : M.back; g.fillRect(x0, y, W, hh);
+  plan.zones.forEach((z, zi) => {
+    const hh = hs[zi] * sc, bh = zb(z), hook = z.t === 'hook', gm = geom(plan, zi, hs);
+    g.fillStyle = kind === 'pallet' ? '#eef1f5' : M.back; g.fillRect(x0, y, W, hh);
     if (kind === 'wall') { g.fillStyle = 'rgba(0,0,0,.13)'; for (let gy = 0; gy < hh; gy += 75) g.fillRect(x0, y + gy, W, 3); }
     else if (kind === 'gondola' || kind === 'endcap') { g.fillStyle = lg(0, y, 0, y + hh, 'rgba(255,255,255,.5)', 'rgba(0,0,0,.04)'); g.fillRect(x0, y, W, hh); }
     if (hook) { g.strokeStyle = 'rgba(0,0,0,.18)'; g.setLineDash([8, 6]); g.lineWidth = 1.5; g.beginPath(); g.moveTo(x0, y + hh); g.lineTo(x0 + W, y + hh); g.stroke(); g.setLineDash([]); }
-    if (kind !== 'pallet' && kind !== 'table')
+    if (kind !== 'pallet')
       for (const ux of [x0 - up, x0 + W]) { g.fillStyle = lg(ux, 0, ux + up, 0, M.u1, M.u2); g.fillRect(ux, y, up, hh + bh);
         g.fillStyle = 'rgba(0,0,0,.3)'; for (let gy = 10; gy < hh + bh; gy += 40) { g.beginPath(); g.arc(ux + up / 2, y + gy, 3, 0, 7); g.fill(); } }
-    let x = x0;
-    sh.items.forEach(it => {
-      const k = sku(it.sku), w = k.w * it.f * sc, h = Math.min(k.h * it.s, sh.h) * sc, top = hook ? y + 44 : y + hh - h, shp = shapeOf(k);
-      if (hook) { g.strokeStyle = '#566070'; g.lineWidth = 3; for (let q = 0; q < it.f; q++) { const cx = x + w / it.f * (q + .5); g.beginPath(); g.moveTo(cx, y + 20); g.lineTo(cx, top - 4); g.arc(cx - 6, top - 4, 6, 0, Math.PI); g.stroke(); } }
-      g.fillStyle = color(k); rr(x, top, w, h, shp === 'jar' ? [14, 14, 5, 5] : shp === 'pot' ? (hook ? [w * .5, w * .5, w * .46, w * .46] : [5, 5, w * .3, w * .3]) : 3); g.fill();
-      g.fillStyle = lg(x, 0, x + w, 0, 'rgba(255,255,255,.3)', 'rgba(0,0,0,.25)'); g.fill();
-      g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1.5; g.stroke();
-      if (shp === 'jar') { g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(x + w * .1, top, w * .8, Math.max(6, h * .14)); }
-      else if (shp === 'box') { g.fillStyle = 'rgba(255,255,255,.34)'; g.fillRect(x, top + h * .1, w, h * .09); }
-      if (hook && shp === 'pot') { g.fillStyle = '#5a6270'; g.fillRect(x + w / 2 - 5, top - 22, 10, 26); }
-      g.fillStyle = '#fff'; g.font = '16px system-ui,sans-serif';
-      let line = '', ly = top + h * .3 + 6;
-      for (const wd of k.name.split(' ')) { const tx = line ? line + ' ' + wd : wd;
-        if (g.measureText(tx).width > w - 8 && line) { g.fillText(line, x + 4, ly); ly += 19; line = wd; } else line = tx; }
-      g.fillText(line, x + 4, ly);
-      if (it.f > 1 || it.s > 1) { g.font = 'bold 15px system-ui,sans-serif'; g.fillText(`${it.f}×${it.s}`, x + 4, y + hh - 8); }
-      x += w;
+    const tw = gm.tw * sc - 4, th = gm.th * sc, blockH = gm.rows * th, top0 = hook ? y + hookPx : y + hh - blockH;
+    z.items.forEach((code, ii) => {
+      const r = Math.floor(ii / gm.perRow), cIdx = ii % gm.perRow, x = x0 + cIdx * gm.tw * sc + 2, ty = top0 + r * th + (hook && r ? hookPx * r : 0);
+      const s = S.skus[code] || { name: code };
+      if (hook) { g.strokeStyle = '#566070'; g.lineWidth = 3; g.beginPath(); g.moveTo(x + tw / 2, r ? ty - hookPx + 8 : y + 20); g.lineTo(x + tw / 2, ty - 4); g.arc(x + tw / 2 - 6, ty - 4, 6, 0, Math.PI); g.stroke(); }
+      g.save(); g.shadowColor = 'rgba(0,0,0,.25)'; g.shadowBlur = 6; g.shadowOffsetY = 3; g.fillStyle = '#fff'; rr(x, ty, tw, th, 6); g.fill(); g.restore();
+      g.strokeStyle = 'rgba(0,0,0,.3)'; g.lineWidth = 1.5; rr(x, ty, tw, th, 6); g.stroke();
+      const capH = 30, ah = th - capH - 6, aw = tw - 6, im = imgs[code];
+      if (im) { const k = Math.min(aw / im.width, ah / im.height); g.drawImage(im, x + 3 + (aw - im.width * k) / 2, ty + 3 + (ah - im.height * k) / 2, im.width * k, im.height * k); }
+      else { g.fillStyle = phColor(code); g.fillRect(x + 3, ty + 3, aw, ah); }
+      g.fillStyle = '#f3f4f7'; g.fillRect(x + 1, ty + th - capH, tw - 2, capH - 1);
+      g.fillStyle = '#222'; g.font = '13px system-ui,sans-serif'; lines(s.name, tw - 8, 2).forEach((l, k) => g.fillText(l, x + 4, ty + th - capH + 13 + k * 13));
     });
     if (hook) { g.fillStyle = '#4f5763'; g.fillRect(x0 + 18, y, 14, 40); g.fillRect(x0 + W - 32, y, 14, 40);
       g.fillStyle = lg(0, y, 0, y + 20, '#f6f8fb', '#6c7584'); rr(x0 - 6, y, W + 12, 20, 10); g.fill(); }
-    else if (bh) {
-      g.fillStyle = '#fff'; g.fillRect(x0, y + hh, W, 14);
-      let rx = x0; sh.items.forEach(it => { const k = sku(it.sku), w = k.w * it.f * sc; g.fillStyle = brandCol(k); g.fillRect(rx, y + hh, w, 14); rx += w; });
-      g.fillStyle = lg(0, y + hh + 14, 0, y + hh + bh, M.b1, M.b2); g.fillRect(x0 - up, y + hh + 14, W + up * 2, bh - 14);
-    }
+    else if (bh) { g.fillStyle = '#fff'; g.fillRect(x0, y + hh, W, 14); g.fillStyle = lg(0, y + hh + 14, 0, y + hh + bh, M.b1, M.b2); g.fillRect(x0 - up, y + hh + 14, W + up * 2, bh - 14); }
     g.fillStyle = '#6b7280'; g.font = '18px system-ui,sans-serif'; g.textAlign = 'right';
-    g.fillText(`${hook ? 'Gantung' : 'Rak'} ${si + 1}`, x0 - up - 12, y + hh - 22); g.font = '15px system-ui,sans-serif';
-    g.fillText(`${used(sh).toFixed(0)}/${f.width} cm`, x0 - up - 12, y + hh - 4); g.textAlign = 'left';
+    g.fillText(`${hook ? 'Gantung' : 'Rak'} ${zi + 1}`, x0 - up - 12, y + hh - 22); g.font = '15px system-ui,sans-serif'; g.fillText(`${gm.n} item`, x0 - up - 12, y + hh - 4); g.textAlign = 'left';
     y += hh + bh;
   });
   if (kind === 'pallet') { g.fillStyle = '#c79a62'; g.fillRect(x0, y, W, base); g.fillStyle = 'rgba(60,38,18,.55)';
     for (let i = 1; i < 5; i++) g.fillRect(x0 + W * i / 5 - 3, y, 6, base); g.fillRect(x0, y + base * .32, W, base * .08); g.fillRect(x0, y + base * .68, W, base * .08); }
   else { g.fillStyle = lg(0, y, 0, y + base, M.u2, M.u1); g.fillRect(x0 - up, y, W + up * 2, base); }
   g.fillStyle = '#9aa3b2'; g.font = '16px system-ui,sans-serif'; g.fillText(`Dibuat ${new Date().toLocaleDateString('id-ID')}`, pad, c.height - 14);
-  download(fname('png'), c.toDataURL('image/png'));
+  try { download(`planogram_${plan.id}.png`, c.toDataURL('image/png')); }
+  catch (err) { toast('Gagal membuat PNG (gambar dari situs lain diblokir). Gunakan tombol Cetak untuk menyimpan sebagai PDF.'); }
 };
 
 /* init */
-syncFixtureForm(); startEdit(null); render();
+render();
 </script>
 </body>
 </html>
