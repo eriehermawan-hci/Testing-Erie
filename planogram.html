@@ -123,6 +123,10 @@ button.danger{color:var(--bad)}
   main{display:block;padding:0}
   body{background:#fff}
 }
+#emptyMsg{display:flex;align-items:center;justify-content:center;text-align:center;min-height:60vh;font-size:20px;font-weight:700;letter-spacing:.04em;line-height:1.7;color:var(--muted);padding:24px}
+#emptyMsg[hidden]{display:none}
+#planTabs[hidden]{display:none}
+#planTabs button.cur{background:var(--accent);border-color:var(--accent);color:#fff}
 #fLoc{margin-bottom:8px;font-size:12px}
 #fLoc button{display:block;width:100%;text-align:left;margin-top:4px;padding:4px 8px}
 #fLoc button.cur{border-color:var(--accent);background:#f1f7ff}
@@ -199,6 +203,8 @@ button.danger{color:var(--bad)}
   </div>
 
   <section class="panel" style="padding:8px">
+    <div id="emptyMsg">SILAHKAN PILIH DULU GRUP ADJACENCY ATAU SERIES<br>UNTUK MENAMPILKAN PREVIEW 3D/2D-NYA</div>
+    <div id="planTabs" class="btns" style="margin:0 0 8px" hidden></div>
     <div id="stage"><div id="fixture"></div></div>
     <div id="view3d" hidden>
       <div class="tb3">
@@ -326,7 +332,7 @@ function geom(plan, zi, hs) {
 }
 
 /* ---------- render ---------- */
-function render() { renderFilters(); renderPlanSel(); renderFixture(); renderLib(); renderInspector(); renderStats(); save(); refresh3d(); }
+function render() { applyView(); renderFilters(); renderPlanSel(); renderFixture(); renderLib(); renderInspector(); renderStats(); save(); refresh3d(); }
 
 function renderPlanSel() {
   const el = $('#planSel');
@@ -489,7 +495,7 @@ function renderFilters() {
   };
   [['#fDisp', 'Grup Display', 'disp'], ['#fAdj', 'Grup Adjacency', 'adj'], ['#fSer', 'Series', 'ser'], ['#fSub', 'Sub Series', 'sub'],
    ['#fDept', 'Dept', 'dept'], ['#fComm', 'Comm', 'comm'], ['#fCls', 'Class', 'cls']].forEach(([id, lb, f]) => fill(id, lb, FKEY[f], f));
-  $('#fMore').hidden = ['#fSub', '#fDept', '#fComm', '#fCls'].every(i => $(i).hidden);
+  $('#fMore').hidden = true;
   const vc = new Map(); S.plans.forEach(p => vc.set(p.variant, (vc.get(p.variant) || 0) + 1));
   if (F.fx && !vc.has(F.fx)) F.fx = '';
   $('#fFx').innerHTML = '<option value="">Jenis Fixture (semua)</option>' + [...vc].map(([k, n]) => `<option value="${k}"${F.fx === k ? ' selected' : ''}>${esc(VARIANTS[k].label)} (${n})</option>`).join('');
@@ -498,7 +504,7 @@ function renderFilters() {
   $('#fReset').hidden = !fActive();
   const loc = $('#fLoc');
   const hits = S.plans.filter(planOk).map(p => [p, planHits(p)]);
-  loc.hidden = false;
+  loc.hidden = true;
   loc.innerHTML = `<div class="muted">${hits.length} planogram${fActive() ? ' sesuai filter' : ''} — klik untuk memilih:</div>` + (hits.map(([p, n]) => `<button data-goto="${esc(p.id)}" class="${p.id === S.cur ? 'cur' : ''}">${esc(p.id)} — ${esc(VARIANTS[p.variant].label)} · <b>${n}</b> item${itemFilter() ? ' cocok' : ''}</button>`).join('') || '<div class="muted">Tidak ada planogram yang cocok dengan filter.</div>');
 }
 function afterFilter() {
@@ -641,40 +647,46 @@ function importRows(rows, daftar) {
   const rep = [];                                   // {t:'err'|'warn'|'ok', m}
   const hdr = (rows[0] || []).map(h => norm(h).replace(/\(.*?\)/g, '').replace(/\*/g, '').trim().replace(/[\s_]+/g, '_'));
   const col = (...names) => { for (const n of names) { const i = hdr.indexOf(n); if (i >= 0) return i; } return -1; };
-  const ci = { id: col('id_fixture'), jenis: col('jenis_fixture'), zona: col('zona_no'), jz: col('jenis_zona'), kode: col('sku', 'kode_sku'), nama: col('sku_description', 'nama', 'deskripsi'),
+  const ci = { kode: col('sku', 'kode_sku'), nama: col('sku_description', 'nama', 'deskripsi'),
     img: col('link_image'), disp: col('grup_display'), adj: col('grup_adjacency'), ser: col('series'), sub: col('sub_series'),
     dept: col('dept'), comm: col('comm'), cls: col('class'), stock: col('stock') };
-  const need = [['SKU', ci.kode], ['ID FIXTURE', ci.id], ['ZONA NO', ci.zona]].filter(x => x[1] < 0).map(x => x[0]);
+  // penempatan: sampai 3 fixture per baris SKU (ID FIXTURE 1/2/3, ZONA NO 1/2/3, JENIS ZONA 1/2/3). Tanpa angka = fixture 1.
+  const slots = [1, 2, 3].map(n => { const f = base => col(...(n === 1 ? [base + '_1', base] : [base + '_' + n]));
+    return { id: f('id_fixture'), zona: f('zona_no'), jz: f('jenis_zona'), jenis: f('jenis_fixture') }; }).filter(sl => sl.id >= 0);
+  const need = [['SKU', ci.kode], ['ID FIXTURE', slots.length ? 0 : -1], ['ZONA NO', slots.length && slots[0].zona >= 0 ? 0 : -1]].filter(x => x[1] < 0).map(x => x[0]);
   if (need.length) { toast('Kolom wajib tidak ditemukan: ' + need.join(', ')); return; }
   const get = (r, i) => i < 0 || r[i] == null ? '' : String(r[i]).trim();
   const dmap = {};                                  // fallback id → jenis dari sheet DAFTAR_FIXTURE
   (daftar || []).slice(1).forEach(r => { if (r[0]) dmap[String(r[0]).trim()] = String(r[1] || '').trim(); });
-  const groups = new Map();
-  let nMaster = 0;
   const val = (r, i, o) => { const v = get(r, i); return (v && norm(v) !== 'x' ? v : o) || ''; };   // 'X' = isi bawaan dropdown, dianggap kosong
   const regSku = r => { const code = get(r, ci.kode); if (!code) return; const old = S.skus[code] || {};
     S.skus[code] = { code, name: get(r, ci.nama) || old.name || code, img: get(r, ci.img) || old.img || patUrl(code),
       disp: val(r, ci.disp, old.disp), adj: val(r, ci.adj, old.adj), series: val(r, ci.ser, old.series), sub: val(r, ci.sub, old.sub),
       dept: val(r, ci.dept, old.dept), comm: val(r, ci.comm, old.comm), cls: val(r, ci.cls, old.cls), stock: val(r, ci.stock, old.stock) }; return code; };
+  const groups = new Map();                         // id fixture → daftar penempatan (urut sesuai baris Excel)
+  let nMaster = 0;
   rows.slice(1).forEach((r, k) => {
-    const id = get(r, ci.id);
-    if (!id) { if (regSku(r)) nMaster++; return; }
-    if (!groups.has(id)) groups.set(id, { rows: [], line0: k + 2 });
-    groups.get(id).rows.push({ r, line: k + 2 });
+    const code = regSku(r) || '', line = k + 2; let placed = false;
+    slots.forEach((sl, si) => {
+      const id = get(r, sl.id); if (!id) return; placed = true;
+      if (!groups.has(id)) groups.set(id, []);
+      groups.get(id).push({ code, line, slot: si + 1, zona: get(r, sl.zona), jz: get(r, sl.jz), jenis: get(r, sl.jenis) });
+    });
+    if (code && !placed) nMaster++;
   });
   let nPlans = 0, nItems = 0; const added = [], warned = new Set();
-  for (const [id, g] of groups) {
-    const jenis = get(g.rows[0].r, ci.jenis) || dmap[id] || '', key = VAR_BY_LABEL[norm(jenis)] || VAR_ALIAS[norm(jenis)];
+  for (const [id, list] of groups) {
+    const jenis = list.map(x => x.jenis).find(Boolean) || dmap[id] || '', key = VAR_BY_LABEL[norm(jenis)] || VAR_ALIAS[norm(jenis)];
     if (VAR_ALIAS[norm(jenis)]) rep.push({ t: 'warn', m: `${id}: "${jenis}" sudah diganti menjadi ${VARIANTS[key].label}.` });
     if (!key) { rep.push({ t: 'err', m: `${id}: jenis_fixture "${jenis || '(kosong)'}" tidak dikenal. Planogram dilewati.` }); continue; }
     const plan = newPlan(id, key); let cnt = 0;
-    for (const { r, line } of g.rows) {
-      const zn = parseInt(get(r, ci.zona), 10);
-      if (!zn || zn < 1 || zn > plan.zones.length) { rep.push({ t: 'err', m: `${id} baris ${line}: zona_no "${get(r, ci.zona)}" di luar layout (1-${plan.zones.length}).` }); continue; }
-      const z = plan.zones[zn - 1], jz = norm(get(r, ci.jz));
-      if (jz && jz !== norm(ZNAME[z.t]) && !warned.has(id + '|' + zn)) { warned.add(id + '|' + zn); rep.push({ t: 'warn', m: `${id} zona ${zn}: di Excel "${get(r, ci.jz)}", di layout ${ZNAME[z.t]}. Dipakai: ${ZNAME[z.t]}.` }); }
-      const code = regSku(r); if (!code) continue;            // baris tanpa SKU = zona kosong
-      z.items.push(code); cnt++;
+    for (const x of list) {
+      const zn = parseInt(x.zona, 10);
+      if (!zn || zn < 1 || zn > plan.zones.length) { rep.push({ t: 'err', m: `${id} baris ${x.line} (fixture ${x.slot}): zona_no "${x.zona}" di luar layout (1-${plan.zones.length}).` }); continue; }
+      const z = plan.zones[zn - 1], jz = norm(x.jz);
+      if (jz && jz !== norm(ZNAME[z.t]) && !warned.has(id + '|' + zn)) { warned.add(id + '|' + zn); rep.push({ t: 'warn', m: `${id} zona ${zn}: di Excel "${x.jz}", di layout ${ZNAME[z.t]}. Dipakai: ${ZNAME[z.t]}.` }); }
+      if (!x.code) continue;                                   // baris tanpa SKU = zona kosong (STOCK)
+      z.items.push(x.code); cnt++;
     }
     const old = S.plans.findIndex(p => p.id === id);
     if (old >= 0) S.plans[old] = plan; else S.plans.push(plan);
@@ -712,22 +724,22 @@ function download(name, content, type) {
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
 const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-const CSV_HEAD = ['DEPT', 'COMM', 'CLASS', 'SKU', 'SKU DESCRIPTION', 'STOCK', 'GRUP DISPLAY', 'GRUP ADJACENCY', 'SERIES', 'SUB SERIES', 'LINK IMAGE', 'ID FIXTURE', 'ZONA NO', 'JENIS ZONA', 'JENIS FIXTURE'];
+const CSV_HEAD = ['DEPT', 'COMM', 'CLASS', 'SKU', 'SKU DESCRIPTION', 'STOCK', 'GRUP DISPLAY', 'GRUP ADJACENCY', 'SERIES', 'SUB SERIES', 'LINK IMAGE', 'ID FIXTURE 1', 'ZONA NO 1', 'JENIS ZONA 1', 'JENIS FIXTURE 1', 'ID FIXTURE 2', 'ZONA NO 2', 'JENIS ZONA 2', 'JENIS FIXTURE 2', 'ID FIXTURE 3', 'ZONA NO 3', 'JENIS ZONA 3', 'JENIS FIXTURE 3'];
 $('#btnCsv').onclick = () => {
   if (!S.plans.length && !Object.keys(S.skus).length) return toast('Belum ada data.');
   const rows = [CSV_HEAD], placed = new Set();
   const sk = c => S.skus[c] || { name: '', img: '' };
   const row = (c, tail) => { const s = sk(c); return [s.dept || '', s.comm || '', s.cls || '', c, s.name || '', s.stock || '', s.disp || '', s.adj || '', s.series || '', s.sub || '', s.img || '', ...tail]; };
   for (const p of S.plans) p.zones.forEach((z, i) => {
-    const base = [p.id, i + 1, ZNAME[z.t], VARIANTS[p.variant].label];
+    const base = [p.id, i + 1, ZNAME[z.t], VARIANTS[p.variant].label, '', '', '', '', '', '', '', ''];
     if (!z.items.length) rows.push(['', '', '', '', '', '', '', '', '', '', '', ...base]);
     z.items.forEach(c => { placed.add(c); rows.push(row(c, base)); });
   });
-  for (const c of Object.keys(S.skus)) if (!placed.has(c)) rows.push(row(c, ['', '', '', '']));
+  for (const c of Object.keys(S.skus)) if (!placed.has(c)) rows.push(row(c, ['', '', '', '', '', '', '', '', '', '', '', '']));
   download('planogram_data.csv', '\ufeff' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
 };
 $('#btnTpl').onclick = () => download('template_planogram.csv',
-  '\ufeff' + CSV_HEAD.join(',') + '\nHomeware,Storage,Food Storage,10680419,MOSQUE DOME GLASS JAR SET OF 3 450ML,,PENYIMPANAN,E4. CANISTER,GLASS FANCY,,,GND-01,1,Rak,Gondola 4 Rack\nHomeware,Tableware,Serving,10681571,SERVING GLASS SQR PLATER ZEVY GOLD,,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,,,GND-01,2,Rak,Gondola 4 Rack\nHomeware,Tableware,Serving,10681571,SERVING GLASS SQR PLATER ZEVY GOLD,,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,,,WLL-01,1,Rak,Wall 6 Rack\n', 'text/csv');
+  '\ufeff' + CSV_HEAD.join(',') + '\nHomeware,Storage,Food Storage,10680419,MOSQUE DOME GLASS JAR SET OF 3 450ML,,PENYIMPANAN,E4. CANISTER,GLASS FANCY,,,GND-01,1,Rak,Gondola 4 Rack,,,,,,,,\nHomeware,Tableware,Serving Set,10681571,SERVING GLASS SQR PLATER ZEVY GOLD,,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,,,GND-01,2,Rak,Gondola 4 Rack,WLL-01,1,Rak,Wall 6 Rack,,,,\n', 'text/csv');
 $('#btnSave').onclick = () => download('planogram.json', JSON.stringify(S, null, 2), 'application/json');
 $('#btnLoad').onclick = () => $('#fileJson').click();
 $('#fileJson').onchange = async e => {
@@ -823,8 +835,18 @@ function setMode(m) {
   if (m === '3d' && typeof THREE === 'undefined') return toast('Three.js gagal dimuat (perlu koneksi internet). Tampilan 3D belum bisa dipakai.');
   mode = m;
   $('#vw2').classList.toggle('on', m === '2d'); $('#vw3').classList.toggle('on', m === '3d');
-  $('#stage').hidden = $('#stageNote').hidden = m === '3d'; $('#view3d').hidden = m === '2d';
+  applyView();
   if (m === '3d') { init3d(); refresh3d(); }
+}
+/* dashboard kosong sampai Grup Adjacency atau Series dipilih */
+const ready = () => !!(F.adj || F.ser);
+function applyView() {
+  const ok = ready();
+  $('#emptyMsg').hidden = ok;
+  $('#stage').hidden = $('#stageNote').hidden = mode === '3d' || !ok; $('#view3d').hidden = mode === '2d' || !ok;
+  const tabs = $('#planTabs'), list = ok ? S.plans.filter(planOk).slice(0, 12) : [];
+  tabs.hidden = mode === '3d' || !ok || list.length < 2;
+  tabs.innerHTML = list.map(p => `<button data-goto="${esc(p.id)}" class="${p.id === S.cur ? 'cur' : ''}">${esc(p.id)} · ${esc(VARIANTS[p.variant].label)}</button>`).join('');
 }
 $('#vw2').onclick = () => setMode('2d'); $('#vw3').onclick = () => setMode('3d');
 
@@ -953,7 +975,7 @@ function labelTex(text, w, h, bg, fg) {
 
 function refresh3d() { if (mode === '3d' && T) { build3d(); need3d(); } }
 function shown3d() {                                  // planogram yang tampil: terfilter (bersebelahan) atau yang dipilih saja
-  const c = cur(); if (!fActive()) return S.plans.length <= 12 ? S.plans.slice() : (c ? [c] : []);
+  if (!ready()) return [];
   return S.plans.filter(planOk).slice(0, 12);
 }
 function build3d() {
