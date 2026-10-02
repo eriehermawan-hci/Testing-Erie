@@ -372,9 +372,9 @@ const phColor = code => `hsl(${hue(code)} 45% 42%)`;
 /* ---------- state ---------- */
 function newPlan(id, variant) {
   const v = VARIANTS[variant];
-  return { id, variant, size: v.sizes[0], mat: v.mat, zones: zonesOf(v).map(z => ({ t: z.t, items: [] })) };
+  return { id, variant, size: v.sizes[0], mat: (S && S.matAll) || v.mat, zones: zonesOf(v).map(z => ({ t: z.t, items: [] })) };
 }
-function fresh() { return { plans: [], cur: null, skus: {}, scale: 4, pat: DEFAULT_PAT }; }
+function fresh() { return { plans: [], cur: null, skus: {}, scale: 4, pat: DEFAULT_PAT, matAll: '' }; }
 let S = (() => { try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && Array.isArray(j.plans)) return Object.assign(fresh(), j); } catch (e) {} return fresh(); })();
 S.plans = S.plans.filter(p => VARIANTS[p.variant] || p.variant === 'w4');
 S.plans.forEach(p => { if (p.variant === 'w4') { p.variant = 'w5'; p.zones.push({ t: 'rack', items: [] }); } });
@@ -424,7 +424,8 @@ function renderPlanSel() {
   $('#planDel').disabled = !p;
   $('#fxVar').innerHTML = Object.entries(VARIANTS).map(([k, v]) => `<option value="${k}"${p && p.variant === k ? ' selected' : ''}>${esc(v.label)}</option>`).join('');
   $('#fxSize').innerHTML = p ? VARIANTS[p.variant].sizes.map(k => `<option value="${k}"${p.size === k ? ' selected' : ''}>${esc(PRESETS[k].label)}</option>`).join('') : '';
-  $('#fxMat').innerHTML = Object.entries(MATNAMES).map(([k, n]) => `<option value="${k}"${p && p.mat === k ? ' selected' : ''}>${n}</option>`).join('');
+  // bahan berlaku untuk SEMUA fixture ('' = bawaan tiap jenis fixture)
+  $('#fxMat').innerHTML = `<option value=""${!S.matAll ? ' selected' : ''}>Bawaan tiap jenis fixture</option>` + Object.entries(MATNAMES).map(([k, n]) => `<option value="${k}"${S.matAll === k ? ' selected' : ''}>${n}</option>`).join('');
   $('#shLock').innerHTML = p ? `🔒 <b>${p.zones.length} zona</b> terkunci sesuai jenis fixture<br>Susunan atas→bawah: ${p.zones.map(z => ZNAME[z.t]).join(' · ')}` : '';
   $('#zoom').value = S.scale; $('#imgPat').value = S.pat || '';
 }
@@ -681,7 +682,7 @@ $('#fxVar').onchange = e => {
   p.variant = key; if (!v.sizes.includes(p.size)) p.size = v.sizes[0]; p.mat = v.mat; S.scale = scaleFor(PRESETS[p.size].h); sel = null; render();
 };
 $('#fxSize').onchange = e => { const p = cur(); if (!p) return; p.size = e.target.value; S.scale = scaleFor(PRESETS[p.size].h); render(); };
-$('#fxMat').onchange = e => { const p = cur(); if (!p) return; p.mat = e.target.value; render(); };
+$('#fxMat').onchange = e => { S.matAll = e.target.value; S.plans.forEach(p => p.mat = S.matAll || VARIANTS[p.variant].mat); render(); };
 
 /* ---------- impor Excel / CSV ---------- */
 function parseCSV(text) {
