@@ -55,7 +55,7 @@ button.danger{color:var(--bad)}
 .shelf-label{position:absolute;right:100%;margin-right:8px;bottom:4px;width:74px;text-align:right;font-size:11px;color:var(--muted);line-height:1.3}
 .shelf-label .u{display:block;font-size:10px}
 .shelf-wrap{flex:none}
-.shelf-body{position:relative;display:flex;flex-wrap:wrap;align-content:flex-end;align-items:flex-end;background:var(--back)}
+.shelf-body{position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-content:flex-end;align-items:flex-end;background:var(--back)}
 .k-wall .shelf-body{background:repeating-linear-gradient(to bottom,rgba(0,0,0,.13) 0 2px,transparent 2px calc(var(--cm)*7.5)),var(--back)}
 .k-gondola .shelf-body,.k-endcap .shelf-body{background:linear-gradient(90deg,rgba(0,0,0,.07),rgba(0,0,0,0) 8%,rgba(0,0,0,0) 92%,rgba(0,0,0,.07)),linear-gradient(180deg,rgba(255,255,255,.55),rgba(0,0,0,.04)),var(--back)}
 .k-pallet .shelf-body{background:linear-gradient(180deg,#f7f8fa,#e9edf3)}
@@ -82,9 +82,9 @@ button.danger{color:var(--bad)}
 /* item = kartu produk bergambar */
 .item{flex:none;position:relative;margin:0 1px;cursor:grab;user-select:none}
 .item .card{position:absolute;inset:0;display:flex;flex-direction:column;background:#fff;border:1px solid rgba(0,0,0,.28);border-radius:3px;overflow:hidden;box-shadow:1px 2px 4px rgba(0,0,0,.22)}
-.item .card img{flex:1;min-height:0;width:100%;object-fit:contain;background:#fff;padding:2px}
+.item .card img{flex:1;min-height:0;width:100%;object-fit:contain;object-position:center;background:#fff;padding:2px}
 .item .card .ph{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9px;line-height:1.15;padding:3px;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5);overflow:hidden}
-.item .cap{flex:none;height:22px;font-size:9px;line-height:1.1;padding:1px 3px;background:#f3f4f7;color:#222;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;border-top:1px solid #e0e3e8}
+.item .cap{flex:none;height:22px;font-size:9px;line-height:1.1;padding:1px 3px;background:#f3f4f7;color:#222;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;border-top:1px solid #e0e3e8}
 .item.sel{z-index:3}
 .item.sel .card{outline:3px solid #f59e0b;outline-offset:-1px}
 .hkx{position:absolute;left:50%;top:calc(var(--hk)*-1);width:2px;margin-left:-1px;height:var(--hk);background:linear-gradient(90deg,#aab1bc,#4a525e);border-radius:1px;z-index:4;pointer-events:none}
@@ -211,7 +211,7 @@ const PRESETS = {
 // layout zona atas→bawah: R = rak, H = gantungan, angka = tinggi relatif
 const VARIANTS = {
   w6:   { fam: 'WALL', label: 'Wall 6 Rack', z: 'R1 R1 R1 R1 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
-  w4:   { fam: 'WALL', label: 'Wall 4 Rack', z: 'R2 R2 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
+  w5:   { fam: 'WALL', label: 'Wall 5 Rack', z: 'R1 R1 R2 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
   w3h2: { fam: 'WALL', label: 'Wall 3 Rack + 2 Gantungan', z: 'H1 H1 R2 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
   g4:   { fam: 'GONDOLA', label: 'Gondola 4 Rack', z: 'R1 R1 R1 R1', sizes: ['gondola'], mat: 'steel' },
   gfull:{ fam: 'GONDOLA', label: 'Gondola Full Gantungan', z: 'H1 H1 H1 H1', sizes: ['gondola'], mat: 'steel' },
@@ -231,6 +231,7 @@ const zoneH = (H, zones, pallet) => { const avail = H - (pallet ? 0 : BASE), tu 
 const scaleFor = h => h > 200 ? 3.5 : h > 120 ? 4.5 : 5;
 const norm = s => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
 const VAR_BY_LABEL = Object.fromEntries(Object.entries(VARIANTS).map(([k, v]) => [norm(v.label), k]));
+const VAR_ALIAS = { 'wall 4 rack': 'w5' };      // nama lama → layout pengganti
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const hue = str => { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
 const phColor = code => `hsl(${hue(code)} 45% 42%)`;
@@ -242,6 +243,9 @@ function newPlan(id, variant) {
 }
 function fresh() { return { plans: [], cur: null, skus: {}, scale: 4, pat: DEFAULT_PAT }; }
 let S = (() => { try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && Array.isArray(j.plans)) return Object.assign(fresh(), j); } catch (e) {} return fresh(); })();
+S.plans = S.plans.filter(p => VARIANTS[p.variant] || p.variant === 'w4');
+S.plans.forEach(p => { if (p.variant === 'w4') { p.variant = 'w5'; p.zones.push({ t: 'rack', items: [] }); } });
+if (S.cur && !S.plans.some(p => p.id === S.cur)) S.cur = S.plans[0] ? S.plans[0].id : null;
 let sel = null, drag = null;
 const cur = () => S.plans.find(p => p.id === S.cur) || null;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
@@ -258,7 +262,7 @@ function geom(plan, zi, hs) {
   const perRow = Math.max(1, Math.floor(p.w / MINTILE));
   const cols = Math.max(1, Math.min(n, perRow)), rows = Math.max(1, Math.ceil(n / perRow));
   const tw = Math.min(MAXTILE, p.w / cols);
-  const th = Math.max(4, Math.min(tw * 1.15, (hs[zi] - (hook ? HOOK_CM * rows : 1.5)) / rows));
+  const th = Math.max(4, Math.min(tw * 1.15, (hs[zi] - (hook ? HOOK_CM * rows + 3 : 1.5)) / rows));
   return { n, perRow, cols, rows, tw, th, hook };
 }
 
@@ -287,7 +291,7 @@ function renderFixture() {
   const head = document.createElement('div'); head.className = 'fx-head'; head.style.width = W + 24 + 'px';
   head.textContent = kind === 'endcap' || kind === 'wall' ? v.label : ''; fx.appendChild(head);
   plan.zones.forEach((z, zi) => {
-    const g = geom(plan, zi, hs), hookPx = Math.max(26, Math.round(HOOK_CM * sc));
+    const g = geom(plan, zi, hs), hookPx = Math.max(20, Math.round(HOOK_CM * sc));
     const row = document.createElement('div'); row.className = 'shelf';
     const lab = document.createElement('div'); lab.className = 'shelf-label';
     lab.innerHTML = `${z.t === 'hook' ? 'Gantung' : 'Rak'} ${zi + 1}<span class="u">${g.n} item</span>`;
@@ -546,7 +550,8 @@ function importRows(rows, daftar) {
   });
   let nPlans = 0, nItems = 0; const added = [], warned = new Set();
   for (const [id, g] of groups) {
-    const jenis = get(g.rows[0].r, ci.jenis) || dmap[id] || '', key = VAR_BY_LABEL[norm(jenis)];
+    const jenis = get(g.rows[0].r, ci.jenis) || dmap[id] || '', key = VAR_BY_LABEL[norm(jenis)] || VAR_ALIAS[norm(jenis)];
+    if (VAR_ALIAS[norm(jenis)]) rep.push({ t: 'warn', m: `${id}: "${jenis}" sudah diganti menjadi ${VARIANTS[key].label}.` });
     if (!key) { rep.push({ t: 'err', m: `${id}: jenis_fixture "${jenis || '(kosong)'}" tidak dikenal. Planogram dilewati.` }); continue; }
     const plan = newPlan(id, key); let cnt = 0;
     for (const { r, line } of g.rows) {
@@ -644,7 +649,7 @@ $('#btnPng').onclick = async () => {
         g.fillStyle = 'rgba(0,0,0,.3)'; for (let gy = 10; gy < hh + bh; gy += 40) { g.beginPath(); g.arc(ux + up / 2, y + gy, 3, 0, 7); g.fill(); } }
     const tw = gm.tw * sc - 4, th = gm.th * sc, blockH = gm.rows * th, top0 = hook ? y + hookPx : y + hh - blockH;
     z.items.forEach((code, ii) => {
-      const r = Math.floor(ii / gm.perRow), cIdx = ii % gm.perRow, x = x0 + cIdx * gm.tw * sc + 2, ty = top0 + r * th + (hook && r ? hookPx * r : 0);
+      const r = Math.floor(ii / gm.perRow), cIdx = ii % gm.perRow, inRow = Math.min(gm.perRow, gm.n - r * gm.perRow), x = x0 + (W - inRow * gm.tw * sc) / 2 + cIdx * gm.tw * sc + 2, ty = top0 + r * th + (hook && r ? hookPx * r : 0);
       const s = S.skus[code] || { name: code };
       if (hook) { g.strokeStyle = '#566070'; g.lineWidth = 3; g.beginPath(); g.moveTo(x + tw / 2, r ? ty - hookPx + 8 : y + 20); g.lineTo(x + tw / 2, ty - 4); g.arc(x + tw / 2 - 6, ty - 4, 6, 0, Math.PI); g.stroke(); }
       g.save(); g.shadowColor = 'rgba(0,0,0,.25)'; g.shadowBlur = 6; g.shadowOffsetY = 3; g.fillStyle = '#fff'; rr(x, ty, tw, th, 6); g.fill(); g.restore();
@@ -653,7 +658,7 @@ $('#btnPng').onclick = async () => {
       if (im) { const k = Math.min(aw / im.width, ah / im.height); g.drawImage(im, x + 3 + (aw - im.width * k) / 2, ty + 3 + (ah - im.height * k) / 2, im.width * k, im.height * k); }
       else { g.fillStyle = phColor(code); g.fillRect(x + 3, ty + 3, aw, ah); }
       g.fillStyle = '#f3f4f7'; g.fillRect(x + 1, ty + th - capH, tw - 2, capH - 1);
-      g.fillStyle = '#222'; g.font = '13px system-ui,sans-serif'; lines(s.name, tw - 8, 2).forEach((l, k) => g.fillText(l, x + 4, ty + th - capH + 13 + k * 13));
+      g.fillStyle = '#222'; g.font = '13px system-ui,sans-serif'; g.textAlign = 'center'; lines(s.name, tw - 8, 2).forEach((l, k) => g.fillText(l, x + tw / 2, ty + th - capH + 13 + k * 13)); g.textAlign = 'left';
     });
     if (hook) { g.fillStyle = '#4f5763'; g.fillRect(x0 + 18, y, 14, 40); g.fillRect(x0 + W - 32, y, 14, 40);
       g.fillStyle = lg(0, y, 0, y + 20, '#f6f8fb', '#6c7584'); rr(x0 - 6, y, W + 12, 20, 10); g.fill(); }
