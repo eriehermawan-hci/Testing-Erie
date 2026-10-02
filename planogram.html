@@ -162,6 +162,7 @@ main{gap:18px;padding:20px 22px}
 select,input{border:1.5px solid #e2e0f7;border-radius:13px;background:#fbfbff;padding:9px 12px;font-weight:600;color:#312e81;transition:.15s}
 select:hover,input:hover{border-color:#c4b5fd}
 select:focus,input:focus{outline:0;border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+select.on{background:linear-gradient(90deg,#f5f3ff,#fff);border-color:#a78bfa;color:#4c1d95}
 #fDisp{border-left:6px solid #f59e0b}#fAdj{border-left:6px solid #ec4899}#fSer{border-left:6px solid #14b8a6}
 button{border-radius:12px;border:1.5px solid #e2e0f7;font-weight:600;transition:.15s}
 button:hover{background:#f5f3ff}
@@ -572,14 +573,32 @@ stage.addEventListener('drop', e => {
 
 /* ---------- filter ---------- */
 function renderFilters() {
-  const all = Object.values(S.skus), cnt = (key) => { const m = new Map(); all.forEach(k => { const v = k[key]; if (v) m.set(v, (m.get(v) || 0) + 1); }); return [...m].sort((a, b) => a[0].localeCompare(b[0], 'id', { numeric: true })); };
-  const fill = (id, label, key, fk) => {
-    const opts = cnt(key); if (F[fk] && !opts.some(o => o[0] === F[fk])) F[fk] = '';
-    const el = $(id); el.hidden = !opts.length;
-    el.innerHTML = `<option value="">${label} (semua)</option>` + opts.map(([v, n]) => `<option value="${esc(v)}"${F[fk] === v ? ' selected' : ''}>${esc(v)} (${n})</option>`).join('');
+  // filter saling terkait (faceted): pilihan tiap filter hanya berisi nilai yang masih ada
+  // pada SKU yang sudah ditempatkan di fixture dan cocok dengan filter LAINNYA
+  const placed = new Set(S.plans.flatMap(p => p.zones.flatMap(z => z.items)));
+  const base = Object.values(S.skus).filter(k => placed.has(k.code));
+  const dims = [['#fDisp', 'Grup Display', 'disp'], ['#fAdj', 'Grup Adjacency', 'adj'], ['#fSer', 'Series', 'ser'], ['#fSub', 'Sub Series', 'sub'],
+    ['#fDept', 'Dept', 'dept'], ['#fComm', 'Comm', 'comm'], ['#fCls', 'Class', 'cls']];
+  const q = qtext();
+  const optsFor = f => {                                   // nilai & jumlah SKU, dengan semua filter selain f
+    const m = new Map();
+    base.forEach(k => {
+      if (!Object.keys(FKEY).every(o => o === f || !F[o] || k[FKEY[o]] === F[o])) return;
+      if (q && !skuText(k).includes(q)) return;
+      const v = k[FKEY[f]]; if (v) m.set(v, (m.get(v) || 0) + 1);
+    });
+    return [...m].sort((a, b) => a[0].localeCompare(b[0], 'id', { numeric: true }));
   };
-  [['#fDisp', 'Grup Display', 'disp'], ['#fAdj', 'Grup Adjacency', 'adj'], ['#fSer', 'Series', 'ser'], ['#fSub', 'Sub Series', 'sub'],
-   ['#fDept', 'Dept', 'dept'], ['#fComm', 'Comm', 'comm'], ['#fCls', 'Class', 'cls']].forEach(([id, lb, f]) => fill(id, lb, FKEY[f], f));
+  for (let it = 0; it < 4; it++) {                          // pilihan yang tidak valid lagi dikosongkan, ulangi sampai stabil
+    let changed = false;
+    dims.forEach(([, , f]) => { if (F[f] && !optsFor(f).some(o => o[0] === F[f])) { F[f] = ''; changed = true; } });
+    if (!changed) break;
+  }
+  dims.forEach(([id, label, f]) => {
+    const opts = optsFor(f), el = $(id); el.hidden = !opts.length && !F[f];
+    el.innerHTML = `<option value="">${label} (semua)${F[f] ? '' : ' · ' + opts.length}</option>` + opts.map(([v, n]) => `<option value="${esc(v)}"${F[f] === v ? ' selected' : ''}>${esc(v)} (${n})</option>`).join('');
+    el.classList.toggle('on', !!F[f]);
+  });
   $('#fMore').hidden = true;
   F.fx = '';                                          // filter jenis fixture tidak dipakai
   $('#fCount').textContent = fActive() ? `(${S.plans.filter(planOk).length} planogram)` : '';
