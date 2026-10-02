@@ -324,7 +324,7 @@ const $ = s => document.querySelector(s);
 const KEY = 'planogram-v4';
 const BASE = 10;                       // tinggi dasar fixture (cm)
 const HOOK_CM = 6.5;                   // jarak bar gantungan ke kartu (cm)
-const MAXTILE = 26, MINTILE = 10;      // lebar kartu maksimum / minimum (cm)
+const MAXTILE = 40, MINTILE = 7.5;     // lebar kartu maksimum / minimum (cm): n SKU dalam 1 baris rak = lebar rak / n (maks. 16 per baris untuk lebar 120 cm)
 const DEFAULT_PAT = 'https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/{kode}_1.jpg';
 
 // ukuran standar (L×D×T cm)
@@ -338,8 +338,8 @@ const PRESETS = {
 // layout zona atas→bawah: R = rak, H = gantungan, angka = tinggi relatif
 const VARIANTS = {
   w6:   { fam: 'WALL', label: 'Wall 6 Rack', z: 'R1 R1 R1 R1 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
-  w5:   { fam: 'WALL', label: 'Wall 5 Rack', z: 'R1 R1 R2 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
-  w3h2: { fam: 'WALL', label: 'Wall 3 Rack + 2 Gantungan', z: 'H1 H1 R2 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
+  w5:   { fam: 'WALL', label: 'Wall 5 Rack', z: 'R1.2 R1.2 R1.2 R1.2 R1.2', sizes: ['wall270', 'wall240'], mat: 'ash' },
+  w3h2: { fam: 'WALL', label: 'Wall 3 Rack + 2 Gantungan', z: 'H1.5 H1.5 R1 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
   g4:   { fam: 'GONDOLA', label: 'Gondola 4 Rack', z: 'R1 R1 R1 R1', sizes: ['gondola'], mat: 'steel' },
   gfull:{ fam: 'GONDOLA', label: 'Gondola Full Gantungan', z: 'H1 H1 H1 H1', sizes: ['gondola'], mat: 'steel' },
   g1h3: { fam: 'GONDOLA', label: 'Gondola 1 Rack + 3 Gantungan', z: 'R1 H1 H1 H1', sizes: ['gondola'], mat: 'steel' },
@@ -359,7 +359,7 @@ const UNIT_CM = 35;                    // tinggi 1 satuan rak pada Wall = jarak 
 const scaleFor = h => h > 200 ? 3.5 : h > 120 ? 4.5 : 5;
 function zoneLayout(plan) {            // tinggi tiap zona (cm) + sisa area kosong di atas
   const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), zs = zonesOf(v);
-  if (kind === 'wall') { const hs = zs.map(() => UNIT_CM); return { hs, top: 0 }; }   // area kosong di atas dipangkas (sama dengan 3D)
+  // semua jenis Wall: tinggi total sama (= Wall 6 Rack), dibagi sesuai bobot zona (jumlah bobot = 6)
   return { hs: zoneH(p.h, zs, kind === 'pallet'), top: 0 };
 }
 const norm = s => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
