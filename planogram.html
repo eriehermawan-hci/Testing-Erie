@@ -229,8 +229,8 @@ const FAMILIES = {
     w3h2: { label: 'Wall 3 Rack + 2 Gantungan', z: 'H1 H1 R2 R1 R1' } } },
   GONDOLA: { label: 'Gondola', sizes: ['gondola'], mat: 'steel', variants: {
     g4: { label: 'Gondola 4 Rack', z: 'R1 R1 R1 R1' },
-    gfull: { label: 'Gondola Full Gantungan', z: 'H1 H1 H1 R1' },
-    g1h2: { label: 'Gondola 1 Rack + 2 Gantungan', z: 'R1 H1 H1 R1' } } },
+    gfull: { label: 'Gondola Full Gantungan', z: 'H1 H1 H1 H1' },
+    g1h3: { label: 'Gondola 1 Rack + 3 Gantungan', z: 'R1 H1 H1 H1' } } },
   ENDCAP: { label: 'Endcap', sizes: ['endcap'], mat: 'ash', variants: { e4: { label: 'Endcap 4 Rack', z: 'R1 R1 R1 R1' } } },
   PALLET: { label: 'Pallet', sizes: ['pallet'], mat: 'ash', variants: { p1: { label: 'Pallet 90x90', z: 'R1' } } },
 };
@@ -269,6 +269,7 @@ function patch(s) {   // lengkapi field baru pada data lama
   const f = s.fixture;
   f.depth = f.depth || 50; f.preset = f.preset || '';
   if (!FAMILIES[f.family]) { f.family = kindOf(f).toUpperCase(); f.variant = ''; }
+  if (f.variant === 'g1h2' || f.variant === 'gfull') f.variant = '';   // layout lama diganti
   f.mat = f.mat || FAMILIES[f.family].mat;
   f.height = f.height || Math.round(f.shelves.reduce((a, x) => a + x.h, 0) + BASE);
   f.shelves.forEach(sh => { sh.t = sh.t || 'rack'; sh.u = sh.u || 1; });
