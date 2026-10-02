@@ -155,10 +155,10 @@ button.danger{color:var(--bad)}
 
     <section class="panel">
       <h2>Fixture</h2>
-      <label>Jenis</label>
-      <select id="fxVar"></select>
+      <div hidden><label>Jenis</label>
+      <select id="fxVar"></select></div>
       <div class="row">
-        <div><label>Ukuran standar</label><select id="fxSize"></select></div>
+        <div hidden><label>Ukuran standar</label><select id="fxSize"></select></div>
         <div><label>Bahan</label><select id="fxMat"></select></div>
       </div>
       <div id="shLock" class="muted" style="margin-top:8px"></div>
@@ -202,7 +202,7 @@ button.danger{color:var(--bad)}
       <input id="libSearch" placeholder="Cari kode / nama…" style="margin-bottom:8px">
       <div id="lib"></div>
     </section>
-    <section class="panel">
+    <section class="panel" hidden>
       <h2>Tambah SKU</h2>
       <label>Kode SKU</label><input id="fCode">
       <label>Nama</label><input id="fName">
@@ -256,7 +256,7 @@ const UNIT_CM = 35;                    // tinggi 1 satuan rak pada Wall = jarak 
 const scaleFor = h => h > 200 ? 3.5 : h > 120 ? 4.5 : 5;
 function zoneLayout(plan) {            // tinggi tiap zona (cm) + sisa area kosong di atas
   const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), zs = zonesOf(v);
-  if (kind === 'wall') { const hs = zs.map(z => z.u * UNIT_CM); return { hs, top: Math.max(0, p.h - BASE - hs.reduce((a, b) => a + b, 0)) }; }
+  if (kind === 'wall') { const hs = zs.map(() => UNIT_CM); return { hs, top: Math.max(0, p.h - BASE - hs.reduce((a, b) => a + b, 0)) }; }
   return { hs: zoneH(p.h, zs, kind === 'pallet'), top: 0 };
 }
 const norm = s => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
@@ -890,7 +890,7 @@ function build3d() {
   const plan = cur(); if (!plan) return;
   const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), M = MATS[plan.mat], { hs, top } = zoneLayout(plan);
   const W = p.w, D = p.d, pallet = kind === 'pallet', b = pallet ? 12 : BASE;
-  const total = b + hs.reduce((a, c) => a + c, 0) + top;
+  const total = b + hs.reduce((a, c) => a + c, 0);   // area kosong di atas wall dipangkas
   const std = (col, o) => new THREE.MeshStandardMaterial(Object.assign({ color: col, roughness: 0.6, metalness: 0.05 }, o));
   const add = (geo, mat, x, y, z, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = shadow; G.add(m); return m; };
   const box = (w, h, d, mat, x, y, z) => add(new THREE.BoxGeometry(w, h, d), mat, x, y, z);
@@ -936,7 +936,7 @@ function build3d() {
       const r = Math.floor(ii / gm.perRow), c = ii % gm.perRow, inRow = Math.min(gm.perRow, gm.n - r * gm.perRow);
       const cw = gm.tw - 0.5, ch = gm.th, x = (c - (inRow - 1) / 2) * gm.tw;
       const y = hook ? zTop - HOOK_CM * (r + 1) - r * ch - ch / 2 : yBase + (gm.rows - 1 - r) * ch + ch / 2;
-      const bd = hook ? 1.2 : Math.max(5, Math.min(cw * 0.7, D - 12)), zz = hook ? zc : D / 2 - 4 - bd / 2;
+      const bd = hook ? Math.max(3, Math.min(cw * 0.3, 6)) : Math.max(5, Math.min(cw * 0.7, D - 12)), zz = hook ? zc : D / 2 - 4 - bd / 2;
       const col = new THREE.Color().setHSL(hue(code) / 360, 0.45, 0.42), sm = std(col);
       const fm = new THREE.MeshStandardMaterial({ map: cardTex(code, cw / ch), roughness: 0.7 });
       const m = add(new THREE.BoxGeometry(cw, ch, bd), [sm, sm, sm, sm, fm, sm], x, y, zz);
