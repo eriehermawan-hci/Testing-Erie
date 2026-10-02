@@ -123,6 +123,9 @@ button.danger{color:var(--bad)}
   main{display:block;padding:0}
   body{background:#fff}
 }
+#fLoc{margin-bottom:8px;font-size:12px}
+#fLoc button{display:block;width:100%;text-align:left;margin-top:4px;padding:4px 8px}
+#fLoc button.cur{border-color:var(--accent);background:#f1f7ff}
 </style>
 </head>
 <body>
@@ -199,7 +202,12 @@ button.danger{color:var(--bad)}
   <div id="side-right">
     <section class="panel">
       <h2>Daftar SKU <span class="muted" id="libCount"></span></h2>
-      <input id="libSearch" placeholder="Cari kode / nama…" style="margin-bottom:8px">
+      <input id="libSearch" placeholder="Cari kode / nama / series…" style="margin-bottom:6px">
+      <select id="fDisp" style="margin-bottom:6px"></select>
+      <select id="fAdj" style="margin-bottom:6px"></select>
+      <select id="fSer" style="margin-bottom:6px"></select>
+      <button id="fReset" style="width:100%;margin-bottom:8px" hidden>Reset filter</button>
+      <div id="fLoc" hidden></div>
       <div id="lib"></div>
     </section>
     <section class="panel" hidden>
@@ -277,6 +285,17 @@ S.plans = S.plans.filter(p => VARIANTS[p.variant] || p.variant === 'w4');
 S.plans.forEach(p => { if (p.variant === 'w4') { p.variant = 'w5'; p.zones.push({ t: 'rack', items: [] }); } });
 if (S.cur && !S.plans.some(p => p.id === S.cur)) S.cur = S.plans[0] ? S.plans[0].id : null;
 let sel = null, drag = null;
+/* filter SKU: Grup Display / Grup Adjacency / Series + kolom cari (tidak disimpan) */
+const F = { disp: '', adj: '', ser: '' };
+const qtext = () => ($('#libSearch') ? $('#libSearch').value.trim().toLowerCase() : '');
+const fActive = () => !!(F.disp || F.adj || F.ser || qtext());
+function skuOk(code) {
+  const k = S.skus[code]; if (!fActive()) return true; if (!k) return false;
+  const q = qtext();
+  return (!F.disp || k.disp === F.disp) && (!F.adj || k.adj === F.adj) && (!F.ser || k.series === F.ser) &&
+    (!q || [k.code, k.name, k.disp, k.adj, k.series].join(' ').toLowerCase().includes(q));
+}
+const planHits = p => p.zones.reduce((a, z) => a + z.items.filter(skuOk).length, 0);
 const cur = () => S.plans.find(p => p.id === S.cur) || null;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 function toast(msg) {
@@ -297,11 +316,12 @@ function geom(plan, zi, hs) {
 }
 
 /* ---------- render ---------- */
-function render() { renderPlanSel(); renderFixture(); renderLib(); renderInspector(); renderStats(); save(); refresh3d(); }
+function render() { renderFilters(); renderPlanSel(); renderFixture(); renderLib(); renderInspector(); renderStats(); save(); refresh3d(); }
 
 function renderPlanSel() {
   const el = $('#planSel');
-  el.innerHTML = S.plans.map(p => `<option value="${esc(p.id)}"${p.id === S.cur ? ' selected' : ''}>${esc(p.id)} — ${esc(VARIANTS[p.variant].label)} (${p.zones.reduce((a, z) => a + z.items.length, 0)} item)</option>`).join('') || '<option value="">(belum ada)</option>';
+  const fa = fActive();
+  el.innerHTML = S.plans.filter(p => !fa || p.id === S.cur || planHits(p)).map(p => `<option value="${esc(p.id)}"${p.id === S.cur ? ' selected' : ''}>${esc(p.id)} — ${esc(VARIANTS[p.variant].label)} (${fa ? planHits(p) + ' cocok / ' : ''}${p.zones.reduce((a, z) => a + z.items.length, 0)} item)</option>`).join('') || '<option value="">(belum ada)</option>';
   const p = cur();
   $('#planDel').disabled = !p;
   $('#fxVar').innerHTML = Object.entries(VARIANTS).map(([k, v]) => `<option value="${k}"${p && p.variant === k ? ' selected' : ''}>${esc(v.label)}</option>`).join('');
@@ -338,6 +358,7 @@ function renderFixture() {
       const s = S.skus[code] || { code, name: code, img: '' };
       const d = document.createElement('div');
       d.className = 'item' + (sel && sel.zone === zi && sel.idx === ii ? ' sel' : '');
+      if (!skuOk(code)) d.style.opacity = '.15';
       d.draggable = true; d.dataset.zone = zi; d.dataset.idx = ii;
       d.style.width = Math.floor(g.tw * sc) - 2 + 'px'; d.style.height = Math.floor(g.th * sc) + 'px';
       if (z.t === 'hook') { d.style.marginTop = hookPx + 'px'; d.style.setProperty('--hk', hookPx - 8 + 'px'); }
@@ -363,14 +384,14 @@ function renderFixture() {
 function renderLib() {
   const q = $('#libSearch').value.trim().toLowerCase(), plan = cur();
   const inPlan = new Set(plan ? plan.zones.flatMap(z => z.items) : []);
-  const all = Object.values(S.skus), list = all.filter(k => !q || [k.code, k.name, k.disp, k.adj, k.series].join(' ').toLowerCase().includes(q));
-  $('#libCount').textContent = `(${all.length})`;
+  const all = Object.values(S.skus), list = all.filter(k => skuOk(k.code));
+  $('#libCount').textContent = fActive() ? `(${list.length}/${all.length})` : `(${all.length})`;
   $('#lib').innerHTML = list.map(k => `
     <div class="sku ${inPlan.has(k.code) ? 'placed' : ''}" draggable="true" data-sku="${esc(k.code)}" title="Klik dua kali untuk menambah ke zona terpilih">
       ${k.img ? `<img class="th" src="${esc(k.img)}" loading="lazy" onerror="this.style.visibility='hidden'">` : '<div class="th"></div>'}
       <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.code)}${k.series ? ' • ' + esc(k.series) : ''}</div></div>
       <button data-del="${esc(k.code)}" class="danger" title="Hapus SKU">×</button>
-    </div>`).join('') || '<div class="muted">Belum ada SKU. Impor data atau tambah SKU di bawah.</div>';
+    </div>`).join('') || `<div class="muted">${all.length ? 'Tidak ada SKU yang cocok dengan filter.' : 'Belum ada SKU. Impor data Excel.'}</div>`;
 }
 
 function renderInspector() {
@@ -381,6 +402,7 @@ function renderInspector() {
   el.innerHTML = `${s.img ? `<img src="${esc(s.img)}" onerror="this.style.display='none'">` : ''}
     <div style="margin-top:6px"><b>${esc(s.name)}</b></div><div class="muted">Kode ${esc(code)} • ${ZNAME[plan.zones[sel.zone].t]} ${sel.zone + 1}, urutan ${sel.idx + 1}</div>
     ${[s.disp, s.adj, s.series].filter(Boolean).length ? `<div class="muted" style="margin-top:4px">${[s.disp && 'Display: ' + esc(s.disp), s.adj && 'Adjacency: ' + esc(s.adj), s.series && 'Series: ' + esc(s.series)].filter(Boolean).join('<br>')}</div>` : ''}
+    ${(() => { const o = S.plans.filter(x => x !== plan && x.zones.some(z => z.items.includes(code))); return o.length ? `<div class="muted" style="margin-top:4px">Juga ditempatkan di: ${o.map(x => `<a href="#" data-goto="${esc(x.id)}">${esc(x.id)}</a> (${esc(VARIANTS[x.variant].label)})`).join(', ')}</div>` : ''; })()}
     <label>Pindah ke zona</label>
     <select id="iZone">${plan.zones.map((z, i) => `<option value="${i}"${i === sel.zone ? ' selected' : ''}>${ZNAME[z.t]} ${i + 1}</option>`).join('')}</select>
     <div class="btns" style="margin-top:8px"><button data-move="-1">← Geser</button><button data-move="1">Geser →</button><button class="danger" id="iDel">Hapus</button></div>`;
@@ -396,7 +418,7 @@ function renderStats() {
     <div class="stat"><b>${plan.zones.length - empty}/${plan.zones.length}</b>Zona terisi</div>
     <div class="stat"><b>${S.plans.length}</b>Planogram</div>`;
   const noImg = new Set(items.filter(c => !imgFor(c))).size;
-  $('#warnList').innerHTML = [empty ? `${empty} zona tanpa item = tempat <b>STOCK</b>.` : '', noImg ? `<span class="warn">${noImg} SKU belum punya link gambar.</span>` : ''].filter(Boolean).join('<br>');
+  $('#warnList').innerHTML = [fActive() ? `<b>${planHits(plan)}</b> item di planogram ini cocok dengan filter.` : '', empty ? `${empty} zona tanpa item = tempat <b>STOCK</b>.` : '', noImg ? `<span class="warn">${noImg} SKU belum punya link gambar.</span>` : ''].filter(Boolean).join('<br>');
 }
 
 /* ---------- drag & drop ---------- */
@@ -447,6 +469,34 @@ stage.addEventListener('drop', e => {
   sel = { zone: zi, idx }; drag = null; clearInd(); render();
 });
 
+/* ---------- filter ---------- */
+function renderFilters() {
+  const all = Object.values(S.skus), cnt = (key) => { const m = new Map(); all.forEach(k => { const v = k[key]; if (v) m.set(v, (m.get(v) || 0) + 1); }); return [...m].sort((a, b) => a[0].localeCompare(b[0], 'id', { numeric: true })); };
+  const fill = (id, label, key, fk) => {
+    const opts = cnt(key); if (F[fk] && !opts.some(o => o[0] === F[fk])) F[fk] = '';
+    const el = $(id); el.hidden = !opts.length;
+    el.innerHTML = `<option value="">${label} (semua)</option>` + opts.map(([v, n]) => `<option value="${esc(v)}"${F[fk] === v ? ' selected' : ''}>${esc(v)} (${n})</option>`).join('');
+  };
+  fill('#fDisp', 'Grup Display', 'disp', 'disp'); fill('#fAdj', 'Grup Adjacency', 'adj', 'adj'); fill('#fSer', 'Series', 'series', 'ser');
+  $('#fReset').hidden = !fActive();
+  const loc = $('#fLoc');
+  if (!fActive()) { loc.hidden = true; loc.innerHTML = ''; return; }
+  const hits = S.plans.map(p => [p, planHits(p)]).filter(x => x[1]);
+  loc.hidden = false;
+  loc.innerHTML = `<div class="muted">Lokasi SKU yang cocok (${hits.length} planogram):</div>` + (hits.map(([p, n]) => `<button data-goto="${esc(p.id)}" class="${p.id === S.cur ? 'cur' : ''}">${esc(p.id)} — ${esc(VARIANTS[p.variant].label)} · <b>${n}</b> item</button>`).join('') || '<div class="muted">Belum ditempatkan di planogram mana pun.</div>');
+}
+function afterFilter() {
+  const p = cur();
+  if (fActive() && (!p || !planHits(p))) { const h = S.plans.find(planHits); if (h) { S.cur = h.id; sel = null; } }
+  render();
+}
+[['#fDisp', 'disp'], ['#fAdj', 'adj'], ['#fSer', 'ser']].forEach(([id, k]) => $(id).onchange = e => { F[k] = e.target.value; afterFilter(); });
+$('#fReset').onclick = () => { F.disp = F.adj = F.ser = ''; $('#libSearch').value = ''; render(); };
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-goto]'); if (!g) return;
+  e.preventDefault(); S.cur = g.dataset.goto; sel = null; render();
+});
+
 /* ---------- interaksi ---------- */
 stage.addEventListener('click', e => {
   const el = e.target.closest('.item');
@@ -478,7 +528,7 @@ $('#lib').addEventListener('click', e => {
   if (!confirm(`Hapus SKU ${code} (${S.skus[code] ? S.skus[code].name : ''})? Item ini juga dihapus dari semua planogram.`)) return;
   delete S.skus[code]; S.plans.forEach(p => p.zones.forEach(z => z.items = z.items.filter(c => c !== code))); sel = null; render();
 });
-$('#libSearch').addEventListener('input', renderLib);
+$('#libSearch').addEventListener('input', afterFilter);
 $('#fSave').onclick = () => {
   const code = $('#fCode').value.trim(), name = $('#fName').value.trim();
   if (!code || !name) return toast('Kode SKU dan nama wajib diisi.');
@@ -642,21 +692,21 @@ function download(name, content, type) {
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
 const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-const CSV_HEAD = ['SKU', 'SKU DESCRIPTION', 'GRUP DISPLAY', 'GRUP ADJACENCY', 'SERIES', 'ID FIXTURE', 'ZONA NO', 'JENIS ZONA', 'JENIS FIXTURE', 'LINK IMAGE'];
+const CSV_HEAD = ['SKU', 'SKU DESCRIPTION', 'GRUP DISPLAY', 'GRUP ADJACENCY', 'SERIES', 'LINK IMAGE', 'ID FIXTURE', 'ZONA NO', 'JENIS ZONA', 'JENIS FIXTURE'];
 $('#btnCsv').onclick = () => {
   if (!S.plans.length && !Object.keys(S.skus).length) return toast('Belum ada data.');
   const rows = [CSV_HEAD], placed = new Set();
   const sk = c => S.skus[c] || { name: '', img: '' };
   for (const p of S.plans) p.zones.forEach((z, i) => {
     const base = [p.id, i + 1, ZNAME[z.t], VARIANTS[p.variant].label];
-    if (!z.items.length) rows.push(['', '', '', '', '', ...base, '']);
-    z.items.forEach(c => { placed.add(c); const s = sk(c); rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', ...base, s.img || '']); });
+    if (!z.items.length) rows.push(['', '', '', '', '', '', ...base]);
+    z.items.forEach(c => { placed.add(c); const s = sk(c); rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', s.img || '', ...base]); });
   });
-  for (const c of Object.keys(S.skus)) if (!placed.has(c)) { const s = S.skus[c]; rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', '', '', '', '', s.img || '']); }
+  for (const c of Object.keys(S.skus)) if (!placed.has(c)) { const s = S.skus[c]; rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', s.img || '', '', '', '', '']); }
   download('planogram_data.csv', '\ufeff' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
 };
 $('#btnTpl').onclick = () => download('template_planogram.csv',
-  '\ufeff' + CSV_HEAD.join(',') + '\n10681571,SERVING GLASS SQR PLATER ZEVY GOLD,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,GND-01,1,Rak,Gondola 4 Rack,\n10680419,MOSQUE DOME GLASS JAR SET OF 3 450ML,PENYIMPANAN,E4. CANISTER,GLASS FANCY,GND-01,2,Rak,Gondola 4 Rack,\n', 'text/csv');
+  '\ufeff' + CSV_HEAD.join(',') + '\n10681571,SERVING GLASS SQR PLATER ZEVY GOLD,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,,GND-01,1,Rak,Gondola 4 Rack\n10680419,MOSQUE DOME GLASS JAR SET OF 3 450ML,PENYIMPANAN,E4. CANISTER,GLASS FANCY,,GND-01,2,Rak,Gondola 4 Rack\n10681571,SERVING GLASS SQR PLATER ZEVY GOLD,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,,WLL-01,1,Rak,Wall 6 Rack\n', 'text/csv');
 $('#btnSave').onclick = () => download('planogram.json', JSON.stringify(S, null, 2), 'application/json');
 $('#btnLoad').onclick = () => $('#fileJson').click();
 $('#fileJson').onchange = async e => {
@@ -940,6 +990,7 @@ function build3d() {
       const col = new THREE.Color().setHSL(hue(code) / 360, 0.45, 0.42), sm = std(col);
       const fm = new THREE.MeshStandardMaterial({ map: cardTex(code, cw / ch), roughness: 0.7 });
       const m = add(new THREE.BoxGeometry(cw, ch, bd), [sm, sm, sm, sm, fm, sm], x, y, zz);
+      if (!skuOk(code)) { for (const mm of [sm, fm]) { mm.transparent = true; mm.opacity = 0.12; mm.depthWrite = false; } m.castShadow = false; }
       m.userData = { zone: zi, idx: ii }; T.items.push(m);
       if (hook) {                                     // kawat gantung dari bar / kartu di atasnya
         const wire = add(new THREE.CylinderGeometry(0.25, 0.25, HOOK_CM, 6), mMetal, x, y + ch / 2 + HOOK_CM / 2, zc, false);

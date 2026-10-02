@@ -123,6 +123,9 @@ button.danger{color:var(--bad)}
   main{display:block;padding:0}
   body{background:#fff}
 }
+#fLoc{margin-bottom:8px;font-size:12px}
+#fLoc button{display:block;width:100%;text-align:left;margin-top:4px;padding:4px 8px}
+#fLoc button.cur{border-color:var(--accent);background:#f1f7ff}
 </style>
 </head>
 <body>
@@ -199,7 +202,12 @@ button.danger{color:var(--bad)}
   <div id="side-right">
     <section class="panel">
       <h2>Daftar SKU <span class="muted" id="libCount"></span></h2>
-      <input id="libSearch" placeholder="Cari kode / nama…" style="margin-bottom:8px">
+      <input id="libSearch" placeholder="Cari kode / nama / series…" style="margin-bottom:6px">
+      <select id="fDisp" style="margin-bottom:6px"></select>
+      <select id="fAdj" style="margin-bottom:6px"></select>
+      <select id="fSer" style="margin-bottom:6px"></select>
+      <button id="fReset" style="width:100%;margin-bottom:8px" hidden>Reset filter</button>
+      <div id="fLoc" hidden></div>
       <div id="lib"></div>
     </section>
     <section class="panel" hidden>
@@ -278,12 +286,23 @@ function newPlan(id, variant) {
   return { id, variant, size: v.sizes[0], mat: v.mat, zones: zonesOf(v).map(z => ({ t: z.t, items: [] })) };
 }
 function fresh() { return { plans: [], cur: null, skus: {}, scale: 4, pat: DEFAULT_PAT }; }
-const SAMPLE = {"plans":[{"id":"WLL-01","variant":"w6","size":"wall270","mat":"ash","zones":[{"t":"rack","items":[]},{"t":"rack","items":["10445959","10445960","10445961"]},{"t":"rack","items":["10445962","10470029","10470030"]},{"t":"rack","items":["10470031","10470032","10470033"]},{"t":"rack","items":[]},{"t":"rack","items":[]}]},{"id":"WLL-02","variant":"w5","size":"wall270","mat":"ash","zones":[{"t":"rack","items":[]},{"t":"rack","items":["10445959","10445960","10445961","10445962","10470029"]},{"t":"rack","items":["10470030","10470031","10470032","10470033","10606307"]},{"t":"rack","items":[]},{"t":"rack","items":[]}]},{"id":"WLL-03","variant":"w3h2","size":"wall270","mat":"ash","zones":[{"t":"hook","items":["10421603","10421608","10421610","10421614"]},{"t":"hook","items":["10421603","10421608","10421610","10421614"]},{"t":"rack","items":[]},{"t":"rack","items":[]},{"t":"rack","items":[]}]},{"id":"GND-01","variant":"g4","size":"gondola","mat":"steel","zones":[{"t":"rack","items":["10445959","10445960","10445961"]},{"t":"rack","items":["10445962","10470029","10470030"]},{"t":"rack","items":[]},{"t":"rack","items":[]}]},{"id":"GND-02","variant":"gfull","size":"gondola","mat":"steel","zones":[{"t":"hook","items":["10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160"]},{"t":"hook","items":["10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160","10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160"]},{"t":"hook","items":["10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160","10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160"]},{"t":"hook","items":["10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160","10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160"]}]},{"id":"GND-03","variant":"g1h3","size":"gondola","mat":"steel","zones":[{"t":"rack","items":["10421603","10421608","10421610","10421614"]},{"t":"hook","items":[]},{"t":"hook","items":[]},{"t":"hook","items":[]}]},{"id":"END-01","variant":"e4","size":"endcap","mat":"ash","zones":[{"t":"rack","items":["10421603"]},{"t":"rack","items":["10421608"]},{"t":"rack","items":["10421610"]},{"t":"rack","items":["10421614"]}]},{"id":"PLT-01","variant":"p1","size":"pallet","mat":"ash","zones":[{"t":"rack","items":["10099887","10099940"]}]}],"cur":"WLL-01","skus":{"10099887":{"code":"10099887","name":"ELAN WATER GLASS SET 414ML (6)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10099887_1.jpg","disp":"","adj":"","series":""},"10099940":{"code":"10099940","name":"INVERNESS WATER GLASS SET 355ML (6)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10099940_1.jpg","disp":"","adj":"","series":""},"10198149":{"code":"10198149","name":"TANTA STRAINER DIA 10CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198149_1.jpg","disp":"","adj":"","series":""},"10198150":{"code":"10198150","name":"TANTA NYLON TONGS 9 INCH","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198150_1.jpg","disp":"","adj":"","series":""},"10198151":{"code":"10198151","name":"TANTA NYLON TONGS 12 INCH","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198151_1.jpg","disp":"","adj":"","series":""},"10198152":{"code":"10198152","name":"TANTA S/S SOLID TURNER M","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198152_1.jpg","disp":"","adj":"","series":""},"10198154":{"code":"10198154","name":"TANTA S/S LADLE","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198154_1.jpg","disp":"","adj":"","series":""},"10198156":{"code":"10198156","name":"TANTA NYLON SLOTTED TURNER M","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198156_1.jpg","disp":"","adj":"","series":""},"10198157":{"code":"10198157","name":"TANTA NYLON SOLID TURNER L","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198157_1.jpg","disp":"","adj":"","series":""},"10198159":{"code":"10198159","name":"TANTA NYLON LADLE","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198159_1.jpg","disp":"","adj":"","series":""},"10198160":{"code":"10198160","name":"TANTA NYLON WHISK","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198160_1.jpg","disp":"","adj":"","series":""},"10421603":{"code":"10421603","name":"KINGSTON SAUCEPAN WITH LID 16CM GREEN","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10421603_1.jpg","disp":"","adj":"","series":""},"10421608":{"code":"10421608","name":"KINGSTON CASSEROLE WITH LID 20 CM GREEN","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10421608_1.jpg","disp":"","adj":"","series":""},"10421610":{"code":"10421610","name":"KINGSTON GRILL PAN 24CM GREEN","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10421610_1.jpg","disp":"","adj":"","series":""},"10421614":{"code":"10421614","name":"KIRA WOK 2 HANDLE W LID AND UTENSIL BRN","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10421614_1.jpg","disp":"","adj":"","series":""},"10445959":{"code":"10445959","name":"CASSEROLE RECT GOLD MARBLE W/LID 33CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10445959_1.jpg","disp":"","adj":"","series":""},"10445960":{"code":"10445960","name":"CASSEROLE OVAL GOLD MARBLE W/LID 33CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10445960_1.jpg","disp":"","adj":"","series":""},"10445961":{"code":"10445961","name":"CASSEROLE ROUND GOLD MARBLE W/LID 33CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10445961_1.jpg","disp":"","adj":"","series":""},"10445962":{"code":"10445962","name":"CASSEROLE SQUARE GOLD MARBLE W/LID 33CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10445962_1.jpg","disp":"","adj":"","series":""},"10470029":{"code":"10470029","name":"SERVING SET W/RACK OCTAGON MARBLE (4)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470029_1.jpg","disp":"","adj":"","series":""},"10470030":{"code":"10470030","name":"SERVING SET RND DETACHABLE MARBLE (2)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470030_1.jpg","disp":"","adj":"","series":""},"10470031":{"code":"10470031","name":"SERVING SET W/RACK SQR MARBLE BLACK (3)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470031_1.jpg","disp":"","adj":"","series":""},"10470032":{"code":"10470032","name":"SERVING SET W/RACK STACK WHITE (3)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470032_1.jpg","disp":"","adj":"","series":""},"10470033":{"code":"10470033","name":"SERVING SET W/RACK CIRCLE BLACK (3)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470033_1.jpg","disp":"","adj":"","series":""},"10606307":{"code":"10606307","name":"CASSEROLE RECT MARBLE W/RACK WHT 38CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10606307_1.jpg","disp":"","adj":"","series":""}},"scale":3.5,"pat":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/{kode}_1.jpg"};
+const SAMPLE = {"plans":[{"id":"WLL-01","variant":"w6","size":"wall270","mat":"ash","zones":[{"t":"rack","items":[]},{"t":"rack","items":["10445959","10445960","10445961"]},{"t":"rack","items":["10445962","10470029","10470030"]},{"t":"rack","items":["10470031","10470032","10470033"]},{"t":"rack","items":["10680419","10682153"]},{"t":"rack","items":[]}]},{"id":"WLL-02","variant":"w5","size":"wall270","mat":"ash","zones":[{"t":"rack","items":[]},{"t":"rack","items":["10445959","10445960","10445961","10445962","10470029"]},{"t":"rack","items":["10470030","10470031","10470032","10470033","10606307"]},{"t":"rack","items":["10681571","10681572"]},{"t":"rack","items":[]}]},{"id":"WLL-03","variant":"w3h2","size":"wall270","mat":"ash","zones":[{"t":"hook","items":["10421603","10421608","10421610","10421614"]},{"t":"hook","items":["10421603","10421608","10421610","10421614"]},{"t":"rack","items":["10198150","10198151","10198152"]},{"t":"rack","items":[]},{"t":"rack","items":[]}]},{"id":"GND-01","variant":"g4","size":"gondola","mat":"steel","zones":[{"t":"rack","items":["10445959","10445960","10445961"]},{"t":"rack","items":["10445962","10470029","10470030"]},{"t":"rack","items":["10681571","10681572","10681573","10681574"]},{"t":"rack","items":["10680419","10682153","10682154","10682155","10681993"]}]},{"id":"GND-02","variant":"gfull","size":"gondola","mat":"steel","zones":[{"t":"hook","items":["10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160"]},{"t":"hook","items":["10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160","10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160"]},{"t":"hook","items":["10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160","10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160"]},{"t":"hook","items":["10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160","10198149","10198150","10198151","10198152","10198154","10198156","10198157","10198159","10198160"]}]},{"id":"GND-03","variant":"g1h3","size":"gondola","mat":"steel","zones":[{"t":"rack","items":["10421603","10421608","10421610","10421614"]},{"t":"hook","items":[]},{"t":"hook","items":[]},{"t":"hook","items":[]}]},{"id":"END-01","variant":"e4","size":"endcap","mat":"ash","zones":[{"t":"rack","items":["10421603"]},{"t":"rack","items":["10421608"]},{"t":"rack","items":["10421610"]},{"t":"rack","items":["10421614"]}]},{"id":"PLT-01","variant":"p1","size":"pallet","mat":"ash","zones":[{"t":"rack","items":["10099887","10099940"]}]}],"cur":"WLL-01","skus":{"10099887":{"code":"10099887","name":"ELAN WATER GLASS SET 414ML (6)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10099887_1.jpg","disp":"MAKAN","adj":"A1. GLASSWARE","series":"ELAN"},"10099940":{"code":"10099940","name":"INVERNESS WATER GLASS SET 355ML (6)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10099940_1.jpg","disp":"MAKAN","adj":"A1. GLASSWARE","series":"INVERNESS"},"10198149":{"code":"10198149","name":"TANTA STRAINER DIA 10CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198149_1.jpg","disp":"ALAT MASAK","adj":"C1. KITCHEN TOOLS","series":"TANTA S/S"},"10198150":{"code":"10198150","name":"TANTA NYLON TONGS 9 INCH","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198150_1.jpg","disp":"ALAT MASAK","adj":"C1. KITCHEN TOOLS","series":"TANTA NYLON"},"10198151":{"code":"10198151","name":"TANTA NYLON TONGS 12 INCH","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198151_1.jpg","disp":"ALAT MASAK","adj":"C1. KITCHEN TOOLS","series":"TANTA NYLON"},"10198152":{"code":"10198152","name":"TANTA S/S SOLID TURNER M","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198152_1.jpg","disp":"ALAT MASAK","adj":"C1. KITCHEN TOOLS","series":"TANTA S/S"},"10198154":{"code":"10198154","name":"TANTA S/S LADLE","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198154_1.jpg","disp":"ALAT MASAK","adj":"C1. KITCHEN TOOLS","series":"TANTA S/S"},"10198156":{"code":"10198156","name":"TANTA NYLON SLOTTED TURNER M","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198156_1.jpg","disp":"ALAT MASAK","adj":"C1. KITCHEN TOOLS","series":"TANTA NYLON"},"10198157":{"code":"10198157","name":"TANTA NYLON SOLID TURNER L","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198157_1.jpg","disp":"ALAT MASAK","adj":"C1. KITCHEN TOOLS","series":"TANTA NYLON"},"10198159":{"code":"10198159","name":"TANTA NYLON LADLE","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198159_1.jpg","disp":"ALAT MASAK","adj":"C1. KITCHEN TOOLS","series":"TANTA NYLON"},"10198160":{"code":"10198160","name":"TANTA NYLON WHISK","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10198160_1.jpg","disp":"ALAT MASAK","adj":"C1. KITCHEN TOOLS","series":"TANTA NYLON"},"10421603":{"code":"10421603","name":"KINGSTON SAUCEPAN WITH LID 16CM GREEN","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10421603_1.jpg","disp":"MASAK","adj":"B2. COOKWARE","series":"KINGSTON"},"10421608":{"code":"10421608","name":"KINGSTON CASSEROLE WITH LID 20 CM GREEN","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10421608_1.jpg","disp":"MASAK","adj":"B2. COOKWARE","series":"KINGSTON"},"10421610":{"code":"10421610","name":"KINGSTON GRILL PAN 24CM GREEN","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10421610_1.jpg","disp":"MASAK","adj":"B2. COOKWARE","series":"KINGSTON"},"10421614":{"code":"10421614","name":"KIRA WOK 2 HANDLE W LID AND UTENSIL BRN","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10421614_1.jpg","disp":"MASAK","adj":"B2. COOKWARE","series":"KIRA"},"10445959":{"code":"10445959","name":"CASSEROLE RECT GOLD MARBLE W/LID 33CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10445959_1.jpg","disp":"MASAK","adj":"B1. CASSEROLE","series":"GOLD MARBLE"},"10445960":{"code":"10445960","name":"CASSEROLE OVAL GOLD MARBLE W/LID 33CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10445960_1.jpg","disp":"MASAK","adj":"B1. CASSEROLE","series":"GOLD MARBLE"},"10445961":{"code":"10445961","name":"CASSEROLE ROUND GOLD MARBLE W/LID 33CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10445961_1.jpg","disp":"MASAK","adj":"B1. CASSEROLE","series":"GOLD MARBLE"},"10445962":{"code":"10445962","name":"CASSEROLE SQUARE GOLD MARBLE W/LID 33CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10445962_1.jpg","disp":"MASAK","adj":"B1. CASSEROLE","series":"GOLD MARBLE"},"10470029":{"code":"10470029","name":"SERVING SET W/RACK OCTAGON MARBLE (4)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470029_1.jpg","disp":"MAKAN","adj":"A2. SERVINGWARE","series":"SERVING SET MARBLE"},"10470030":{"code":"10470030","name":"SERVING SET RND DETACHABLE MARBLE (2)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470030_1.jpg","disp":"MAKAN","adj":"A2. SERVINGWARE","series":"SERVING SET MARBLE"},"10470031":{"code":"10470031","name":"SERVING SET W/RACK SQR MARBLE BLACK (3)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470031_1.jpg","disp":"MAKAN","adj":"A2. SERVINGWARE","series":"SERVING SET MARBLE"},"10470032":{"code":"10470032","name":"SERVING SET W/RACK STACK WHITE (3)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470032_1.jpg","disp":"MAKAN","adj":"A2. SERVINGWARE","series":"SERVING SET MARBLE"},"10470033":{"code":"10470033","name":"SERVING SET W/RACK CIRCLE BLACK (3)","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10470033_1.jpg","disp":"MAKAN","adj":"A2. SERVINGWARE","series":"SERVING SET MARBLE"},"10606307":{"code":"10606307","name":"CASSEROLE RECT MARBLE W/RACK WHT 38CM","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10606307_1.jpg","disp":"MASAK","adj":"B1. CASSEROLE","series":"MARBLE W/RACK"},"10680419":{"code":"10680419","name":"MOSQUE DOME GLASS JAR SET OF 3 450ML","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10680419_1.jpg","disp":"PENYIMPANAN","adj":"E4. CANISTER","series":"GLASS FANCY"},"10681571":{"code":"10681571","name":"SERVING GLASS SQR PLATER ZEVY GOLD","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10681571_1.jpg","disp":"MAKAN","adj":"A2. SERVINGWARE","series":"W/GOLD RACK GLASS"},"10681572":{"code":"10681572","name":"SERVING GLASS OVAL PLATER ZOE GOLD","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10681572_1.jpg","disp":"MAKAN","adj":"A2. SERVINGWARE","series":"W/GOLD RACK GLASS"},"10681573":{"code":"10681573","name":"SERVING GLASS SQR TWO RACK ZENA GOLD","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10681573_1.jpg","disp":"MAKAN","adj":"A2. SERVINGWARE","series":"W/GOLD RACK GLASS"},"10681574":{"code":"10681574","name":"SERVING GLASS RND TWO RACK ZIA GOLD","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10681574_1.jpg","disp":"MAKAN","adj":"A2. SERVINGWARE","series":"W/GOLD RACK GLASS"},"10681993":{"code":"10681993","name":"POLLA RICE BIN 5KG BEIGE","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10681993_1.jpg","disp":"MASAK","adj":"D11. KITCHEN PLASTICWARE","series":"POLLA"},"10682153":{"code":"10682153","name":"EID 2026 GLASS JAR SET OF 3 900ML","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10682153_1.jpg","disp":"PENYIMPANAN","adj":"E4. CANISTER","series":"GLASS FANCY"},"10682154":{"code":"10682154","name":"GRETTA GLASS JAR SET OF 4 WITH RACK","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10682154_1.jpg","disp":"PENYIMPANAN","adj":"E4. CANISTER","series":"GLASS BASIC"},"10682155":{"code":"10682155","name":"GRETTA GLASS JAR SET OF 3 WITH RACK","img":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/10682155_1.jpg","disp":"PENYIMPANAN","adj":"E4. CANISTER","series":"GLASS BASIC"}},"scale":3.5,"pat":"https://cdn.ruparupa.io/fit-in/850x850/ruparupa-com/image/upload/Products/{kode}_1.jpg"};
 let S = (() => { try { const j = JSON.parse(localStorage.getItem(KEY)); if (j && Array.isArray(j.plans)) return Object.assign(fresh(), j); } catch (e) {} return Object.assign(fresh(), JSON.parse(JSON.stringify(SAMPLE))); })();
 S.plans = S.plans.filter(p => VARIANTS[p.variant] || p.variant === 'w4');
 S.plans.forEach(p => { if (p.variant === 'w4') { p.variant = 'w5'; p.zones.push({ t: 'rack', items: [] }); } });
 if (S.cur && !S.plans.some(p => p.id === S.cur)) S.cur = S.plans[0] ? S.plans[0].id : null;
 let sel = null, drag = null;
+/* filter SKU: Grup Display / Grup Adjacency / Series + kolom cari (tidak disimpan) */
+const F = { disp: '', adj: '', ser: '' };
+const qtext = () => ($('#libSearch') ? $('#libSearch').value.trim().toLowerCase() : '');
+const fActive = () => !!(F.disp || F.adj || F.ser || qtext());
+function skuOk(code) {
+  const k = S.skus[code]; if (!fActive()) return true; if (!k) return false;
+  const q = qtext();
+  return (!F.disp || k.disp === F.disp) && (!F.adj || k.adj === F.adj) && (!F.ser || k.series === F.ser) &&
+    (!q || [k.code, k.name, k.disp, k.adj, k.series].join(' ').toLowerCase().includes(q));
+}
+const planHits = p => p.zones.reduce((a, z) => a + z.items.filter(skuOk).length, 0);
 const cur = () => S.plans.find(p => p.id === S.cur) || null;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 function toast(msg) {
@@ -304,11 +323,12 @@ function geom(plan, zi, hs) {
 }
 
 /* ---------- render ---------- */
-function render() { renderPlanSel(); renderFixture(); renderLib(); renderInspector(); renderStats(); save(); refresh3d(); }
+function render() { renderFilters(); renderPlanSel(); renderFixture(); renderLib(); renderInspector(); renderStats(); save(); refresh3d(); }
 
 function renderPlanSel() {
   const el = $('#planSel');
-  el.innerHTML = S.plans.map(p => `<option value="${esc(p.id)}"${p.id === S.cur ? ' selected' : ''}>${esc(p.id)} — ${esc(VARIANTS[p.variant].label)} (${p.zones.reduce((a, z) => a + z.items.length, 0)} item)</option>`).join('') || '<option value="">(belum ada)</option>';
+  const fa = fActive();
+  el.innerHTML = S.plans.filter(p => !fa || p.id === S.cur || planHits(p)).map(p => `<option value="${esc(p.id)}"${p.id === S.cur ? ' selected' : ''}>${esc(p.id)} — ${esc(VARIANTS[p.variant].label)} (${fa ? planHits(p) + ' cocok / ' : ''}${p.zones.reduce((a, z) => a + z.items.length, 0)} item)</option>`).join('') || '<option value="">(belum ada)</option>';
   const p = cur();
   $('#planDel').disabled = !p;
   $('#fxVar').innerHTML = Object.entries(VARIANTS).map(([k, v]) => `<option value="${k}"${p && p.variant === k ? ' selected' : ''}>${esc(v.label)}</option>`).join('');
@@ -345,6 +365,7 @@ function renderFixture() {
       const s = S.skus[code] || { code, name: code, img: '' };
       const d = document.createElement('div');
       d.className = 'item' + (sel && sel.zone === zi && sel.idx === ii ? ' sel' : '');
+      if (!skuOk(code)) d.style.opacity = '.15';
       d.draggable = true; d.dataset.zone = zi; d.dataset.idx = ii;
       d.style.width = Math.floor(g.tw * sc) - 2 + 'px'; d.style.height = Math.floor(g.th * sc) + 'px';
       if (z.t === 'hook') { d.style.marginTop = hookPx + 'px'; d.style.setProperty('--hk', hookPx - 8 + 'px'); }
@@ -370,14 +391,14 @@ function renderFixture() {
 function renderLib() {
   const q = $('#libSearch').value.trim().toLowerCase(), plan = cur();
   const inPlan = new Set(plan ? plan.zones.flatMap(z => z.items) : []);
-  const all = Object.values(S.skus), list = all.filter(k => !q || [k.code, k.name, k.disp, k.adj, k.series].join(' ').toLowerCase().includes(q));
-  $('#libCount').textContent = `(${all.length})`;
+  const all = Object.values(S.skus), list = all.filter(k => skuOk(k.code));
+  $('#libCount').textContent = fActive() ? `(${list.length}/${all.length})` : `(${all.length})`;
   $('#lib').innerHTML = list.map(k => `
     <div class="sku ${inPlan.has(k.code) ? 'placed' : ''}" draggable="true" data-sku="${esc(k.code)}" title="Klik dua kali untuk menambah ke zona terpilih">
       ${k.img ? `<img class="th" src="${esc(k.img)}" loading="lazy" onerror="this.style.visibility='hidden'">` : '<div class="th"></div>'}
       <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.code)}${k.series ? ' • ' + esc(k.series) : ''}</div></div>
       <button data-del="${esc(k.code)}" class="danger" title="Hapus SKU">×</button>
-    </div>`).join('') || '<div class="muted">Belum ada SKU. Impor data atau tambah SKU di bawah.</div>';
+    </div>`).join('') || `<div class="muted">${all.length ? 'Tidak ada SKU yang cocok dengan filter.' : 'Belum ada SKU. Impor data Excel.'}</div>`;
 }
 
 function renderInspector() {
@@ -388,6 +409,7 @@ function renderInspector() {
   el.innerHTML = `${s.img ? `<img src="${esc(s.img)}" onerror="this.style.display='none'">` : ''}
     <div style="margin-top:6px"><b>${esc(s.name)}</b></div><div class="muted">Kode ${esc(code)} • ${ZNAME[plan.zones[sel.zone].t]} ${sel.zone + 1}, urutan ${sel.idx + 1}</div>
     ${[s.disp, s.adj, s.series].filter(Boolean).length ? `<div class="muted" style="margin-top:4px">${[s.disp && 'Display: ' + esc(s.disp), s.adj && 'Adjacency: ' + esc(s.adj), s.series && 'Series: ' + esc(s.series)].filter(Boolean).join('<br>')}</div>` : ''}
+    ${(() => { const o = S.plans.filter(x => x !== plan && x.zones.some(z => z.items.includes(code))); return o.length ? `<div class="muted" style="margin-top:4px">Juga ditempatkan di: ${o.map(x => `<a href="#" data-goto="${esc(x.id)}">${esc(x.id)}</a> (${esc(VARIANTS[x.variant].label)})`).join(', ')}</div>` : ''; })()}
     <label>Pindah ke zona</label>
     <select id="iZone">${plan.zones.map((z, i) => `<option value="${i}"${i === sel.zone ? ' selected' : ''}>${ZNAME[z.t]} ${i + 1}</option>`).join('')}</select>
     <div class="btns" style="margin-top:8px"><button data-move="-1">← Geser</button><button data-move="1">Geser →</button><button class="danger" id="iDel">Hapus</button></div>`;
@@ -403,7 +425,7 @@ function renderStats() {
     <div class="stat"><b>${plan.zones.length - empty}/${plan.zones.length}</b>Zona terisi</div>
     <div class="stat"><b>${S.plans.length}</b>Planogram</div>`;
   const noImg = new Set(items.filter(c => !imgFor(c))).size;
-  $('#warnList').innerHTML = [empty ? `${empty} zona tanpa item = tempat <b>STOCK</b>.` : '', noImg ? `<span class="warn">${noImg} SKU belum punya link gambar.</span>` : ''].filter(Boolean).join('<br>');
+  $('#warnList').innerHTML = [fActive() ? `<b>${planHits(plan)}</b> item di planogram ini cocok dengan filter.` : '', empty ? `${empty} zona tanpa item = tempat <b>STOCK</b>.` : '', noImg ? `<span class="warn">${noImg} SKU belum punya link gambar.</span>` : ''].filter(Boolean).join('<br>');
 }
 
 /* ---------- drag & drop ---------- */
@@ -454,6 +476,34 @@ stage.addEventListener('drop', e => {
   sel = { zone: zi, idx }; drag = null; clearInd(); render();
 });
 
+/* ---------- filter ---------- */
+function renderFilters() {
+  const all = Object.values(S.skus), cnt = (key) => { const m = new Map(); all.forEach(k => { const v = k[key]; if (v) m.set(v, (m.get(v) || 0) + 1); }); return [...m].sort((a, b) => a[0].localeCompare(b[0], 'id', { numeric: true })); };
+  const fill = (id, label, key, fk) => {
+    const opts = cnt(key); if (F[fk] && !opts.some(o => o[0] === F[fk])) F[fk] = '';
+    const el = $(id); el.hidden = !opts.length;
+    el.innerHTML = `<option value="">${label} (semua)</option>` + opts.map(([v, n]) => `<option value="${esc(v)}"${F[fk] === v ? ' selected' : ''}>${esc(v)} (${n})</option>`).join('');
+  };
+  fill('#fDisp', 'Grup Display', 'disp', 'disp'); fill('#fAdj', 'Grup Adjacency', 'adj', 'adj'); fill('#fSer', 'Series', 'series', 'ser');
+  $('#fReset').hidden = !fActive();
+  const loc = $('#fLoc');
+  if (!fActive()) { loc.hidden = true; loc.innerHTML = ''; return; }
+  const hits = S.plans.map(p => [p, planHits(p)]).filter(x => x[1]);
+  loc.hidden = false;
+  loc.innerHTML = `<div class="muted">Lokasi SKU yang cocok (${hits.length} planogram):</div>` + (hits.map(([p, n]) => `<button data-goto="${esc(p.id)}" class="${p.id === S.cur ? 'cur' : ''}">${esc(p.id)} — ${esc(VARIANTS[p.variant].label)} · <b>${n}</b> item</button>`).join('') || '<div class="muted">Belum ditempatkan di planogram mana pun.</div>');
+}
+function afterFilter() {
+  const p = cur();
+  if (fActive() && (!p || !planHits(p))) { const h = S.plans.find(planHits); if (h) { S.cur = h.id; sel = null; } }
+  render();
+}
+[['#fDisp', 'disp'], ['#fAdj', 'adj'], ['#fSer', 'ser']].forEach(([id, k]) => $(id).onchange = e => { F[k] = e.target.value; afterFilter(); });
+$('#fReset').onclick = () => { F.disp = F.adj = F.ser = ''; $('#libSearch').value = ''; render(); };
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-goto]'); if (!g) return;
+  e.preventDefault(); S.cur = g.dataset.goto; sel = null; render();
+});
+
 /* ---------- interaksi ---------- */
 stage.addEventListener('click', e => {
   const el = e.target.closest('.item');
@@ -485,7 +535,7 @@ $('#lib').addEventListener('click', e => {
   if (!confirm(`Hapus SKU ${code} (${S.skus[code] ? S.skus[code].name : ''})? Item ini juga dihapus dari semua planogram.`)) return;
   delete S.skus[code]; S.plans.forEach(p => p.zones.forEach(z => z.items = z.items.filter(c => c !== code))); sel = null; render();
 });
-$('#libSearch').addEventListener('input', renderLib);
+$('#libSearch').addEventListener('input', afterFilter);
 $('#fSave').onclick = () => {
   const code = $('#fCode').value.trim(), name = $('#fName').value.trim();
   if (!code || !name) return toast('Kode SKU dan nama wajib diisi.');
@@ -649,21 +699,21 @@ function download(name, content, type) {
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
 const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-const CSV_HEAD = ['SKU', 'SKU DESCRIPTION', 'GRUP DISPLAY', 'GRUP ADJACENCY', 'SERIES', 'ID FIXTURE', 'ZONA NO', 'JENIS ZONA', 'JENIS FIXTURE', 'LINK IMAGE'];
+const CSV_HEAD = ['SKU', 'SKU DESCRIPTION', 'GRUP DISPLAY', 'GRUP ADJACENCY', 'SERIES', 'LINK IMAGE', 'ID FIXTURE', 'ZONA NO', 'JENIS ZONA', 'JENIS FIXTURE'];
 $('#btnCsv').onclick = () => {
   if (!S.plans.length && !Object.keys(S.skus).length) return toast('Belum ada data.');
   const rows = [CSV_HEAD], placed = new Set();
   const sk = c => S.skus[c] || { name: '', img: '' };
   for (const p of S.plans) p.zones.forEach((z, i) => {
     const base = [p.id, i + 1, ZNAME[z.t], VARIANTS[p.variant].label];
-    if (!z.items.length) rows.push(['', '', '', '', '', ...base, '']);
-    z.items.forEach(c => { placed.add(c); const s = sk(c); rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', ...base, s.img || '']); });
+    if (!z.items.length) rows.push(['', '', '', '', '', '', ...base]);
+    z.items.forEach(c => { placed.add(c); const s = sk(c); rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', s.img || '', ...base]); });
   });
-  for (const c of Object.keys(S.skus)) if (!placed.has(c)) { const s = S.skus[c]; rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', '', '', '', '', s.img || '']); }
+  for (const c of Object.keys(S.skus)) if (!placed.has(c)) { const s = S.skus[c]; rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', s.img || '', '', '', '', '']); }
   download('planogram_data.csv', '\ufeff' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
 };
 $('#btnTpl').onclick = () => download('template_planogram.csv',
-  '\ufeff' + CSV_HEAD.join(',') + '\n10681571,SERVING GLASS SQR PLATER ZEVY GOLD,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,GND-01,1,Rak,Gondola 4 Rack,\n10680419,MOSQUE DOME GLASS JAR SET OF 3 450ML,PENYIMPANAN,E4. CANISTER,GLASS FANCY,GND-01,2,Rak,Gondola 4 Rack,\n', 'text/csv');
+  '\ufeff' + CSV_HEAD.join(',') + '\n10681571,SERVING GLASS SQR PLATER ZEVY GOLD,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,,GND-01,1,Rak,Gondola 4 Rack\n10680419,MOSQUE DOME GLASS JAR SET OF 3 450ML,PENYIMPANAN,E4. CANISTER,GLASS FANCY,,GND-01,2,Rak,Gondola 4 Rack\n10681571,SERVING GLASS SQR PLATER ZEVY GOLD,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,,WLL-01,1,Rak,Wall 6 Rack\n', 'text/csv');
 $('#btnSave').onclick = () => download('planogram.json', JSON.stringify(S, null, 2), 'application/json');
 $('#btnLoad').onclick = () => $('#fileJson').click();
 $('#fileJson').onchange = async e => {
@@ -947,6 +997,7 @@ function build3d() {
       const col = new THREE.Color().setHSL(hue(code) / 360, 0.45, 0.42), sm = std(col);
       const fm = new THREE.MeshStandardMaterial({ map: cardTex(code, cw / ch), roughness: 0.7 });
       const m = add(new THREE.BoxGeometry(cw, ch, bd), [sm, sm, sm, sm, fm, sm], x, y, zz);
+      if (!skuOk(code)) { for (const mm of [sm, fm]) { mm.transparent = true; mm.opacity = 0.12; mm.depthWrite = false; } m.castShadow = false; }
       m.userData = { zone: zi, idx: ii }; T.items.push(m);
       if (hook) {                                     // kawat gantung dari bar / kartu di atasnya
         const wire = add(new THREE.CylinderGeometry(0.25, 0.25, HOOK_CM, 6), mMetal, x, y + ch / 2 + HOOK_CM / 2, zc, false);
