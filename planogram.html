@@ -34,21 +34,54 @@ button.danger{color:var(--bad)}
 
 /* fixture */
 #stage{overflow:auto;padding:8px 4px 16px}
-#fixture{display:inline-block;background:#e9ecf1;border:2px solid #9aa3b2;border-radius:4px;padding:8px 8px 8px 0}
-.fx-title{padding:0 0 6px 62px;font-weight:600}
-.shelf{display:flex;align-items:flex-end}
-.shelf-label{width:62px;flex:none;font-size:11px;color:var(--muted);padding:0 6px 6px 0;text-align:right}
+#fixture{display:inline-block;padding:14px 18px 18px 90px;border-radius:10px;background:linear-gradient(180deg,#eef1f6,#dde3ec);border:1px solid var(--line);
+  --board1:#e8d3ae;--board2:#c9a877;--up1:#dcc59c;--up2:#b99a6a;--back:#f6efdf;--ink2:#4a3a22}
+#fixture.m-burnt{--board1:#7a5740;--board2:#47301f;--up1:#6e4e39;--up2:#3b281b;--back:#a8917f;--ink2:#f3e6d8}
+#fixture.m-glass{--board1:rgba(196,232,243,.95);--board2:rgba(122,186,206,.95);--up1:#d0d5dd;--up2:#8d97a6;--back:#eef5f8;--ink2:#2a3a44}
+#fixture.m-steel{--board1:#d9dde4;--board2:#8f98a6;--up1:#c7ccd5;--up2:#808996;--back:#eef0f4;--ink2:#2a313b}
+.fx-title{margin:0 0 8px -76px;font-weight:600}
+.fx-head{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);
+  background:linear-gradient(180deg,var(--up1),var(--up2));border-radius:5px 5px 0 0;box-shadow:0 2px 5px rgba(0,0,0,.22);overflow:hidden;white-space:nowrap}
+.k-wall .fx-head{height:26px}
+.k-gondola .fx-head{height:12px;font-size:0}
+.k-endcap .fx-head{height:38px;font-size:13px;color:#fff;background:linear-gradient(135deg,#1d4fd0,#2563eb 60%,#5b93ff);border-radius:7px 7px 0 0}
+.k-pallet .fx-head,.k-table .fx-head{display:none}
+.shelf{position:relative;display:flex;align-items:stretch}
+.up{width:12px;flex:none;background:radial-gradient(circle,rgba(0,0,0,.32) 1.6px,transparent 2.1px) 0 0/12px 20px,linear-gradient(90deg,var(--up1),var(--up2))}
+.k-pallet .up,.k-table .up{visibility:hidden}
+.shelf-label{position:absolute;right:100%;margin-right:8px;bottom:4px;width:74px;text-align:right;font-size:11px;color:var(--muted);line-height:1.3}
 .shelf-label input{width:52px;padding:2px 4px;font-size:11px;text-align:right}
+.shelf-label .u{display:block;font-size:10px}
 .shelf-wrap{flex:none}
-.shelf-body{position:relative;display:flex;align-items:flex-end;background:#f8f9fb;border-bottom:7px solid #8b6b4a;box-shadow:inset 0 0 0 1px #d6dae1}
-.shelf-body.over{background:#eaf1ff}
+.shelf-body{position:relative;display:flex;align-items:flex-end;background:var(--back)}
+.k-wall .shelf-body{background:repeating-linear-gradient(to bottom,rgba(0,0,0,.13) 0 2px,transparent 2px calc(var(--cm)*7.5)),var(--back)}
+.k-gondola .shelf-body,.k-endcap .shelf-body{background:radial-gradient(circle,rgba(0,0,0,.2) 1.6px,transparent 2.2px) 0 0/calc(var(--cm)*2.5) calc(var(--cm)*2.5),var(--back)}
+.k-pallet .shelf-body,.k-table .shelf-body{background:linear-gradient(180deg,#f7f8fa,#e9edf3)}
+.shelf-body.over{outline:2px dashed var(--accent);outline-offset:-2px}
 .shelf-body.full{box-shadow:inset 0 0 0 2px var(--bad)}
-.item{flex:none;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;line-height:1.15;overflow:hidden;border:1px solid rgba(0,0,0,.35);cursor:grab;position:relative;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.45);user-select:none}
-.item.sel{outline:3px solid #f59e0b;outline-offset:-2px;z-index:2}
+.board{display:flex;flex-direction:column;height:15px}
+.rail{height:7px;display:flex;background:#fff;border-bottom:1px solid rgba(0,0,0,.25)}
+.rail i{display:block;height:100%}
+.plank{flex:1;background:linear-gradient(180deg,var(--board1),var(--board2));box-shadow:0 3px 4px rgba(0,0,0,.28)}
+.k-pallet .board{display:none}
+.fx-base{height:calc(var(--cm)*10);background:linear-gradient(180deg,var(--up2),var(--up1));border-top:2px solid rgba(0,0,0,.25);box-shadow:0 5px 9px rgba(0,0,0,.22);border-radius:0 0 3px 3px}
+.k-pallet .fx-base{height:calc(var(--cm)*12);border-top:0;
+  background:repeating-linear-gradient(90deg,transparent 0 calc(20% - 3px),rgba(60,38,18,.55) calc(20% - 3px) 20%),
+  linear-gradient(180deg,#cf9f66 0 30%,#5e4023 30% 38%,#b98a54 38% 68%,#5e4023 68% 76%,#cf9f66 76%)}
+.k-table .fx-base{height:calc(var(--cm)*20);border:0;box-shadow:none;background:linear-gradient(90deg,var(--up2) 0 16px,transparent 16px calc(100% - 16px),var(--up2) 0)}
+
+.item{flex:none;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;line-height:1.15;overflow:hidden;border:1px solid rgba(0,0,0,.4);cursor:grab;position:relative;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5);user-select:none;box-shadow:2px 0 3px rgba(0,0,0,.22);border-radius:2px}
+.item::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.3),rgba(255,255,255,0) 32%,rgba(0,0,0,.24));pointer-events:none}
+.item .t{position:relative;z-index:1;padding:0 2px}
+.item.jar{border-radius:7px 7px 3px 3px}
+.item.jar::before{content:'';position:absolute;left:10%;right:10%;top:0;height:14%;min-height:3px;background:rgba(0,0,0,.42);border-radius:0 0 3px 3px;z-index:1}
+.item.pot{border-radius:3px 3px 45% 45%/3px 3px 28% 28%}
+.item.pot::before{content:'';position:absolute;left:5%;right:5%;top:9%;height:2px;background:rgba(255,255,255,.55);z-index:1}
+.item.box::before{content:'';position:absolute;left:0;right:0;top:10%;height:9%;background:rgba(255,255,255,.34);z-index:1}
+.item.sel{outline:3px solid #f59e0b;outline-offset:-2px;z-index:3}
 .item.tall{box-shadow:inset 0 0 0 3px var(--bad)}
-.item .fc{position:absolute;right:1px;top:1px;background:rgba(0,0,0,.55);padding:0 3px;border-radius:3px;font-size:9px}
+.item .fc{position:absolute;right:1px;top:1px;background:rgba(0,0,0,.6);padding:0 3px;border-radius:3px;font-size:9px;z-index:2}
 .ind{position:absolute;top:0;bottom:0;width:3px;background:var(--accent);pointer-events:none;z-index:5}
-.shelf-info{font-size:11px;color:var(--muted);padding:2px 0 6px 62px}
 
 /* library */
 .sku{display:flex;gap:8px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;cursor:grab;background:#fff}
@@ -101,15 +134,18 @@ button.danger{color:var(--bad)}
         <div><label>Tinggi</label><input id="fxHeight" type="number" min="30" max="400"></div>
       </div>
       <div class="muted">Ukuran dalam cm (L × D × T)</div>
-      <label>Jumlah rak</label>
-      <div class="row">
-        <button id="shMinus">− Rak</button>
-        <button id="shPlus">+ Rak</button>
+      <div id="shCtl">
+        <label>Jumlah rak</label>
+        <div class="row">
+          <button id="shMinus">− Rak</button>
+          <button id="shPlus">+ Rak</button>
+        </div>
+        <label>Tinggi default rak baru (cm)</label>
+        <input id="shDefH" type="number" min="5" max="100" value="25">
       </div>
+      <div id="shLock" class="muted" style="margin-top:8px"></div>
       <button id="shEven" style="width:100%;margin-top:6px">Bagi rata tinggi rak</button>
       <div id="heightInfo" class="muted" style="margin-top:6px"></div>
-      <label>Tinggi default rak baru (cm)</label>
-      <input id="shDefH" type="number" min="5" max="100" value="25">
       <label>Zoom</label>
       <input id="zoom" type="range" min="2" max="9" step="0.5">
     </section>
@@ -230,39 +266,64 @@ function normalize() {
 }
 
 /* ---------- render ---------- */
+function updateLock() {
+  const l = locked(); $('#shCtl').hidden = l;
+  $('#shLock').innerHTML = l ? `🔒 <b>${S.fixture.shelves.length} rak</b> — terkunci sesuai standar fixture.` : '';
+}
 function render() {
-  normalize(); renderFixture(); renderLib(); renderInspector(); renderStats(); save();
+  normalize(); renderFixture(); renderLib(); renderInspector(); renderStats(); updateLock(); save();
 }
 
+const shapeOf = k => /canister|toples|botol|jar|bottle|gelas|tumbler/i.test(k.name) ? 'jar' : /panci|wajan|pot\b|pan\b/i.test(k.name) ? 'pot' : 'box';
+const brandCol = k => `hsl(${hue(k.brand || k.name)} 60% 42%)`;
+const kindOf = f => { const n = (f.type || f.name || '').toUpperCase();
+  if ((f.preset || '').startsWith('wall') || n.includes('WALL')) return 'wall';
+  if (f.preset === 'endcap' || n.includes('ENDCAP')) return 'endcap';
+  if (f.preset === 'pallet' || n.includes('PALLET')) return 'pallet';
+  if (/MEJA|TD-0|NESTING/.test(n)) return 'table';
+  return 'gondola'; };
+const matOf = f => { const n = (f.type || f.name || '').toUpperCase();
+  return n.includes('BURNT') ? 'burnt' : n.includes('GLASS') ? 'glass' : (n.includes('METAL') || f.src === 'CHINA') ? 'steel' : 'ash'; };
+const MATS = { ash: { b1: '#e8d3ae', b2: '#c9a877', u1: '#dcc59c', u2: '#b99a6a', back: '#f6efdf', ink: '#4a3a22' },
+  burnt: { b1: '#7a5740', b2: '#47301f', u1: '#6e4e39', u2: '#3b281b', back: '#a8917f', ink: '#f3e6d8' },
+  glass: { b1: '#c4e8f3', b2: '#7abace', u1: '#d0d5dd', u2: '#8d97a6', back: '#eef5f8', ink: '#2a3a44' },
+  steel: { b1: '#d9dde4', b2: '#8f98a6', u1: '#c7ccd5', u2: '#808996', back: '#eef0f4', ink: '#2a313b' } };
+const locked = () => !!S.fixture.preset || !!guessPreset(S.fixture.type || '');
+
 function renderFixture() {
-  const fx = $('#fixture'), sc = S.scale, W = S.fixture.width * sc;
-  fx.innerHTML = '';
+  const fx = $('#fixture'), sc = S.scale, f = S.fixture, W = f.width * sc, kind = kindOf(f);
+  fx.className = `k-${kind} m-${matOf(f)}`; fx.style.setProperty('--cm', sc + 'px'); fx.innerHTML = '';
   const t = document.createElement('div'); t.className = 'fx-title';
-  t.textContent = `${S.fixture.name} — ${S.fixture.width}×${S.fixture.depth}×${S.fixture.height} cm`; fx.appendChild(t);
-  S.fixture.shelves.forEach((sh, si) => {
+  t.textContent = `${f.name} — ${f.width}×${f.depth}×${f.height} cm`; fx.appendChild(t);
+  const head = document.createElement('div'); head.className = 'fx-head'; head.style.width = W + 24 + 'px';
+  head.textContent = kind === 'endcap' ? (f.type || 'ENDCAP') : kind === 'wall' ? (f.type || 'WALL') : ''; fx.appendChild(head);
+  f.shelves.forEach((sh, si) => {
     const row = document.createElement('div'); row.className = 'shelf';
+    const u = used(sh), pct = Math.round(u / f.width * 100);
     const lab = document.createElement('div'); lab.className = 'shelf-label';
-    lab.innerHTML = `Rak ${si + 1}<br><input type="number" min="5" max="120" value="${sh.h}" data-h="${si}"> cm`;
+    lab.innerHTML = `Rak ${si + 1}<br><input type="number" min="5" max="120" value="${sh.h}" data-h="${si}"> cm<span class="u${u > f.width ? ' bad' : ''}">${pct}% terisi</span>`;
     const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
     const body = document.createElement('div'); body.className = 'shelf-body';
     body.dataset.shelf = si; body.style.width = W + 'px'; body.style.height = sh.h * sc + 'px';
-    if (used(sh) > S.fixture.width) body.classList.add('full');
+    if (u > f.width) body.classList.add('full');
+    const rail = document.createElement('div'); rail.className = 'rail'; rail.style.width = W + 'px';
     sh.items.forEach((it, ii) => {
-      const k = sku(it.sku); const d = document.createElement('div');
-      d.className = 'item' + (sel && sel.shelf === si && sel.idx === ii ? ' sel' : '') + (k.h * it.s > sh.h ? ' tall' : '');
+      const k = sku(it.sku), iw = k.w * it.f * sc, d = document.createElement('div');
+      d.className = `item ${shapeOf(k)}` + (sel && sel.shelf === si && sel.idx === ii ? ' sel' : '') + (k.h * it.s > sh.h ? ' tall' : '');
       d.draggable = true; d.dataset.shelf = si; d.dataset.idx = ii;
-      d.style.width = k.w * it.f * sc + 'px'; d.style.height = Math.min(k.h * it.s, sh.h) * sc + 'px';
-      d.style.background = color(k);
+      d.style.width = iw + 'px'; d.style.height = Math.min(k.h * it.s, sh.h) * sc + 'px'; d.style.background = color(k);
       d.title = `${k.name} (${k.brand}) • ${k.w}×${k.h} cm • ${it.f} facing × ${it.s} susun`;
-      d.innerHTML = `<span>${k.name}</span>` + (it.f > 1 || it.s > 1 ? `<span class="fc">${it.f}×${it.s}</span>` : '');
+      d.innerHTML = `<span class="t">${esc(k.name)}</span>` + (it.f > 1 || it.s > 1 ? `<span class="fc">${it.f}×${it.s}</span>` : '');
       body.appendChild(d);
+      const seg = document.createElement('i'); seg.style.width = iw + 'px'; seg.style.background = brandCol(k); rail.appendChild(seg);
     });
-    wrap.appendChild(body); row.append(lab, wrap); fx.appendChild(row);
-    const u = used(sh), pct = Math.round(u / S.fixture.width * 100);
-    const info = document.createElement('div'); info.className = 'shelf-info';
-    info.innerHTML = `${u.toFixed(1)} / ${S.fixture.width} cm (${pct}%)` + (u > S.fixture.width ? ' <b class="bad">melebihi lebar!</b>' : '');
-    fx.appendChild(info);
+    const board = document.createElement('div'); board.className = 'board';
+    const plank = document.createElement('div'); plank.className = 'plank'; board.append(rail, plank);
+    wrap.append(body, board);
+    const upL = document.createElement('div'); upL.className = 'up'; const upR = upL.cloneNode();
+    row.append(lab, upL, wrap, upR); fx.appendChild(row);
   });
+  const base = document.createElement('div'); base.className = 'fx-base'; base.style.width = W + 24 + 'px'; fx.appendChild(base);
 }
 
 function renderLib() {
@@ -449,6 +510,7 @@ $('#fxType').onchange = e => {
   const t = e.target.value; if (!t) return;
   const old = { ...S.fixture, shelves: S.fixture.shelves }, g = guessPreset(t);
   S.fixture.type = t; S.fixture.name = `BN - Fixture ${S.fixture.src} - ${t}`;
+  if (!g) S.fixture.preset = '';
   if (g && !applyPreset(g)) { Object.assign(S.fixture, { type: old.type, name: old.name }); }
   syncFixtureForm(); render();
   if (!g) toast('Ukuran jenis ini belum ada di preset. Isi L × D × T secara manual.');
@@ -459,9 +521,9 @@ for (const [id, key] of [['fxWidth', 'width'], ['fxDepth', 'depth'], ['fxHeight'
   $('#' + id).onchange = e => { S.fixture[key] = num(e.target.value, S.fixture[key]); S.fixture.preset = ''; syncFixtureForm(); render(); };
 $('#shEven').onclick = () => { const f = S.fixture, h = evenH(f.height, f.shelves.length, f.preset); f.shelves.forEach(s => s.h = h); render(); };
 $('#zoom').oninput = e => { S.scale = +e.target.value; renderFixture(); save(); };
-$('#shPlus').onclick = () => { S.fixture.shelves.push({ h: num($('#shDefH').value, 25), items: [] }); render(); };
+$('#shPlus').onclick = () => { if (locked()) return; S.fixture.shelves.push({ h: num($('#shDefH').value, 25), items: [] }); render(); };
 $('#shMinus').onclick = () => {
-  const sh = S.fixture.shelves; if (sh.length <= 1) return;
+  const sh = S.fixture.shelves; if (locked() || sh.length <= 1) return;
   if (sh[sh.length - 1].items.length && !confirm('Rak terakhir berisi item. Hapus rak beserta isinya?')) return;
   sh.pop(); sel = null; render();
 };
@@ -547,33 +609,64 @@ $('#fileCsv').onchange = async e => {
 };
 
 $('#btnPng').onclick = () => {
-  const sc = 10, W = S.fixture.width * sc, lab = 90, pad = 30, head = 70, foot = 30;
-  const H = S.fixture.shelves.reduce((a, s) => a + s.h * sc + 14 + 34, 0);
-  const c = document.createElement('canvas'); c.width = lab + W + pad * 2; c.height = head + H + foot;
-  const g = c.getContext('2d');
+  const f = S.fixture, kind = kindOf(f), M = MATS[matOf(f)];
+  const sc = 10, W = f.width * sc, lab = 100, pad = 30, up = 24, plank = 28, titleH = 70;
+  const head = { endcap: 76, wall: 50, gondola: 24 }[kind] || 0;
+  const base = (kind === 'pallet' ? 12 : kind === 'table' ? 20 : BASE) * sc;
+  const H = f.shelves.reduce((a, s) => a + s.h * sc + (kind === 'pallet' ? 0 : plank), 0);
+  const c = document.createElement('canvas'); c.width = pad + lab + up * 2 + W + pad; c.height = titleH + head + H + base + 50;
+  const g = c.getContext('2d'), x0 = pad + lab + up;
+  const lg = (xa, ya, xb, yb, a, b) => { const q = g.createLinearGradient(xa, ya, xb, yb); q.addColorStop(0, a); q.addColorStop(1, b); return q; };
+  const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
   g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
-  g.fillStyle = '#1f2430'; g.font = 'bold 28px system-ui,sans-serif'; g.fillText(`${S.fixture.name} — ${S.fixture.width}×${S.fixture.depth}×${S.fixture.height} cm`, pad, 44);
-  let y = head;
-  S.fixture.shelves.forEach((sh, si) => {
-    const hh = sh.h * sc, x0 = pad + lab;
-    g.fillStyle = '#f2f4f7'; g.fillRect(x0, y, W, hh);
-    g.fillStyle = '#8b6b4a'; g.fillRect(x0, y + hh, W, 14);
-    g.fillStyle = '#6b7280'; g.font = '20px system-ui,sans-serif'; g.fillText(`Rak ${si + 1}`, pad, y + hh - 6);
+  g.fillStyle = '#1f2430'; g.font = 'bold 28px system-ui,sans-serif'; g.fillText(`${f.name} — ${f.width}×${f.depth}×${f.height} cm`, pad, 44);
+  let y = titleH;
+  if (head) {
+    g.fillStyle = kind === 'endcap' ? lg(x0 - up, y, x0 + W + up, y, '#1d4fd0', '#5b93ff') : lg(0, y, 0, y + head, M.u1, M.u2);
+    rr(x0 - up, y, W + up * 2, head, 8); g.fill();
+    const txt = kind === 'endcap' ? (f.type || 'ENDCAP') : kind === 'wall' ? (f.type || 'WALL') : '';
+    g.fillStyle = kind === 'endcap' ? '#fff' : M.ink; g.font = 'bold 22px system-ui,sans-serif'; g.textAlign = 'center';
+    g.fillText(txt, x0 + W / 2, y + head / 2 + 8); g.textAlign = 'left'; y += head;
+  }
+  f.shelves.forEach((sh, si) => {
+    const hh = sh.h * sc, bh = kind === 'pallet' ? 0 : plank;
+    g.fillStyle = kind === 'pallet' || kind === 'table' ? '#eef1f5' : M.back; g.fillRect(x0, y, W, hh);
+    if (kind === 'wall') { g.fillStyle = 'rgba(0,0,0,.13)'; for (let gy = 0; gy < hh; gy += 75) g.fillRect(x0, y + gy, W, 3); }
+    else if (kind === 'gondola' || kind === 'endcap') { g.fillStyle = 'rgba(0,0,0,.2)'; for (let gy = 12; gy < hh; gy += 25) for (let gx = 12; gx < W; gx += 25) { g.beginPath(); g.arc(x0 + gx, y + gy, 3, 0, 7); g.fill(); } }
+    if (kind !== 'pallet' && kind !== 'table')
+      for (const ux of [x0 - up, x0 + W]) { g.fillStyle = lg(ux, 0, ux + up, 0, M.u1, M.u2); g.fillRect(ux, y, up, hh + bh);
+        g.fillStyle = 'rgba(0,0,0,.3)'; for (let gy = 10; gy < hh + bh; gy += 40) { g.beginPath(); g.arc(ux + up / 2, y + gy, 3, 0, 7); g.fill(); } }
     let x = x0;
-    sh.items.forEach(it => { const k = sku(it.sku), w = k.w * it.f * sc, h = Math.min(k.h * it.s, sh.h) * sc;
-      g.fillStyle = color(k); g.fillRect(x, y + hh - h, w, h); g.strokeStyle = 'rgba(0,0,0,.4)'; g.strokeRect(x + .5, y + hh - h + .5, w - 1, h - 1);
+    sh.items.forEach(it => {
+      const k = sku(it.sku), w = k.w * it.f * sc, h = Math.min(k.h * it.s, sh.h) * sc, top = y + hh - h, shp = shapeOf(k);
+      g.fillStyle = color(k); rr(x, top, w, h, shp === 'jar' ? [14, 14, 5, 5] : shp === 'pot' ? [5, 5, w * .3, w * .3] : 3); g.fill();
+      g.fillStyle = lg(x, 0, x + w, 0, 'rgba(255,255,255,.3)', 'rgba(0,0,0,.25)'); g.fill();
+      g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1.5; g.stroke();
+      if (shp === 'jar') { g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(x + w * .1, top, w * .8, Math.max(6, h * .14)); }
+      else if (shp === 'box') { g.fillStyle = 'rgba(255,255,255,.34)'; g.fillRect(x, top + h * .1, w, h * .09); }
       g.fillStyle = '#fff'; g.font = '16px system-ui,sans-serif';
-      const words = k.name.split(' '); let line = '', ly = y + hh - h + 22;
-      for (const wd of words) { const t = line ? line + ' ' + wd : wd;
-        if (g.measureText(t).width > w - 8 && line) { g.fillText(line, x + 4, ly); ly += 19; line = wd; } else line = t; }
+      let line = '', ly = top + h * .3 + 6;
+      for (const wd of k.name.split(' ')) { const tx = line ? line + ' ' + wd : wd;
+        if (g.measureText(tx).width > w - 8 && line) { g.fillText(line, x + 4, ly); ly += 19; line = wd; } else line = tx; }
       g.fillText(line, x + 4, ly);
-      if (it.f > 1 || it.s > 1) g.fillText(`${it.f}×${it.s}`, x + 4, y + hh - 6);
-      x += w; });
-    g.fillStyle = '#6b7280'; g.font = '18px system-ui,sans-serif';
-    g.fillText(`${used(sh).toFixed(1)} / ${S.fixture.width} cm`, x0, y + hh + 14 + 22);
-    y += hh + 14 + 34;
+      if (it.f > 1 || it.s > 1) { g.font = 'bold 15px system-ui,sans-serif'; g.fillText(`${it.f}×${it.s}`, x + 4, y + hh - 8); }
+      x += w;
+    });
+    if (bh) {
+      g.fillStyle = '#fff'; g.fillRect(x0, y + hh, W, 14);
+      let rx = x0; sh.items.forEach(it => { const k = sku(it.sku), w = k.w * it.f * sc; g.fillStyle = brandCol(k); g.fillRect(rx, y + hh, w, 14); rx += w; });
+      g.fillStyle = lg(0, y + hh + 14, 0, y + hh + bh, M.b1, M.b2); g.fillRect(x0 - up, y + hh + 14, W + up * 2, bh - 14);
+    }
+    g.fillStyle = '#6b7280'; g.font = '18px system-ui,sans-serif'; g.textAlign = 'right';
+    g.fillText(`Rak ${si + 1}`, x0 - up - 12, y + hh - 22); g.font = '15px system-ui,sans-serif';
+    g.fillText(`${used(sh).toFixed(0)}/${f.width} cm`, x0 - up - 12, y + hh - 4); g.textAlign = 'left';
+    y += hh + bh;
   });
-  g.fillStyle = '#9aa3b2'; g.font = '16px system-ui,sans-serif'; g.fillText(`Dibuat ${new Date().toLocaleDateString('id-ID')}`, pad, c.height - 10);
+  if (kind === 'pallet') { g.fillStyle = '#c79a62'; g.fillRect(x0, y, W, base); g.fillStyle = 'rgba(60,38,18,.55)';
+    for (let i = 1; i < 5; i++) g.fillRect(x0 + W * i / 5 - 3, y, 6, base); g.fillRect(x0, y + base * .32, W, base * .08); g.fillRect(x0, y + base * .68, W, base * .08); }
+  else if (kind === 'table') { g.fillStyle = M.u2; g.fillRect(x0 - up, y, 24, base); g.fillRect(x0 + W, y, 24, base); }
+  else { g.fillStyle = lg(0, y, 0, y + base, M.u2, M.u1); g.fillRect(x0 - up, y, W + up * 2, base); }
+  g.fillStyle = '#9aa3b2'; g.font = '16px system-ui,sans-serif'; g.fillText(`Dibuat ${new Date().toLocaleDateString('id-ID')}`, pad, c.height - 14);
   download(fname('png'), c.toDataURL('image/png'));
 };
 
