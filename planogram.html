@@ -338,12 +338,12 @@ function renderFixture() {
 function renderLib() {
   const q = $('#libSearch').value.trim().toLowerCase(), plan = cur();
   const inPlan = new Set(plan ? plan.zones.flatMap(z => z.items) : []);
-  const all = Object.values(S.skus), list = all.filter(k => !q || (k.code + ' ' + k.name).toLowerCase().includes(q));
+  const all = Object.values(S.skus), list = all.filter(k => !q || [k.code, k.name, k.disp, k.adj, k.series].join(' ').toLowerCase().includes(q));
   $('#libCount').textContent = `(${all.length})`;
   $('#lib').innerHTML = list.map(k => `
     <div class="sku ${inPlan.has(k.code) ? 'placed' : ''}" draggable="true" data-sku="${esc(k.code)}" title="Klik dua kali untuk menambah ke zona terpilih">
       ${k.img ? `<img class="th" src="${esc(k.img)}" loading="lazy" onerror="this.style.visibility='hidden'">` : '<div class="th"></div>'}
-      <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.code)}</div></div>
+      <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.code)}${k.series ? ' • ' + esc(k.series) : ''}</div></div>
       <button data-del="${esc(k.code)}" class="danger" title="Hapus SKU">×</button>
     </div>`).join('') || '<div class="muted">Belum ada SKU. Impor data atau tambah SKU di bawah.</div>';
 }
@@ -355,6 +355,7 @@ function renderInspector() {
   const s = S.skus[code] || { code, name: code, img: '' }; el.className = '';
   el.innerHTML = `${s.img ? `<img src="${esc(s.img)}" onerror="this.style.display='none'">` : ''}
     <div style="margin-top:6px"><b>${esc(s.name)}</b></div><div class="muted">Kode ${esc(code)} • ${ZNAME[plan.zones[sel.zone].t]} ${sel.zone + 1}, urutan ${sel.idx + 1}</div>
+    ${[s.disp, s.adj, s.series].filter(Boolean).length ? `<div class="muted" style="margin-top:4px">${[s.disp && 'Display: ' + esc(s.disp), s.adj && 'Adjacency: ' + esc(s.adj), s.series && 'Series: ' + esc(s.series)].filter(Boolean).join('<br>')}</div>` : ''}
     <label>Pindah ke zona</label>
     <select id="iZone">${plan.zones.map((z, i) => `<option value="${i}"${i === sel.zone ? ' selected' : ''}>${ZNAME[z.t]} ${i + 1}</option>`).join('')}</select>
     <div class="btns" style="margin-top:8px"><button data-move="-1">← Geser</button><button data-move="1">Geser →</button><button class="danger" id="iDel">Hapus</button></div>`;
@@ -546,17 +547,23 @@ async function readXlsx(buf) {                       // pembaca .xlsx mandiri (t
 
 function importRows(rows, daftar) {
   const rep = [];                                   // {t:'err'|'warn'|'ok', m}
-  const hdr = (rows[0] || []).map(h => norm(h).replace(/\(.*?\)/g, '').trim());
-  const col = name => hdr.indexOf(name);
-  const need = ['id_fixture', 'zona_no', 'kode_sku'].filter(n => col(n) < 0);
+  const hdr = (rows[0] || []).map(h => norm(h).replace(/\(.*?\)/g, '').trim().replace(/[\s_]+/g, '_'));
+  const col = (...names) => { for (const n of names) { const i = hdr.indexOf(n); if (i >= 0) return i; } return -1; };
+  const ci = { id: col('id_fixture'), jenis: col('jenis_fixture'), zona: col('zona_no'), jz: col('jenis_zona'), kode: col('sku', 'kode_sku'), nama: col('sku_description', 'nama', 'deskripsi'),
+    img: col('link_image'), disp: col('grup_display'), adj: col('grup_adjacency'), ser: col('series') };
+  const need = [['SKU', ci.kode], ['ID FIXTURE', ci.id], ['ZONA NO', ci.zona]].filter(x => x[1] < 0).map(x => x[0]);
   if (need.length) { toast('Kolom wajib tidak ditemukan: ' + need.join(', ')); return; }
-  const ci = { id: col('id_fixture'), jenis: col('jenis_fixture'), zona: col('zona_no'), jz: col('jenis_zona'), kode: col('kode_sku'), nama: col('nama'), img: col('link_image') };
   const get = (r, i) => i < 0 || r[i] == null ? '' : String(r[i]).trim();
   const dmap = {};                                  // fallback id → jenis dari sheet DAFTAR_FIXTURE
   (daftar || []).slice(1).forEach(r => { if (r[0]) dmap[String(r[0]).trim()] = String(r[1] || '').trim(); });
   const groups = new Map();
+  let nMaster = 0;
+  const regSku = r => { const code = get(r, ci.kode); if (!code) return; const old = S.skus[code] || {};
+    S.skus[code] = { code, name: get(r, ci.nama) || old.name || code, img: get(r, ci.img) || old.img || patUrl(code),
+      disp: get(r, ci.disp) || old.disp || '', adj: get(r, ci.adj) || old.adj || '', series: get(r, ci.ser) || old.series || '' }; return code; };
   rows.slice(1).forEach((r, k) => {
-    const id = get(r, ci.id); if (!id) return;
+    const id = get(r, ci.id);
+    if (!id) { if (regSku(r)) nMaster++; return; }
     if (!groups.has(id)) groups.set(id, { rows: [], line0: k + 2 });
     groups.get(id).rows.push({ r, line: k + 2 });
   });
@@ -571,9 +578,8 @@ function importRows(rows, daftar) {
       if (!zn || zn < 1 || zn > plan.zones.length) { rep.push({ t: 'err', m: `${id} baris ${line}: zona_no "${get(r, ci.zona)}" di luar layout (1-${plan.zones.length}).` }); continue; }
       const z = plan.zones[zn - 1], jz = norm(get(r, ci.jz));
       if (jz && jz !== norm(ZNAME[z.t]) && !warned.has(id + '|' + zn)) { warned.add(id + '|' + zn); rep.push({ t: 'warn', m: `${id} zona ${zn}: di Excel "${get(r, ci.jz)}", di layout ${ZNAME[z.t]}. Dipakai: ${ZNAME[z.t]}.` }); }
-      const code = get(r, ci.kode); if (!code) continue;     // baris tanpa SKU = zona kosong
-      const nama = get(r, ci.nama) || code, img = get(r, ci.img) || patUrl(code);
-      S.skus[code] = { code, name: nama, img }; z.items.push(code); cnt++;
+      const code = regSku(r); if (!code) continue;            // baris tanpa SKU = zona kosong
+      z.items.push(code); cnt++;
     }
     const old = S.plans.findIndex(p => p.id === id);
     if (old >= 0) S.plans[old] = plan; else S.plans.push(plan);
@@ -581,6 +587,7 @@ function importRows(rows, daftar) {
     rep.push({ t: 'ok', m: `${id} — ${VARIANTS[key].label}: ${cnt} item di ${plan.zones.filter(z => z.items.length).length}/${plan.zones.length} zona.` });
   }
   if (added.length) { S.cur = added[0]; S.scale = scaleFor(PRESETS[cur().size].h); sel = null; }
+  if (nMaster) rep.push({ t: 'ok', m: `${nMaster} SKU tanpa ID FIXTURE masuk daftar SKU (belum ditempatkan).` });
   $('#reportBox').hidden = false;
   $('#report').innerHTML = rep.map(x => `<div class="${x.t === 'err' ? 'bad' : x.t === 'warn' ? 'warn' : 'ok'}">${x.t === 'err' ? '✖' : x.t === 'warn' ? '⚠' : '✔'} ${esc(x.m)}</div>`).join('');
   render(); toast(`${nPlans} planogram, ${nItems} item diimpor.` + (rep.some(x => x.t === 'err') ? ' Ada baris yang dilewati, lihat Laporan impor.' : ''));
@@ -601,18 +608,21 @@ function download(name, content, type) {
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
 const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-const CSV_HEAD = ['id_fixture', 'jenis_fixture', 'zona_no', 'jenis_zona', 'kode_sku', 'nama', 'link_image'];
+const CSV_HEAD = ['SKU', 'SKU DESCRIPTION', 'GRUP DISPLAY', 'GRUP ADJACENCY', 'SERIES', 'ID FIXTURE', 'ZONA NO', 'JENIS ZONA', 'JENIS FIXTURE', 'LINK IMAGE'];
 $('#btnCsv').onclick = () => {
-  if (!S.plans.length) return toast('Belum ada planogram.');
-  const rows = [CSV_HEAD];
+  if (!S.plans.length && !Object.keys(S.skus).length) return toast('Belum ada data.');
+  const rows = [CSV_HEAD], placed = new Set();
+  const sk = c => S.skus[c] || { name: '', img: '' };
   for (const p of S.plans) p.zones.forEach((z, i) => {
-    if (!z.items.length) rows.push([p.id, VARIANTS[p.variant].label, i + 1, ZNAME[z.t], '', '', '']);
-    z.items.forEach(c => { const s = S.skus[c] || {}; rows.push([p.id, VARIANTS[p.variant].label, i + 1, ZNAME[z.t], c, s.name || '', s.img || '']); });
+    const base = [p.id, i + 1, ZNAME[z.t], VARIANTS[p.variant].label];
+    if (!z.items.length) rows.push(['', '', '', '', '', ...base, '']);
+    z.items.forEach(c => { placed.add(c); const s = sk(c); rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', ...base, s.img || '']); });
   });
-  download('planogram_data.csv', '﻿' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
+  for (const c of Object.keys(S.skus)) if (!placed.has(c)) { const s = S.skus[c]; rows.push([c, s.name, s.disp || '', s.adj || '', s.series || '', '', '', '', '', s.img || '']); }
+  download('planogram_data.csv', '\ufeff' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
 };
 $('#btnTpl').onclick = () => download('template_planogram.csv',
-  '﻿' + CSV_HEAD.join(',') + '\nGND-01,Gondola 4 Rack,1,Rak,10445959,CASSEROLE RECT GOLD MARBLE W/LID 33CM,\nGND-01,Gondola 4 Rack,1,Rak,10445960,CASSEROLE OVAL GOLD MARBLE W/LID 33CM,\nGND-01,Gondola 4 Rack,2,Rak,,,\n', 'text/csv');
+  '\ufeff' + CSV_HEAD.join(',') + '\n10681571,SERVING GLASS SQR PLATER ZEVY GOLD,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,GND-01,1,Rak,Gondola 4 Rack,\n10680419,MOSQUE DOME GLASS JAR SET OF 3 450ML,PENYIMPANAN,E4. CANISTER,GLASS FANCY,GND-01,2,Rak,Gondola 4 Rack,\n', 'text/csv');
 $('#btnSave').onclick = () => download('planogram.json', JSON.stringify(S, null, 2), 'application/json');
 $('#btnLoad').onclick = () => $('#fileJson').click();
 $('#fileJson').onchange = async e => {
