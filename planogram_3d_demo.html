@@ -130,11 +130,93 @@ button.danger{color:var(--bad)}
 #fLoc{margin-bottom:8px;font-size:12px}
 #fLoc button{display:block;width:100%;text-align:left;margin-top:4px;padding:4px 8px}
 #fLoc button.cur{border-color:var(--accent);background:#f1f7ff}
+
+/* ===== tema baru: berwarna, kartu & widget ===== */
+:root{--bg:#f3f1ff;--panel:#fff;--ink:#1e1b4b;--muted:#6b6f93;--line:#e6e4f8;--accent:#6366f1;--accent2:#ec4899;--bad:#e11d48;--ok:#059669;--warn:#d97706}
+body{font-family:"Inter","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);min-height:100vh;padding-bottom:70px;
+  background:radial-gradient(900px 420px at 6% -8%,#dfe6ff 0,transparent 60%),radial-gradient(800px 420px at 100% 0,#ffe0f0 0,transparent 55%),linear-gradient(180deg,#f7f6ff,#eaf6ff)}
+header{position:relative;overflow:hidden;gap:8px;padding:14px 22px;background:linear-gradient(115deg,#3730a3,#7c3aed 48%,#db2777);border:0;color:#fff;box-shadow:0 12px 34px rgba(79,70,229,.38)}
+header::before,header::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+header::before{width:260px;height:260px;right:-60px;top:-140px;background:radial-gradient(circle,rgba(255,255,255,.28),transparent 70%)}
+header::after{width:200px;height:200px;left:34%;bottom:-130px;background:radial-gradient(circle,rgba(251,191,36,.35),transparent 70%)}
+header>*{position:relative;z-index:1}
+.brand{display:flex;align-items:center;gap:14px;margin-right:8px}
+.logo{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(135deg,#fde68a,#fb923c 55%,#f43f5e);box-shadow:0 10px 24px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.55);transform:rotate(-6deg)}
+.brand h1{margin:0;font-size:32px;line-height:1;font-weight:900;letter-spacing:-.03em;background:linear-gradient(90deg,#fff 0,#fef3c7 55%,#fbcfe8);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 4px 18px rgba(0,0,0,.18)}
+.brand small{display:block;margin-top:6px;font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.82)}
+header button{border-radius:999px;padding:7px 12px;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.38);background:rgba(255,255,255,.15);color:#fff;transition:.15s}
+header button:hover{background:rgba(255,255,255,.3);transform:translateY(-1px)}
+header button.primary{border:0;color:#431407;background:linear-gradient(135deg,#fde047,#fb923c);box-shadow:0 8px 18px rgba(249,115,22,.5)}
+header button.primary:hover{background:linear-gradient(135deg,#fef08a,#fdba74)}
+.seg{background:rgba(255,255,255,.16);padding:3px;border-radius:999px;border:1px solid rgba(255,255,255,.3)}
+.seg button{border:0!important;background:transparent!important;border-radius:999px!important;padding:6px 18px}
+.seg button.on{background:#fff!important;color:#4338ca!important;box-shadow:0 4px 12px rgba(0,0,0,.22)}
+main{gap:18px;padding:20px 22px}
+.panel{background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.9);border-radius:20px;padding:16px;box-shadow:0 10px 30px rgba(76,29,149,.09),0 1px 0 rgba(255,255,255,.8) inset}
+.panel+.panel{margin-top:18px}
+.panel h2{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;letter-spacing:.08em;color:#4338ca;margin:0 0 12px}
+#filterPanel{border-top:5px solid #6366f1}
+#filterPanel h2{color:#6d28d9}
+#side-left .panel:nth-of-type(2){border-top:5px solid #14b8a6}
+#side-right .panel{border-top:5px solid #ec4899}
+select,input{border:1.5px solid #e2e0f7;border-radius:13px;background:#fbfbff;padding:9px 12px;font-weight:600;color:#312e81;transition:.15s}
+select:hover,input:hover{border-color:#c4b5fd}
+select:focus,input:focus{outline:0;border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+#fDisp{border-left:6px solid #f59e0b}#fAdj{border-left:6px solid #ec4899}#fSer{border-left:6px solid #14b8a6}
+button{border-radius:12px;border:1.5px solid #e2e0f7;font-weight:600;transition:.15s}
+button:hover{background:#f5f3ff}
+button.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;color:#fff}
+#fReset{border:0;color:#fff;background:linear-gradient(135deg,#f43f5e,#ec4899);box-shadow:0 8px 18px rgba(244,63,94,.35)}
+#fReset:hover{background:linear-gradient(135deg,#fb7185,#f472b6)}
+/* widget KPI */
+#kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:6px 6px 14px}
+#kpis[hidden],#pvTitle[hidden]{display:none}
+.kpi{position:relative;overflow:hidden;border-radius:18px;padding:14px 16px 12px;color:#fff;box-shadow:0 12px 26px rgba(0,0,0,.16);animation:rise .45s ease both}
+.kpi:hover{transform:translateY(-3px);transition:.2s}
+.kpi .ic{position:absolute;right:10px;top:4px;font-size:46px;opacity:.28;transform:rotate(12deg)}
+.kpi .lb{display:block;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.92}
+.kpi b{display:block;font-size:34px;line-height:1.1;font-weight:900;margin-top:4px}
+.k1{background:linear-gradient(135deg,#4f46e5,#8b5cf6)}.k2{background:linear-gradient(135deg,#ec4899,#f97316)}
+.k3{background:linear-gradient(135deg,#0d9488,#06b6d4)}.k4{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.kpi:nth-child(2){animation-delay:.06s}.kpi:nth-child(3){animation-delay:.12s}.kpi:nth-child(4){animation-delay:.18s}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#pvTitle{display:flex;flex-wrap:wrap;gap:8px;margin:0 6px 12px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;font-weight:800;font-size:13px;color:#1e1b4b;background:#fff;border:1.5px solid #e2e0f7;box-shadow:0 4px 12px rgba(76,29,149,.08)}
+.chip i{font-style:normal;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:999px;color:#fff}
+.c-adj i{background:linear-gradient(135deg,#ec4899,#f43f5e)}.c-ser i{background:linear-gradient(135deg,#14b8a6,#06b6d4)}.c-disp i{background:linear-gradient(135deg,#f59e0b,#f97316)}
+/* kondisi awal */
+#emptyMsg{flex-direction:column;gap:10px;margin:6px;min-height:62vh;border:2.5px dashed #c4b5fd;border-radius:24px;background:linear-gradient(135deg,rgba(238,242,255,.9),rgba(253,242,248,.9));font-size:19px;color:#4338ca;letter-spacing:.05em}
+.em-ico{font-size:64px;filter:drop-shadow(0 10px 14px rgba(99,102,241,.35));animation:float 3s ease-in-out infinite}
+.em-t{font-weight:800;line-height:1.7}.em-h{font-size:13px;font-weight:600;color:#9d174d;letter-spacing:.04em}
+@keyframes float{50%{transform:translateY(-10px)}}
+/* daftar SKU sebagai kartu */
+.sku{border-radius:15px;border:1px solid #ece9ff;border-left-width:5px;background:#fff;box-shadow:0 4px 12px rgba(99,102,241,.08);transition:.18s}
+.sku:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(99,102,241,.18);background:#fff}
+.sku.placed{background:linear-gradient(90deg,#eef2ff,#fff)}
+.sku .th{border-radius:10px}
+.sku .nm div:first-child{font-weight:700;color:#1e1b4b}
+#lib{max-height:70vh;padding-right:2px}
+/* 3D */
+#gl{height:max(420px,calc(100vh - 430px));border-radius:18px;border:2px solid #e7e4fb;box-shadow:0 10px 30px rgba(76,29,149,.12) inset}
+.tb3 button{border-radius:999px;padding:7px 16px;font-weight:700;background:#fff;border:1.5px solid #ddd6fe;color:#4338ca}
+.tb3 button:hover{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:transparent}
+.tb3 .muted{background:#f5f3ff;padding:5px 12px;border-radius:999px}
+.fixture{box-shadow:0 12px 30px rgba(76,29,149,.14);border:1px solid #e6e4f8}
+.fx-title{color:#3730a3}
+/* kredit */
+#credit{position:fixed;left:16px;bottom:14px;z-index:60;padding:9px 18px;border-radius:999px;font-size:12.5px;font-weight:600;letter-spacing:.05em;color:#fff;background:linear-gradient(115deg,#3730a3,#7c3aed 55%,#db2777);box-shadow:0 10px 24px rgba(67,56,202,.45)}
+#credit b{color:#fde68a;font-weight:800}
+#toast{border-radius:14px;background:linear-gradient(115deg,#3730a3,#7c3aed)}
+@media(max-width:900px){#kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.brand h1{font-size:25px}}
+@media print{#credit,#kpis,#pvTitle{display:none!important}}
 </style>
 </head>
 <body>
 <header>
-  <h1>Planogram Generator</h1>
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><rect x="6" y="5" width="36" height="38" rx="5" fill="rgba(255,255,255,.95)"/><rect x="10" y="12" width="9" height="9" rx="2" fill="#6366f1"/><rect x="21" y="12" width="7" height="9" rx="2" fill="#ec4899"/><rect x="30" y="14" width="8" height="7" rx="2" fill="#14b8a6"/><rect x="10" y="24" width="12" height="7" rx="2" fill="#f59e0b"/><rect x="24" y="23" width="14" height="8" rx="2" fill="#6366f1"/><rect x="8" y="21.5" width="32" height="2" rx="1" fill="#312e81"/><rect x="8" y="33" width="32" height="2" rx="1" fill="#312e81"/></svg></div>
+    <div><h1>Planogram Generator</h1><small>Preview display fixture 2D &amp; 3D dari Excel</small></div>
+  </div>
   <div class="seg"><button id="vw2" class="on">2D</button><button id="vw3">3D</button></div>
   <button class="primary" id="btnImport">Impor Excel / CSV</button>
   <input type="file" id="fileData" accept=".xlsx,.csv,.txt" hidden>
@@ -151,11 +233,10 @@ button.danger{color:var(--bad)}
 <main>
   <div id="side-left">
     <section class="panel" id="filterPanel">
-      <h2>Filter <span class="muted" id="fCount"></span></h2>
+      <h2>🎯 Filter <span class="muted" id="fCount"></span></h2>
       <select id="fDisp" style="margin-bottom:6px"></select>
       <select id="fAdj" style="margin-bottom:6px"></select>
       <select id="fSer" style="margin-bottom:6px"></select>
-      <select id="fFx" style="margin-bottom:6px"></select>
       <details id="fMore" style="margin-bottom:6px"><summary class="muted" style="cursor:pointer;margin-bottom:6px">Filter lainnya (Dept, Comm, Class, Sub Series)</summary>
         <select id="fDept" style="margin-bottom:6px"></select><select id="fComm" style="margin-bottom:6px"></select><select id="fCls" style="margin-bottom:6px"></select><select id="fSub" style="margin-bottom:6px"></select>
       </details>
@@ -174,7 +255,7 @@ button.danger{color:var(--bad)}
     </section>
 
     <section class="panel">
-      <h2>Bahan Fixture</h2>
+      <h2>🪵 Bahan Fixture</h2>
       <div hidden><label>Jenis</label>
       <select id="fxVar"></select></div>
       <div class="row">
@@ -203,7 +284,9 @@ button.danger{color:var(--bad)}
   </div>
 
   <section class="panel" style="padding:8px">
-    <div id="emptyMsg">SILAHKAN PILIH DULU GRUP ADJACENCY ATAU SERIES<br>UNTUK MENAMPILKAN PREVIEW 3D/2D-NYA</div>
+    <div id="kpis" hidden></div>
+    <div id="pvTitle" hidden></div>
+    <div id="emptyMsg"><div class="em-ico">🧭</div><div class="em-t">SILAHKAN PILIH DULU GRUP ADJACENCY ATAU SERIES<br>UNTUK MENAMPILKAN PREVIEW 3D/2D-NYA</div><div class="em-h">← gunakan filter di panel kiri</div></div>
     <div id="planTabs" class="btns" style="margin:0 0 8px" hidden></div>
     <div id="stage"></div>
     <div id="view3d" hidden>
@@ -219,7 +302,7 @@ button.danger{color:var(--bad)}
 
   <div id="side-right">
     <section class="panel">
-      <h2>Daftar SKU <span class="muted" id="libCount"></span></h2>
+      <h2>🏷️ Daftar SKU <span class="muted" id="libCount"></span></h2>
       <input id="libSearch" hidden>
       <div id="lib"></div>
     </section>
@@ -235,6 +318,7 @@ button.danger{color:var(--bad)}
   </div>
 </main>
 <div id="toast"></div>
+<div id="credit">Apps by <b>Erie Hermawan</b></div>
 
 <script>/**
  * @license
@@ -360,7 +444,7 @@ function renderFixture() {
   if (!plans.length) { if (!S.plans.length) host.innerHTML = '<div class="empty" style="padding:30px;color:var(--muted)">Belum ada planogram. Klik <b>Impor Excel / CSV</b> untuk memuat data.</div>'; return; }
   // satu skala (px per cm) untuk semua fixture agar ukuran relatifnya sama dengan 3D
   const avail = Math.max(600, host.clientWidth || 900), sumW = plans.reduce((a, pl) => a + PRESETS[pl.size].w, 0), maxH = Math.max(...plans.map(pl => PRESETS[pl.size].h));
-  const sc = Math.max(2.0, Math.min(scaleFor(maxH), (avail - plans.length * 110) / sumW));
+  const sc = Math.max(1.5, Math.min(scaleFor(maxH), (avail - plans.length * 112) / sumW));
   const row = document.createElement('div'); row.className = 'fxrow';
   plans.forEach(plan => row.appendChild(buildFixture2d(plan, sc)));
   host.appendChild(row);
@@ -414,7 +498,7 @@ function renderLib() {
   const all = Object.values(S.skus), list = all.filter(k => skuOk(k.code));
   $('#libCount').textContent = itemFilter() ? `(${list.length}/${all.length})` : `(${all.length})`;
   $('#lib').innerHTML = list.map(k => `
-    <div class="sku ${inPlan.has(k.code) ? 'placed' : ''}" draggable="true" data-sku="${esc(k.code)}" title="Klik dua kali untuk menambah ke zona terpilih">
+    <div class="sku ${inPlan.has(k.code) ? 'placed' : ''}" style="border-left:5px solid hsl(${hue(k.series || k.adj || k.code)} 70% 58%)" draggable="true" data-sku="${esc(k.code)}" title="Klik dua kali untuk menambah ke zona terpilih">
       ${k.img ? `<img class="th" src="${esc(k.img)}" loading="lazy" onerror="this.style.visibility='hidden'">` : '<div class="th"></div>'}
       <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.code)}${k.series ? ' • ' + esc(k.series) : ''}</div></div>
       <button data-del="${esc(k.code)}" class="danger" title="Hapus SKU">×</button>
@@ -508,10 +592,7 @@ function renderFilters() {
   [['#fDisp', 'Grup Display', 'disp'], ['#fAdj', 'Grup Adjacency', 'adj'], ['#fSer', 'Series', 'ser'], ['#fSub', 'Sub Series', 'sub'],
    ['#fDept', 'Dept', 'dept'], ['#fComm', 'Comm', 'comm'], ['#fCls', 'Class', 'cls']].forEach(([id, lb, f]) => fill(id, lb, FKEY[f], f));
   $('#fMore').hidden = true;
-  const vc = new Map(); S.plans.forEach(p => vc.set(p.variant, (vc.get(p.variant) || 0) + 1));
-  if (F.fx && !vc.has(F.fx)) F.fx = '';
-  $('#fFx').innerHTML = '<option value="">Jenis Fixture (semua)</option>' + [...vc].map(([k, n]) => `<option value="${k}"${F.fx === k ? ' selected' : ''}>${esc(VARIANTS[k].label)} (${n})</option>`).join('');
-  $('#fFx').hidden = !vc.size;
+  F.fx = '';                                          // filter jenis fixture tidak dipakai
   $('#fCount').textContent = fActive() ? `(${S.plans.filter(planOk).length} planogram)` : '';
   $('#fReset').hidden = !fActive();
   const loc = $('#fLoc');
@@ -525,7 +606,6 @@ function afterFilter() {
   render();
 }
 [['#fDisp', 'disp'], ['#fAdj', 'adj'], ['#fSer', 'ser'], ['#fSub', 'sub'], ['#fDept', 'dept'], ['#fComm', 'comm'], ['#fCls', 'cls']].forEach(([id, k]) => $(id).onchange = e => { F[k] = e.target.value; afterFilter(); });
-$('#fFx').onchange = e => { F.fx = e.target.value; afterFilter(); };
 $('#fReset').onclick = () => { Object.keys(F).forEach(k => F[k] = ''); $('#libSearch').value = ''; render(); };
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-goto]'); if (!g) return;
@@ -860,6 +940,15 @@ function applyView() {
   $('#stage').hidden = $('#stageNote').hidden = mode === '3d' || !ok; $('#view3d').hidden = mode === '2d' || !ok;
   const tabs = $('#planTabs'), list = ok ? S.plans.filter(planOk).slice(0, 12) : [];
   tabs.hidden = true; tabs.innerHTML = '';
+  renderKpis();
+}
+function renderKpis() {
+  const box = $('#kpis'), pv = $('#pvTitle'), ok = ready(); box.hidden = pv.hidden = !ok; if (!ok) return;
+  const list = S.plans.filter(planOk).slice(0, 12), skus = new Set(); let items = 0, stock = 0;
+  list.forEach(p => p.zones.forEach(z => { if (!z.items.length) stock++; z.items.forEach(c => { if (skuOk(c)) { items++; skus.add(c); } }); }));
+  box.innerHTML = [['🏬', 'Fixture tampil', list.length, 'k1'], ['🏷️', 'SKU cocok', skus.size, 'k2'], ['📦', 'Item tampil', items, 'k3'], ['🗃️', 'Zona STOCK', stock, 'k4']]
+    .map(([ic, lb, n, k]) => `<div class="kpi ${k}"><span class="ic">${ic}</span><span class="lb">${lb}</span><b>${n}</b></div>`).join('');
+  pv.innerHTML = [['adj', F.adj, 'Adjacency'], ['ser', F.ser, 'Series'], ['disp', F.disp, 'Display']].filter(x => x[1]).map(([k, v, l]) => `<span class="chip c-${k}"><i>${l}</i>${esc(v)}</span>`).join('');
 }
 $('#vw2').onclick = () => setMode('2d'); $('#vw3').onclick = () => setMode('3d');
 
@@ -871,13 +960,13 @@ function init3d() {
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   host.appendChild(renderer.domElement);
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xeef1f6);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xeef0ff);
   const camera = new THREE.PerspectiveCamera(35, 1, 1, 5000);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa3b2, 0.8));
   const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; scene.add(sun);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshStandardMaterial({ color: 0xe3e7ee, roughness: 1 }));
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshStandardMaterial({ color: 0xe6e8fb, roughness: 1 }));
   floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
-  const grid = new THREE.GridHelper(1000, 50, 0xb8c0cc, 0xd0d6df); grid.position.y = 0.1; scene.add(grid);
+  const grid = new THREE.GridHelper(1000, 50, 0xbfc4ee, 0xd9dcf6); grid.position.y = 0.1; scene.add(grid);
   const group = new THREE.Group(); scene.add(group);
   T = { renderer, scene, camera, sun, group, items: [], hl: null, key: '', total: 200, W: 120, D: 50,
         cam: { th: 0.55, ph: 1.28, r: 400, t: new THREE.Vector3(0, 100, 0) }, ray: new THREE.Raycaster(), q: 0 };
