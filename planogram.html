@@ -163,7 +163,7 @@ select,input{border:1.5px solid #e2e0f7;border-radius:13px;background:#fbfbff;pa
 select:hover,input:hover{border-color:#c4b5fd}
 select:focus,input:focus{outline:0;border-color:#8b5cf6;box-shadow:0 0 0 4px rgba(139,92,246,.18)}
 select.on{background:linear-gradient(90deg,#f5f3ff,#fff);border-color:#a78bfa;color:#4c1d95}
-#fDisp{border-left:6px solid #f59e0b}#fAdj{border-left:6px solid #ec4899}#fSer{border-left:6px solid #14b8a6}
+#fAdj{border-left:6px solid #ec4899}#fSer{border-left:6px solid #14b8a6}
 button{border-radius:12px;border:1.5px solid #e2e0f7;font-weight:600;transition:.15s}
 button:hover{background:#f5f3ff}
 button.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;color:#fff}
@@ -172,14 +172,13 @@ button.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;color
 /* widget KPI */
 #kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:6px 6px 14px}
 #kpis[hidden],#pvTitle[hidden]{display:none}
-.kpi{position:relative;overflow:hidden;border-radius:18px;padding:14px 16px 12px;color:#fff;box-shadow:0 12px 26px rgba(0,0,0,.16);animation:rise .45s ease both}
+.kpi{position:relative;overflow:hidden;border-radius:18px;padding:14px 16px 12px;color:#fff;box-shadow:0 12px 26px rgba(0,0,0,.16)}
 .kpi:hover{transform:translateY(-3px);transition:.2s}
 .kpi .ic{position:absolute;right:10px;top:4px;font-size:46px;opacity:.28;transform:rotate(12deg)}
 .kpi .lb{display:block;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.92}
 .kpi b{display:block;font-size:34px;line-height:1.1;font-weight:900;margin-top:4px}
 .k1{background:linear-gradient(135deg,#4f46e5,#8b5cf6)}.k2{background:linear-gradient(135deg,#ec4899,#f97316)}
 .k3{background:linear-gradient(135deg,#0d9488,#06b6d4)}.k4{background:linear-gradient(135deg,#f59e0b,#ef4444)}
-.kpi:nth-child(2){animation-delay:.06s}.kpi:nth-child(3){animation-delay:.12s}.kpi:nth-child(4){animation-delay:.18s}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 #pvTitle{display:flex;flex-wrap:wrap;gap:8px;margin:0 6px 12px}
 .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;font-weight:800;font-size:13px;color:#1e1b4b;background:#fff;border:1.5px solid #e2e0f7;box-shadow:0 4px 12px rgba(76,29,149,.08)}
@@ -205,6 +204,9 @@ button.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;color
 .fixture{box-shadow:0 12px 30px rgba(76,29,149,.14);border:1px solid #e6e4f8}
 .fx-title{color:#3730a3}
 #toast{border-radius:14px;background:linear-gradient(115deg,#3730a3,#7c3aed)}
+main{grid-template-columns:300px minmax(0,1fr)}
+@media(max-width:1100px){main{grid-template-columns:1fr}}
+.item{cursor:pointer!important}
 @media(max-width:900px){#kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.brand h1{font-size:25px}}
 @media print{#kpis,#pvTitle{display:none!important}}
 </style>
@@ -232,7 +234,6 @@ button.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;color
   <div id="side-left">
     <section class="panel" id="filterPanel">
       <h2>🎯 Filter <span class="muted" id="fCount"></span></h2>
-      <select id="fDisp" style="margin-bottom:6px"></select>
       <select id="fAdj" style="margin-bottom:6px"></select>
       <select id="fSer" style="margin-bottom:6px"></select>
       <details id="fMore" style="margin-bottom:6px"><summary class="muted" style="cursor:pointer;margin-bottom:6px">Filter lainnya (Dept, Comm, Class, Sub Series)</summary>
@@ -298,7 +299,7 @@ button.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;color
     <div id="stageNote" class="muted" style="padding:0 6px 4px">Urutan item dari kiri ke kanan mengikuti urutan baris di Excel. Zona tanpa item dianggap tempat STOCK. Seret item untuk memindah atau mengubah urutan. Delete = hapus item terpilih.</div>
   </section>
 
-  <div id="side-right">
+  <div id="side-right" hidden>
     <section class="panel">
       <h2>🏷️ Daftar SKU <span class="muted" id="libCount"></span></h2>
       <input id="libSearch" hidden>
@@ -459,7 +460,7 @@ function buildFixture2d(plan, sc) {
       const d = document.createElement('div');
       d.className = 'item' + (sel && plan.id === S.cur && sel.zone === zi && sel.idx === ii ? ' sel' : '');
       if (!skuOk(code)) d.style.visibility = 'hidden';
-      d.draggable = true; d.dataset.plan = plan.id; d.dataset.zone = zi; d.dataset.idx = ii;
+      d.draggable = false; d.dataset.plan = plan.id; d.dataset.zone = zi; d.dataset.idx = ii;
       d.style.width = Math.floor(g.tw * sc) - 2 + 'px'; d.style.height = Math.floor(g.th * sc) + 'px';
       if (z.t === 'hook') { d.style.marginTop = hookPx + 'px'; d.style.setProperty('--hk', hookPx - 8 + 'px'); }
       d.title = `${code} — ${s.name}`;
@@ -577,7 +578,7 @@ function renderFilters() {
   // pada SKU yang sudah ditempatkan di fixture dan cocok dengan filter LAINNYA
   const placed = new Set(S.plans.flatMap(p => p.zones.flatMap(z => z.items)));
   const base = Object.values(S.skus).filter(k => placed.has(k.code));
-  const dims = [['#fDisp', 'Grup Display', 'disp'], ['#fAdj', 'Grup Adjacency', 'adj'], ['#fSer', 'Series', 'ser'], ['#fSub', 'Sub Series', 'sub'],
+  const dims = [['#fAdj', 'Grup Adjacency', 'adj'], ['#fSer', 'Series', 'ser'], ['#fSub', 'Sub Series', 'sub'],
     ['#fDept', 'Dept', 'dept'], ['#fComm', 'Comm', 'comm'], ['#fCls', 'Class', 'cls']];
   const q = qtext();
   const optsFor = f => {                                   // nilai & jumlah SKU, dengan semua filter selain f
@@ -595,7 +596,7 @@ function renderFilters() {
     if (!changed) break;
   }
   dims.forEach(([id, label, f]) => {
-    const opts = optsFor(f), el = $(id); el.hidden = !opts.length && !F[f];
+    const opts = optsFor(f), el = $(id); el.hidden = false;   // Grup Adjacency & Series selalu tampil
     el.innerHTML = `<option value="">${label} (semua)${F[f] ? '' : ' · ' + opts.length}</option>` + opts.map(([v, n]) => `<option value="${esc(v)}"${F[f] === v ? ' selected' : ''}>${esc(v)} (${n})</option>`).join('');
     el.classList.toggle('on', !!F[f]);
   });
@@ -613,7 +614,7 @@ function afterFilter() {
   if (fActive() && (!p || !planOk(p))) { const h = S.plans.find(planOk); if (h) { S.cur = h.id; sel = null; } }
   render();
 }
-[['#fDisp', 'disp'], ['#fAdj', 'adj'], ['#fSer', 'ser'], ['#fSub', 'sub'], ['#fDept', 'dept'], ['#fComm', 'comm'], ['#fCls', 'cls']].forEach(([id, k]) => $(id).onchange = e => { F[k] = e.target.value; afterFilter(); });
+[['#fAdj', 'adj'], ['#fSer', 'ser'], ['#fSub', 'sub'], ['#fDept', 'dept'], ['#fComm', 'comm'], ['#fCls', 'cls']].forEach(([id, k]) => $(id).onchange = e => { F[k] = e.target.value; afterFilter(); });
 $('#fReset').onclick = () => { Object.keys(F).forEach(k => F[k] = ''); $('#libSearch').value = ''; render(); };
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-goto]'); if (!g) return;
@@ -625,9 +626,6 @@ stage.addEventListener('click', e => {
   const el = e.target.closest('.item');
   if (el) S.cur = el.dataset.plan;
   sel = el ? { zone: +el.dataset.zone, idx: +el.dataset.idx } : null; render();
-});
-document.addEventListener('keydown', e => {
-  if ((e.key === 'Delete' || e.key === 'Backspace') && sel && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { removeSel(); e.preventDefault(); }
 });
 function removeSel() { const p = cur(); if (!p || !sel) return; p.zones[sel.zone].items.splice(sel.idx, 1); sel = null; render(); }
 $('#inspector').addEventListener('click', e => {
@@ -956,7 +954,7 @@ function renderKpis() {
   list.forEach(p => p.zones.forEach(z => { if (!z.items.length) stock++; z.items.forEach(c => { if (skuOk(c)) { items++; skus.add(c); } }); }));
   box.innerHTML = [['🏬', 'Fixture tampil', list.length, 'k1'], ['🏷️', 'SKU cocok', skus.size, 'k2'], ['📦', 'Item tampil', items, 'k3'], ['🗃️', 'Zona STOCK', stock, 'k4']]
     .map(([ic, lb, n, k]) => `<div class="kpi ${k}"><span class="ic">${ic}</span><span class="lb">${lb}</span><b>${n}</b></div>`).join('');
-  pv.innerHTML = [['adj', F.adj, 'Adjacency'], ['ser', F.ser, 'Series'], ['disp', F.disp, 'Display']].filter(x => x[1]).map(([k, v, l]) => `<span class="chip c-${k}"><i>${l}</i>${esc(v)}</span>`).join('');
+  pv.innerHTML = [['adj', F.adj, 'Adjacency'], ['ser', F.ser, 'Series']].filter(x => x[1]).map(([k, v, l]) => `<span class="chip c-${k}"><i>${l}</i>${esc(v)}</span>`).join('');
 }
 $('#vw2').onclick = () => setMode('2d'); $('#vw3').onclick = () => setMode('3d');
 
@@ -994,7 +992,7 @@ function draw3d() {
   camera.lookAt(cam.t); T.renderer.render(T.scene, camera);
 }
 function setView3d(name) {
-  if (!T) return; const c = T.cam, ar = T.camera.aspect || 1.3, fit = Math.max(T.total * 1.3, T.W * 1.2 / ar, 120) / 0.63;
+  if (!T) return; resize3d(); const c = T.cam, ar = T.camera.aspect || 1.3, fit = Math.max(T.total * 1.5, T.W * 1.25 / ar, 120) / 0.63;
   c.t.set(0, T.total / 2, 0); c.r = fit;
   if (name === 'front') { c.th = 0; c.ph = Math.PI / 2; }
   else if (name === 'side') { c.th = Math.PI / 2; c.ph = Math.PI / 2; c.r = Math.max(T.total * 1.15, T.D * 2) / 0.63; }
