@@ -67,9 +67,8 @@ button.danger{color:var(--bad)}
 .plank{flex:1;background:linear-gradient(180deg,var(--board1),var(--board2));box-shadow:0 3px 4px rgba(0,0,0,.28)}
 .k-pallet .board{display:none}
 .fx-base{height:calc(var(--cm)*10);background:linear-gradient(180deg,var(--up2),var(--up1));border-top:2px solid rgba(0,0,0,.25);box-shadow:0 5px 9px rgba(0,0,0,.22);border-radius:0 0 3px 3px}
-.k-pallet .fx-base{height:calc(var(--cm)*12);border-top:0;
-  background:repeating-linear-gradient(90deg,transparent 0 calc(20% - 3px),rgba(60,38,18,.55) calc(20% - 3px) 20%),
-  linear-gradient(180deg,#cf9f66 0 30%,#5e4023 30% 38%,#b98a54 38% 68%,#5e4023 68% 76%,#cf9f66 76%)}
+.k-pallet .fx-base{height:calc(var(--cm)*12);border-top:0;border-radius:3px;box-shadow:0 4px 8px rgba(0,0,0,.22);
+  background:repeating-linear-gradient(0deg,rgba(90,52,20,.13) 0 1px,transparent 1px 5px),repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 2px,transparent 2px 11px),linear-gradient(180deg,#d6a86a,#bf915a)}
 
 /* gantungan: bar di atas */
 .shelf-body.hook{align-content:flex-start;align-items:flex-start;border-bottom:1px dashed rgba(0,0,0,.14)}
@@ -154,9 +153,9 @@ button.danger{color:var(--bad)}
     <section class="panel" id="filterPanel">
       <h2>Filter <span class="muted" id="fCount"></span></h2>
       <select id="fDisp" style="margin-bottom:6px"></select>
-      <select id="fFx" style="margin-bottom:6px"></select>
-      <select id="fSer" style="margin-bottom:6px"></select>
       <select id="fAdj" style="margin-bottom:6px"></select>
+      <select id="fSer" style="margin-bottom:6px"></select>
+      <select id="fFx" style="margin-bottom:6px"></select>
       <details id="fMore" style="margin-bottom:6px"><summary class="muted" style="cursor:pointer;margin-bottom:6px">Filter lainnya (Dept, Comm, Class, Sub Series)</summary>
         <select id="fDept" style="margin-bottom:6px"></select><select id="fComm" style="margin-bottom:6px"></select><select id="fCls" style="margin-bottom:6px"></select><select id="fSub" style="margin-bottom:6px"></select>
       </details>
@@ -825,8 +824,8 @@ $('#btnPng').onclick = async () => {
     g.fillText(`${hook ? 'Gantung' : 'Rak'} ${zi + 1}`, x0 - up - 12, y + hh - 22); g.font = '15px system-ui,sans-serif'; g.fillText(`${gm.n} item`, x0 - up - 12, y + hh - 4); g.textAlign = 'left';
     y += hh + bh;
   });
-  if (kind === 'pallet') { g.fillStyle = '#c79a62'; g.fillRect(x0, y, W, base); g.fillStyle = 'rgba(60,38,18,.55)';
-    for (let i = 1; i < 5; i++) g.fillRect(x0 + W * i / 5 - 3, y, 6, base); g.fillRect(x0, y + base * .32, W, base * .08); g.fillRect(x0, y + base * .68, W, base * .08); }
+  if (kind === 'pallet') { g.fillStyle = lg(0, y, 0, y + base, '#d6a86a', '#bf915a'); g.fillRect(x0, y, W, base); g.strokeStyle = 'rgba(90,52,20,.16)'; g.lineWidth = 1.5;
+    for (let gy = 6; gy < base; gy += 9) { g.beginPath(); g.moveTo(x0, y + gy); g.lineTo(x0 + W, y + gy); g.stroke(); } }
   else { g.fillStyle = lg(0, y, 0, y + base, M.u2, M.u1); g.fillRect(x0 - up, y, W + up * 2, base); }
   g.fillStyle = '#9aa3b2'; g.font = '16px system-ui,sans-serif'; g.fillText(`Dibuat ${new Date().toLocaleDateString('id-ID')}`, pad, c.height - 14);
   try { download(`planogram_${plan.id}.png`, c.toDataURL('image/png')); }
@@ -974,6 +973,14 @@ function cardTex(code, aspect) {
   }
   return en.tex;
 }
+function woodTex() {                                 // tekstur serat kayu solid (kanvas)
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, '#d6a86a'); gr.addColorStop(1, '#c0925a'); g.fillStyle = gr; g.fillRect(0, 0, 512, 128);
+  let sd = 7; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 70; i++) { const y = rnd() * 128, a = 0.05 + rnd() * 0.12; g.strokeStyle = `rgba(92,56,22,${a})`; g.lineWidth = 0.6 + rnd() * 1.8; g.beginPath(); g.moveTo(0, y);
+    for (let x = 0; x <= 512; x += 64) g.lineTo(x, y + Math.sin(x / 90 + i) * 2.5 + (rnd() - .5) * 1.5); g.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; ownTex.add(t); return t;
+}
 function labelTex(text, w, h, bg, fg) {
   const c = document.createElement('canvas'); c.width = 1024; c.height = Math.max(32, Math.round(1024 * h / w)); const g = c.getContext('2d');
   g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height); g.fillStyle = fg; g.font = `bold ${Math.round(c.height * 0.5)}px system-ui,sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -1013,14 +1020,11 @@ function buildOne3d(plan, G) {
   const mUp = std(M.u2, { metalness: plan.mat === 'steel' ? 0.5 : 0.1 }), mUp1 = std(M.u1);
   const mPlank = std(M.b2, plan.mat === 'glass' ? { transparent: true, opacity: 0.6 } : {}), mMetal = std(0x6c7584, { metalness: 0.6, roughness: 0.4 });
 
-  if (pallet) {                                      // pallet kayu 90x90
-    const wood = std(0xcf9f66, { roughness: 0.85 }), dark = std(0xb98a54, { roughness: 0.9 });
-    for (let i = 0; i < 3; i++) box(W, 3, 10, dark, 0, 1.5, -D / 2 + 5 + i * (D - 10) / 2);
-    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) box(10, 6, 10, dark, -W / 2 + 5 + i * (W - 10) / 2, 6, -D / 2 + 5 + j * (D - 10) / 2);
-    for (let i = 0; i < 5; i++) box(W, 2.5, 14, wood, 0, 10.75, -D / 2 + 7 + i * (D - 14) / 4);
+  if (pallet) {                                      // solid wood: papan kayu utuh (bukan pallet gudang)
+    const wt = woodTex(), wood = std(0xffffff, { roughness: 0.75 }); wood.map = wt;
+    box(W, 12, D, wood, 0, 6, 0);
   } else {
     box(W + 5, b, D, mUp1, 0, b / 2, 0);             // kaki / base
-    for (const sx of [-1, 1]) box(2.5, total, D, mUp, sx * (W / 2 + 1.25), total / 2, 0);   // tiang samping
     const bm = std(0xffffff, { roughness: 0.9 });
     if (kind === 'wall') {                           // panel belakang bergaris tiap 7.5 cm
       const c = document.createElement('canvas'); c.width = 8; c.height = 64; const g = c.getContext('2d');
@@ -1028,9 +1032,13 @@ function buildOne3d(plan, G) {
       const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, total / 7.5); t.encoding = THREE.sRGBEncoding; ownTex.add(t); bm.map = t;
     } else bm.color.set(M.back);
     box(W, total, 1, bm, 0, total / 2, -D / 2 + 0.5);
-    const hh = { wall: 8, gondola: 4, endcap: 14 }[kind], lab = kind === 'wall' || kind === 'endcap';
-    const hc = kind === 'endcap' ? '#2563eb' : M.u1, side = std(hc), front = lab ? new THREE.MeshStandardMaterial({ map: labelTex(v.label, W + 5, hh, hc, kind === 'endcap' ? '#ffffff' : M.ink), roughness: 0.6 }) : side;
-    add(new THREE.BoxGeometry(W + 5, hh, 8), [side, side, side, side, front, side], 0, total + hh / 2, -D / 2 + 4).castShadow = true;
+  }
+
+  {                                                  // header biru seragam (semua jenis fixture)
+    const hh = 14, hw = pallet ? W : W + 5, hc = '#2563eb', side = std(hc);
+    const front = new THREE.MeshStandardMaterial({ map: labelTex(v.label, hw, hh, hc, '#ffffff'), roughness: 0.6 });
+    if (pallet) for (const sx of [-1, 1]) box(2, total, 2, mMetal, sx * (W / 2 - 3), total / 2, -D / 2 + 4);   // tiang penyangga papan nama
+    add(new THREE.BoxGeometry(hw, hh, 8), [side, side, side, side, front, side], 0, total + hh / 2, -D / 2 + 4).castShadow = true;
   }
 
   let cy = b;
@@ -1067,7 +1075,7 @@ function buildOne3d(plan, G) {
 
   const lt = labelTex(`${plan.id} · ${v.label}`, 110, 12, '#ffffff', '#1f2430');   // papan nama di lantai depan fixture
   const lab = add(new THREE.PlaneGeometry(110, 12), new THREE.MeshBasicMaterial({ map: lt }), 0, 0.3, D / 2 + 14, false); lab.rotation.x = -Math.PI / 2;
-  return { W, D, total };
+  return { W, D, total: total + 14 };       // + tinggi header
 }
 
 /* init */
