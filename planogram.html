@@ -59,6 +59,7 @@ button.danger{color:var(--bad)}
 .k-wall .shelf-body{background:repeating-linear-gradient(to bottom,rgba(0,0,0,.13) 0 2px,transparent 2px calc(var(--cm)*7.5)),var(--back)}
 .k-gondola .shelf-body,.k-endcap .shelf-body{background:linear-gradient(90deg,rgba(0,0,0,.07),rgba(0,0,0,0) 8%,rgba(0,0,0,0) 92%,rgba(0,0,0,.07)),linear-gradient(180deg,rgba(255,255,255,.55),rgba(0,0,0,.04)),var(--back)}
 .k-pallet .shelf-body{background:linear-gradient(180deg,#f7f8fa,#e9edf3)}
+.shelf-body.blank{min-height:0}
 .shelf-body.over{outline:2px dashed var(--accent);outline-offset:-2px}
 .board{display:flex;flex-direction:column;height:15px}
 .rail{height:7px;background:#fff;border-bottom:1px solid rgba(0,0,0,.25)}
@@ -71,7 +72,6 @@ button.danger{color:var(--bad)}
 
 /* gantungan: bar di atas */
 .shelf-body.hook{align-content:flex-start;align-items:flex-start;border-bottom:1px dashed rgba(0,0,0,.14)}
-.shelf-body.hook::before{content:'GANTUNGAN';position:absolute;right:8px;bottom:4px;font-size:10px;font-weight:700;letter-spacing:.14em;color:rgba(40,50,66,.55);background:rgba(255,255,255,.75);padding:0 5px;border-radius:3px;pointer-events:none}
 .shelf-body.hook::after{content:'';position:absolute;left:-5px;right:-5px;top:0;height:20px;pointer-events:none;z-index:4;
   background:linear-gradient(180deg,#f6f8fb 0%,#b4bcc8 35%,#eef1f5 55%,#6c7584 100%) 0 0/100% 9px no-repeat,
   linear-gradient(90deg,#4a525e,#7c8594,#4a525e) 14px 0/8px 20px no-repeat,
@@ -228,7 +228,13 @@ const ZNAME = { rack: 'Rak', hook: 'Gantungan' };
 const zonesOf = v => v.z.split(' ').map(t => ({ t: t[0] === 'H' ? 'hook' : 'rack', u: +t.slice(1) }));
 const zoneH = (H, zones, pallet) => { const avail = H - (pallet ? 0 : BASE), tu = zones.reduce((a, z) => a + z.u, 0);
   return zones.map(z => Math.max(5, Math.floor(avail * z.u / tu))); };
+const UNIT_CM = 35;                    // tinggi 1 satuan rak pada Wall = jarak rak Gondola (35 cm)
 const scaleFor = h => h > 200 ? 3.5 : h > 120 ? 4.5 : 5;
+function zoneLayout(plan) {            // tinggi tiap zona (cm) + sisa area kosong di atas
+  const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), zs = zonesOf(v);
+  if (kind === 'wall') { const hs = zs.map(z => z.u * UNIT_CM); return { hs, top: Math.max(0, p.h - BASE - hs.reduce((a, b) => a + b, 0)) }; }
+  return { hs: zoneH(p.h, zs, kind === 'pallet'), top: 0 };
+}
 const norm = s => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
 const VAR_BY_LABEL = Object.fromEntries(Object.entries(VARIANTS).map(([k, v]) => [norm(v.label), k]));
 const VAR_ALIAS = { 'wall 4 rack': 'w5' };      // nama lama → layout pengganti
@@ -285,11 +291,17 @@ function renderFixture() {
   const fx = $('#fixture'), plan = cur();
   if (!plan) { fx.className = ''; fx.innerHTML = '<div class="empty">Belum ada planogram.<br>Klik <b>Impor Excel / CSV</b> untuk memuat data, atau tambah planogram baru di panel kiri.</div>'; return; }
   const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), sc = S.scale, W = p.w * sc;
-  const hs = zoneH(p.h, zonesOf(v), kind === 'pallet');
+  const { hs, top } = zoneLayout(plan);
   fx.className = `k-${kind} m-${plan.mat}`; fx.style.setProperty('--cm', sc + 'px'); fx.innerHTML = '';
   const t = document.createElement('div'); t.className = 'fx-title'; t.textContent = `${plan.id} — ${v.label} — ${p.w}×${p.d}×${p.h} cm`; fx.appendChild(t);
   const head = document.createElement('div'); head.className = 'fx-head'; head.style.width = W + 24 + 'px';
   head.textContent = kind === 'endcap' || kind === 'wall' ? v.label : ''; fx.appendChild(head);
+  if (top > 0) {                                    // sisa tinggi wall: panel kosong di bagian atas
+    const row = document.createElement('div'); row.className = 'shelf';
+    const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
+    const body = document.createElement('div'); body.className = 'shelf-body blank'; body.style.width = W + 'px'; body.style.height = top * sc + 'px';
+    wrap.appendChild(body); const upL = document.createElement('div'); upL.className = 'up'; row.append(upL, wrap, upL.cloneNode()); fx.appendChild(row);
+  }
   plan.zones.forEach((z, zi) => {
     const g = geom(plan, zi, hs), hookPx = Math.max(20, Math.round(HOOK_CM * sc));
     const row = document.createElement('div'); row.className = 'shelf';
@@ -614,10 +626,10 @@ $('#btnPng').onclick = async () => {
   const plan = cur(); if (!plan) return toast('Belum ada planogram.');
   const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), M = MATS[plan.mat];
   const sc = 10, W = p.w * sc, lab = 100, pad = 30, up = 24, plankH = 28, titleH = 70, hookPx = HOOK_CM * sc;
-  const hs = zoneH(p.h, zonesOf(v), kind === 'pallet');
+  const { hs, top } = zoneLayout(plan);
   const head = { endcap: 76, wall: 50, gondola: 24 }[kind] || 0, base = (kind === 'pallet' ? 12 : BASE) * sc;
   const zb = z => kind === 'pallet' || z.t === 'hook' ? 0 : plankH;
-  const H = plan.zones.reduce((a, z, i) => a + hs[i] * sc + zb(z), 0);
+  const H = top * sc + plan.zones.reduce((a, z, i) => a + hs[i] * sc + zb(z), 0);
   const imgs = {};
   await Promise.all([...new Set(plan.zones.flatMap(z => z.items))].map(code => new Promise(res => {
     const u = imgFor(code); if (!u) return res();
@@ -637,6 +649,13 @@ $('#btnPng').onclick = async () => {
     rr(x0 - up, y, W + up * 2, head, 8); g.fill();
     g.fillStyle = kind === 'endcap' ? '#fff' : M.ink; g.font = 'bold 22px system-ui,sans-serif'; g.textAlign = 'center';
     g.fillText(kind === 'endcap' || kind === 'wall' ? v.label : '', x0 + W / 2, y + head / 2 + 8); g.textAlign = 'left'; y += head;
+  }
+  if (top > 0) {
+    const t0 = top * sc; g.fillStyle = M.back; g.fillRect(x0, y, W, t0);
+    g.fillStyle = 'rgba(0,0,0,.13)'; for (let gy = 0; gy < t0; gy += 75) g.fillRect(x0, y + gy, W, 3);
+    for (const ux of [x0 - up, x0 + W]) { g.fillStyle = lg(ux, 0, ux + up, 0, M.u1, M.u2); g.fillRect(ux, y, up, t0);
+      g.fillStyle = 'rgba(0,0,0,.3)'; for (let gy = 10; gy < t0; gy += 40) { g.beginPath(); g.arc(ux + up / 2, y + gy, 3, 0, 7); g.fill(); } }
+    y += t0;
   }
   plan.zones.forEach((z, zi) => {
     const hh = hs[zi] * sc, bh = zb(z), hook = z.t === 'hook', gm = geom(plan, zi, hs);
