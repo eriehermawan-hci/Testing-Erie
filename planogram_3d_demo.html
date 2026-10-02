@@ -36,13 +36,14 @@ button.danger{color:var(--bad)}
 
 /* fixture */
 #stage{overflow:auto;padding:8px 4px 16px}
-#fixture{display:inline-block;padding:14px 18px 18px 90px;border-radius:10px;background:linear-gradient(180deg,#eef1f6,#dde3ec);border:1px solid var(--line);
+.fxrow{display:flex;gap:14px;align-items:flex-end;width:max-content;min-width:100%}
+.fixture{display:inline-block;flex:none;padding:10px 10px 14px 62px;border-radius:10px;background:linear-gradient(180deg,#eef1f6,#dde3ec);border:1px solid var(--line);
   --board1:#e8d3ae;--board2:#c9a877;--up1:#dcc59c;--up2:#b99a6a;--back:#f6efdf;--ink2:#4a3a22}
-#fixture.m-burnt{--board1:#7a5740;--board2:#47301f;--up1:#6e4e39;--up2:#3b281b;--back:#a8917f;--ink2:#f3e6d8}
-#fixture.m-glass{--board1:rgba(196,232,243,.95);--board2:rgba(122,186,206,.95);--up1:#d0d5dd;--up2:#8d97a6;--back:#eef5f8;--ink2:#2a3a44}
-#fixture.m-steel{--board1:#d9dde4;--board2:#8f98a6;--up1:#c7ccd5;--up2:#808996;--back:#eef0f4;--ink2:#2a313b}
-#fixture .empty{padding:30px 40px 30px 0;margin-left:-60px;color:var(--muted);max-width:420px}
-.fx-title{margin:0 0 8px -76px;font-weight:600}
+.fixture.m-burnt{--board1:#7a5740;--board2:#47301f;--up1:#6e4e39;--up2:#3b281b;--back:#a8917f;--ink2:#f3e6d8}
+.fixture.m-glass{--board1:rgba(196,232,243,.95);--board2:rgba(122,186,206,.95);--up1:#d0d5dd;--up2:#8d97a6;--back:#eef5f8;--ink2:#2a3a44}
+.fixture.m-steel{--board1:#d9dde4;--board2:#8f98a6;--up1:#c7ccd5;--up2:#808996;--back:#eef0f4;--ink2:#2a313b}
+.fixture .empty{padding:30px 40px 30px 0;margin-left:-60px;color:var(--muted);max-width:420px}
+.fx-title{margin:0 0 6px -52px;font-weight:600;font-size:12px;line-height:1.3;width:0;min-width:calc(100% + 52px)}
 .fx-head{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);
   background:linear-gradient(180deg,var(--up1),var(--up2));border-radius:5px 5px 0 0;box-shadow:0 2px 5px rgba(0,0,0,.22);overflow:hidden;white-space:nowrap}
 .k-wall .fx-head{height:26px}
@@ -52,7 +53,7 @@ button.danger{color:var(--bad)}
 .shelf{position:relative;display:flex;align-items:stretch}
 .up{width:12px;flex:none;background:radial-gradient(circle,rgba(0,0,0,.32) 1.6px,transparent 2.1px) 0 0/12px 20px,linear-gradient(90deg,var(--up1),var(--up2))}
 .k-pallet .up{visibility:hidden}
-.shelf-label{position:absolute;right:100%;margin-right:8px;bottom:4px;width:74px;text-align:right;font-size:11px;color:var(--muted);line-height:1.3}
+.shelf-label{position:absolute;right:100%;margin-right:6px;bottom:4px;width:56px;text-align:right;font-size:10px;color:var(--muted);line-height:1.3}
 .shelf-label .u{display:block;font-size:10px}
 .shelf-wrap{flex:none}
 .shelf-body{position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-content:flex-end;align-items:flex-end;background:var(--back)}
@@ -205,7 +206,7 @@ button.danger{color:var(--bad)}
   <section class="panel" style="padding:8px">
     <div id="emptyMsg">SILAHKAN PILIH DULU GRUP ADJACENCY ATAU SERIES<br>UNTUK MENAMPILKAN PREVIEW 3D/2D-NYA</div>
     <div id="planTabs" class="btns" style="margin:0 0 8px" hidden></div>
-    <div id="stage"><div id="fixture"></div></div>
+    <div id="stage"></div>
     <div id="view3d" hidden>
       <div class="tb3">
         <button data-view="persp">Perspektif</button><button data-view="front">Depan</button><button data-view="top">Atas</button><button data-view="side">Samping</button>
@@ -283,7 +284,7 @@ const UNIT_CM = 35;                    // tinggi 1 satuan rak pada Wall = jarak 
 const scaleFor = h => h > 200 ? 3.5 : h > 120 ? 4.5 : 5;
 function zoneLayout(plan) {            // tinggi tiap zona (cm) + sisa area kosong di atas
   const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), zs = zonesOf(v);
-  if (kind === 'wall') { const hs = zs.map(() => UNIT_CM); return { hs, top: Math.max(0, p.h - BASE - hs.reduce((a, b) => a + b, 0)) }; }
+  if (kind === 'wall') { const hs = zs.map(() => UNIT_CM); return { hs, top: 0 }; }   // area kosong di atas dipangkas (sama dengan 3D)
   return { hs: zoneH(p.h, zs, kind === 'pallet'), top: 0 };
 }
 const norm = s => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
@@ -354,21 +355,24 @@ function renderPlanSel() {
   $('#zoom').value = S.scale; $('#imgPat').value = S.pat || '';
 }
 
+function shown2d() { return ready() ? S.plans.filter(planOk).slice(0, 12) : []; }   // sama dengan shown3d()
 function renderFixture() {
-  const fx = $('#fixture'), plan = cur();
-  if (!plan) { fx.className = ''; fx.innerHTML = '<div class="empty">Belum ada planogram.<br>Klik <b>Impor Excel / CSV</b> untuk memuat data, atau tambah planogram baru di panel kiri.</div>'; return; }
-  const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), sc = S.scale, W = p.w * sc;
-  const { hs, top } = zoneLayout(plan);
-  fx.className = `k-${kind} m-${plan.mat}`; fx.style.setProperty('--cm', sc + 'px'); fx.innerHTML = '';
+  const host = $('#stage'), plans = shown2d(); host.innerHTML = '';
+  if (!plans.length) { if (!S.plans.length) host.innerHTML = '<div class="empty" style="padding:30px;color:var(--muted)">Belum ada planogram. Klik <b>Impor Excel / CSV</b> untuk memuat data.</div>'; return; }
+  // satu skala (px per cm) untuk semua fixture agar ukuran relatifnya sama dengan 3D
+  const avail = Math.max(600, host.clientWidth || 900), sumW = plans.reduce((a, pl) => a + PRESETS[pl.size].w, 0), maxH = Math.max(...plans.map(pl => PRESETS[pl.size].h));
+  const sc = Math.max(2.0, Math.min(scaleFor(maxH), (avail - plans.length * 110) / sumW));
+  const row = document.createElement('div'); row.className = 'fxrow';
+  plans.forEach(plan => row.appendChild(buildFixture2d(plan, sc)));
+  host.appendChild(row);
+}
+function buildFixture2d(plan, sc) {
+  const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), W = p.w * sc;
+  const { hs } = zoneLayout(plan);
+  const fx = document.createElement('div'); fx.className = `fixture k-${kind} m-${plan.mat}`; fx.style.setProperty('--cm', sc + 'px');
   const t = document.createElement('div'); t.className = 'fx-title'; t.textContent = `${plan.id} — ${v.label} — ${p.w}×${p.d}×${p.h} cm`; fx.appendChild(t);
   const head = document.createElement('div'); head.className = 'fx-head'; head.style.width = W + 24 + 'px';
   head.textContent = kind === 'endcap' || kind === 'wall' ? v.label : ''; fx.appendChild(head);
-  if (top > 0) {                                    // sisa tinggi wall: panel kosong di bagian atas
-    const row = document.createElement('div'); row.className = 'shelf';
-    const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
-    const body = document.createElement('div'); body.className = 'shelf-body blank'; body.style.width = W + 'px'; body.style.height = top * sc + 'px';
-    wrap.appendChild(body); const upL = document.createElement('div'); upL.className = 'up'; row.append(upL, wrap, upL.cloneNode()); fx.appendChild(row);
-  }
   plan.zones.forEach((z, zi) => {
     const g = geom(plan, zi, hs), hookPx = Math.max(20, Math.round(HOOK_CM * sc));
     const row = document.createElement('div'); row.className = 'shelf';
@@ -376,13 +380,13 @@ function renderFixture() {
     lab.innerHTML = `${z.t === 'hook' ? 'Gantung' : 'Rak'} ${zi + 1}<span class="u">${g.n ? g.n + ' item' : 'stock'}</span>`;
     const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
     const body = document.createElement('div'); body.className = 'shelf-body' + (z.t === 'hook' ? ' hook' : '');
-    body.dataset.zone = zi; body.style.width = W + 'px'; body.style.height = hs[zi] * sc + 'px';
+    body.dataset.zone = zi; body.dataset.plan = plan.id; body.style.width = W + 'px'; body.style.height = hs[zi] * sc + 'px';
     z.items.forEach((code, ii) => {
       const s = S.skus[code] || { code, name: code, img: '' };
       const d = document.createElement('div');
-      d.className = 'item' + (sel && sel.zone === zi && sel.idx === ii ? ' sel' : '');
+      d.className = 'item' + (sel && plan.id === S.cur && sel.zone === zi && sel.idx === ii ? ' sel' : '');
       if (!skuOk(code)) d.style.visibility = 'hidden';
-      d.draggable = true; d.dataset.zone = zi; d.dataset.idx = ii;
+      d.draggable = true; d.dataset.plan = plan.id; d.dataset.zone = zi; d.dataset.idx = ii;
       d.style.width = Math.floor(g.tw * sc) - 2 + 'px'; d.style.height = Math.floor(g.th * sc) + 'px';
       if (z.t === 'hook') { d.style.marginTop = hookPx + 'px'; d.style.setProperty('--hk', hookPx - 8 + 'px'); }
       d.title = `${code} — ${s.name}`;
@@ -402,6 +406,7 @@ function renderFixture() {
     row.append(lab, upL, wrap, upR); fx.appendChild(row);
   });
   const base = document.createElement('div'); base.className = 'fx-base'; base.style.width = W + 24 + 'px'; fx.appendChild(base);
+  return fx;
 }
 
 function renderLib() {
@@ -445,14 +450,14 @@ function renderStats() {
 }
 
 /* ---------- drag & drop ---------- */
-const stage = $('#fixture');
+const stage = $('#stage');
 $('#lib').addEventListener('dragstart', e => {
   const el = e.target.closest('.sku'); if (!el) return;
   drag = { type: 'sku', code: el.dataset.sku }; e.dataTransfer.setData('text/plain', 'sku'); e.dataTransfer.effectAllowed = 'copy';
 });
 stage.addEventListener('dragstart', e => {
   const el = e.target.closest('.item'); if (!el) return;
-  drag = { type: 'item', zone: +el.dataset.zone, idx: +el.dataset.idx };
+  drag = { type: 'item', plan: el.dataset.plan, zone: +el.dataset.zone, idx: +el.dataset.idx };
   e.dataTransfer.setData('text/plain', 'item'); e.dataTransfer.effectAllowed = 'move';
 });
 function dropIndex(body, x, y) {
@@ -480,16 +485,17 @@ stage.addEventListener('dragover', e => {
 stage.addEventListener('dragleave', e => { if (!stage.contains(e.relatedTarget)) clearInd(); });
 document.addEventListener('dragend', () => { drag = null; clearInd(); });
 stage.addEventListener('drop', e => {
-  const body = e.target.closest('.shelf-body'), plan = cur(); if (!body || !drag || !plan) return;
+  const body = e.target.closest('.shelf-body'), plan = body && S.plans.find(x => x.id === body.dataset.plan); if (!body || !drag || !plan) return;
   e.preventDefault();
   const zi = +body.dataset.zone; let idx = dropIndex(body, e.clientX, e.clientY); const items = plan.zones[zi].items;
   if (drag.type === 'sku') items.splice(idx, 0, drag.code);
   else {
-    const code = plan.zones[drag.zone].items.splice(drag.idx, 1)[0];
-    if (drag.zone === zi && drag.idx < idx) idx--;
+    const src = S.plans.find(x => x.id === drag.plan); if (!src) return;
+    const code = src.zones[drag.zone].items.splice(drag.idx, 1)[0];
+    if (src === plan && drag.zone === zi && drag.idx < idx) idx--;
     items.splice(idx, 0, code);
   }
-  sel = { zone: zi, idx }; drag = null; clearInd(); render();
+  S.cur = plan.id; sel = { zone: zi, idx }; drag = null; clearInd(); render();
 });
 
 /* ---------- filter ---------- */
@@ -530,6 +536,7 @@ document.addEventListener('click', e => {
 /* ---------- interaksi ---------- */
 stage.addEventListener('click', e => {
   const el = e.target.closest('.item');
+  if (el) S.cur = el.dataset.plan;
   sel = el ? { zone: +el.dataset.zone, idx: +el.dataset.idx } : null; render();
 });
 document.addEventListener('keydown', e => {
@@ -843,6 +850,7 @@ function setMode(m) {
   mode = m;
   $('#vw2').classList.toggle('on', m === '2d'); $('#vw3').classList.toggle('on', m === '3d');
   applyView();
+  if (m === '2d') renderFixture();
   if (m === '3d') { init3d(); refresh3d(); }
 }
 /* dashboard kosong sampai Grup Adjacency atau Series dipilih */
@@ -852,8 +860,7 @@ function applyView() {
   $('#emptyMsg').hidden = ok;
   $('#stage').hidden = $('#stageNote').hidden = mode === '3d' || !ok; $('#view3d').hidden = mode === '2d' || !ok;
   const tabs = $('#planTabs'), list = ok ? S.plans.filter(planOk).slice(0, 12) : [];
-  tabs.hidden = mode === '3d' || !ok || list.length < 2;
-  tabs.innerHTML = list.map(p => `<button data-goto="${esc(p.id)}" class="${p.id === S.cur ? 'cur' : ''}">${esc(p.id)} · ${esc(VARIANTS[p.variant].label)}</button>`).join('');
+  tabs.hidden = true; tabs.innerHTML = '';
 }
 $('#vw2').onclick = () => setMode('2d'); $('#vw3').onclick = () => setMode('3d');
 
