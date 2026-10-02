@@ -133,7 +133,7 @@ button.danger{color:var(--bad)}
 
 /* ===== tema baru: berwarna, kartu & widget ===== */
 :root{--bg:#f3f1ff;--panel:#fff;--ink:#1e1b4b;--muted:#6b6f93;--line:#e6e4f8;--accent:#6366f1;--accent2:#ec4899;--bad:#e11d48;--ok:#059669;--warn:#d97706}
-body{font-family:"Inter","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);min-height:100vh;padding-bottom:70px;
+body{font-family:"Inter","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);min-height:100vh;padding-bottom:24px;
   background:radial-gradient(900px 420px at 6% -8%,#dfe6ff 0,transparent 60%),radial-gradient(800px 420px at 100% 0,#ffe0f0 0,transparent 55%),linear-gradient(180deg,#f7f6ff,#eaf6ff)}
 header{position:relative;overflow:hidden;gap:8px;padding:14px 22px;background:linear-gradient(115deg,#3730a3,#7c3aed 48%,#db2777);border:0;color:#fff;box-shadow:0 12px 34px rgba(79,70,229,.38)}
 header::before,header::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
@@ -203,19 +203,16 @@ button.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;color
 .tb3 .muted{background:#f5f3ff;padding:5px 12px;border-radius:999px}
 .fixture{box-shadow:0 12px 30px rgba(76,29,149,.14);border:1px solid #e6e4f8}
 .fx-title{color:#3730a3}
-/* kredit */
-#credit{position:fixed;left:16px;bottom:14px;z-index:60;padding:9px 18px;border-radius:999px;font-size:12.5px;font-weight:600;letter-spacing:.05em;color:#fff;background:linear-gradient(115deg,#3730a3,#7c3aed 55%,#db2777);box-shadow:0 10px 24px rgba(67,56,202,.45)}
-#credit b{color:#fde68a;font-weight:800}
 #toast{border-radius:14px;background:linear-gradient(115deg,#3730a3,#7c3aed)}
 @media(max-width:900px){#kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.brand h1{font-size:25px}}
-@media print{#credit,#kpis,#pvTitle{display:none!important}}
+@media print{#kpis,#pvTitle{display:none!important}}
 </style>
 </head>
 <body>
 <header>
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><rect x="6" y="5" width="36" height="38" rx="5" fill="rgba(255,255,255,.95)"/><rect x="10" y="12" width="9" height="9" rx="2" fill="#6366f1"/><rect x="21" y="12" width="7" height="9" rx="2" fill="#ec4899"/><rect x="30" y="14" width="8" height="7" rx="2" fill="#14b8a6"/><rect x="10" y="24" width="12" height="7" rx="2" fill="#f59e0b"/><rect x="24" y="23" width="14" height="8" rx="2" fill="#6366f1"/><rect x="8" y="21.5" width="32" height="2" rx="1" fill="#312e81"/><rect x="8" y="33" width="32" height="2" rx="1" fill="#312e81"/></svg></div>
-    <div><h1>Planogram Generator</h1><small>Preview display fixture 2D &amp; 3D dari Excel</small></div>
+    <div><h1>Planogram Generator</h1><small>by Erie Hermawan (2026)</small></div>
   </div>
   <div class="seg"><button id="vw2" class="on">2D</button><button id="vw3">3D</button></div>
   <button class="primary" id="btnImport">Impor Excel / CSV</button>
@@ -318,7 +315,6 @@ button.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);border:0;color
   </div>
 </main>
 <div id="toast"></div>
-<div id="credit">Apps by <b>Erie Hermawan</b></div>
 
 <script>/**
  * @license
