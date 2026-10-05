@@ -936,8 +936,10 @@ function importRows(rows, daftar, sambung) {
   }
   if (added.length) { S.cur = added[0]; S.scale = scaleFor(PRESETS[cur().size].h); sel = null; }
   if (nMaster) rep.push({ t: 'ok', m: `${nMaster} SKU tanpa ID FIXTURE masuk daftar SKU (belum ditempatkan).` });
-  // template urutan sambung (sheet SAMBUNG, opsional)
+  // template urutan sambung (kolom SAMBUNGAN di sheet DATA; sheet SAMBUNG lama tetap dibaca)
   S.runs = [];
+  const sx = ['sambungan', 'urutan', 'sambung_id_fixture', 'sambung_series'].map(n => hdr.indexOf(n));   // sambungan di kolom sheet DATA (baris sama dengan nomor baris Excel)
+  if (sx[0] >= 0 && sx[2] >= 0) sambung = [['sambungan', 'kategori', 'urutan', 'id_fixture', 'series'], ...rows.slice(1).map(r => [r[sx[0]], '', r[sx[1]], r[sx[2]], sx[3] >= 0 ? r[sx[3]] : ''])];
   if (sambung && sambung.length > 1) {
     const sh = sambung[0].map(h => norm(h).replace(/\(.*?\)/g, '').replace(/\*/g, '').trim().replace(/[\s_]+/g, '_')), sc = n => sh.indexOf(n);
     const ic = { run: sc('sambungan'), cat: sc('kategori'), ord: sc('urutan'), id: sc('id_fixture'), ser: sc('series') };
@@ -950,11 +952,13 @@ function importRows(rows, daftar, sambung) {
           cat && norm(cat) !== famLb[VARIANTS[plan.variant].fam] ? `${id} termasuk kategori ${famLb[VARIANTS[plan.variant].fam]}, bukan ${cat}` :
           ser && !Object.values(S.skus).some(x => x.series === ser) ? `Series "${ser}" tidak ada di DATA` : '';
         if (bad) { rep.push({ t: 'err', m: `SAMBUNG baris ${line} (${name}): ${bad}. Baris dilewati.` }); return; }
-        if (!runs.has(name)) runs.set(name, { name, cat: famLb[VARIANTS[plan.variant].fam], items: [] });
+        const fl = famLb[VARIANTS[plan.variant].fam];
+        if (runs.has(name) && runs.get(name).cat !== fl) { rep.push({ t: 'err', m: `SAMBUNG baris ${line} (${name}): ${id} kategori ${fl}, rangkaian ini ${runs.get(name).cat}. Satu rangkaian satu kategori. Baris dilewati.` }); return; }
+        if (!runs.has(name)) runs.set(name, { name, cat: fl, items: [] });
         runs.get(name).items.push({ plan: id, ser, ord: parseInt(g2(r, ic.ord), 10) || (k + 1) });
       });
       S.runs = [...runs.values()].map(r => ({ ...r, cat: r.cat[0].toUpperCase() + r.cat.slice(1), items: r.items.sort((a, b) => a.ord - b.ord) }));
-      if (S.runs.length) rep.push({ t: 'ok', m: `${S.runs.length} template sambungan dari sheet SAMBUNG: ${S.runs.map(r => r.name).join(', ')}.` });
+      if (S.runs.length) rep.push({ t: 'ok', m: `${S.runs.length} template sambungan dari kolom SAMBUNGAN: ${S.runs.map(r => r.name).join(', ')}.` });
     }
   }
   $('#reportBox').hidden = false;
