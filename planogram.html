@@ -85,6 +85,8 @@ button.danger{color:var(--bad)}
 .item .card img{flex:1;min-height:0;width:100%;object-fit:contain;object-position:center;background:#fff;padding:2px}
 .item .card .ph{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9px;line-height:1.15;padding:3px;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5);overflow:hidden}
 .item .cap{flex:none;height:22px;font-size:9px;line-height:1.1;padding:1px 3px;background:#f3f4f7;color:#222;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;border-top:1px solid #e0e3e8}
+.gsep{flex:none;position:relative}
+.gsep::after{content:'';position:absolute;left:50%;top:4%;bottom:4%;border-left:2px dashed rgba(60,70,90,.4)}
 .item.sel{z-index:3}
 .item.sel .card{outline:3px solid #f59e0b;outline-offset:-1px}
 .hkx{position:absolute;left:50%;top:calc(var(--hk)*-1);width:2px;margin-left:-1px;height:var(--hk);background:linear-gradient(90deg,#aab1bc,#4a525e);border-radius:1px;z-index:4;pointer-events:none}
@@ -469,13 +471,25 @@ const imgFor = code => (S.skus[code] && S.skus[code].img) || '';
 const patUrl = code => (S.pat || '').replace('{kode}', code);
 
 /* ---------- geometri kartu (dipakai layar & PNG) ---------- */
+const SER_GAP = 0.7;                    // jarak antar series dalam satu zona (satuan lebar kartu)
 function geom(plan, zi, hs) {
   const p = PRESETS[plan.size], z = plan.zones[zi], n = z.items.length, hook = z.t === 'hook';
   const perRow = Math.max(1, Math.floor(p.w / MINTILE));
-  const cols = Math.max(1, Math.min(n, perRow)), rows = Math.max(1, Math.ceil(n / perRow));
-  const tw = Math.min(MAXTILE, p.w / cols);
+  // item satu zona dikelompokkan per series (urutan kemunculan pertama); tiap series dipisah celah dan garis pembatas
+  const gmap = new Map(); z.items.forEach((c, i) => { const k = (S.skus[c] || {}).series || ''; if (!gmap.has(k)) gmap.set(k, []); gmap.get(k).push(i); });
+  const groups = [...gmap.values()], order = groups.flat(), units = n + Math.max(0, groups.length - 1) * SER_GAP;
+  const tw = Math.min(MAXTILE, p.w / Math.max(1, Math.min(Math.ceil(units - 1e-9), perRow))), cap = p.w / tw;
+  const pl = new Array(n), rowW = [0], seps = []; let r = 0, cur = 0;
+  groups.forEach((g, gi) => g.forEach((idx, k) => {
+    let lead = k === 0 && gi > 0 && cur > 0;
+    if (cur > 0 && cur + 1 + (lead ? SER_GAP : 0) > cap + 1e-9) { r++; cur = 0; lead = false; rowW[r] = 0; }
+    if (lead) seps.push({ r, u: cur + SER_GAP / 2 });
+    const start = cur + (lead ? SER_GAP : 0); pl[idx] = { r, u: start + 0.5, lead }; cur = start + 1; rowW[r] = cur;
+  }));
+  pl.forEach(q => { q.x = (q.u - rowW[q.r] / 2) * tw; }); seps.forEach(q => { q.x = (q.u - rowW[q.r] / 2) * tw; });
+  const rows = Math.max(1, r + 1), cols = Math.max(1, Math.min(n, perRow));
   const th = Math.max(4, Math.min(tw * 1.15, (hs[zi] - (hook ? HOOK_CM * rows + 3 : 1.5)) / rows));
-  return { n, perRow, cols, rows, tw, th, hook };
+  return { n, perRow, cols, rows, tw, th, hook, pl, order, seps };
 }
 
 /* ---------- render ---------- */
@@ -521,7 +535,9 @@ function buildFixture2d(plan, sc) {
     const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
     const body = document.createElement('div'); body.className = 'shelf-body' + (z.t === 'hook' ? ' hook' : '');
     body.dataset.zone = zi; body.dataset.plan = plan.id; body.style.width = W + 'px'; body.style.height = hs[zi] * sc + 'px';
-    z.items.forEach((code, ii) => {
+    g.order.forEach(ii => {
+      const code = z.items[ii];
+      if (g.pl[ii].lead) { const sp = document.createElement('div'); sp.className = 'gsep'; sp.style.width = SER_GAP * g.tw * sc + 'px'; sp.style.height = Math.floor(g.th * sc) + 'px'; if (z.t === 'hook') sp.style.marginTop = hookPx + 'px'; body.appendChild(sp); }
       const s = S.skus[code] || { code, name: code, img: '' };
       const d = document.createElement('div');
       d.className = 'item' + (sel && plan.id === S.cur && sel.zone === zi && sel.idx === ii ? ' sel' : '');
@@ -1079,8 +1095,9 @@ $('#btnPng').onclick = async () => {
       g.fillStyle = 'rgba(40,50,66,.65)'; g.font = 'bold 26px system-ui,sans-serif'; g.textAlign = 'center'; g.fillText('S T O C K', x0 + W / 2, by + bh / 2 + 9); g.textAlign = 'left';
     }
     const tw = gm.tw * sc - 4, th = gm.th * sc, blockH = gm.rows * th, top0 = hook ? y + hookPx : y + hh - blockH;
+    gm.seps.forEach(q => { const sx = x0 + W / 2 + q.x * sc, sy = top0 + q.r * th + (hook && q.r ? hookPx * q.r : 0); g.save(); g.strokeStyle = 'rgba(60,70,90,.55)'; g.lineWidth = 2; g.setLineDash([6, 5]); g.beginPath(); g.moveTo(sx, sy + th * .04); g.lineTo(sx, sy + th * .96); g.stroke(); g.restore(); });
     z.items.forEach((code, ii) => {
-      const r = Math.floor(ii / gm.perRow), cIdx = ii % gm.perRow, inRow = Math.min(gm.perRow, gm.n - r * gm.perRow), x = x0 + (W - inRow * gm.tw * sc) / 2 + cIdx * gm.tw * sc + 2, ty = top0 + r * th + (hook && r ? hookPx * r : 0);
+      const r = gm.pl[ii].r, x = x0 + W / 2 + gm.pl[ii].x * sc - gm.tw * sc / 2 + 2, ty = top0 + r * th + (hook && r ? hookPx * r : 0);
       const s = S.skus[code] || { name: code };
       if (hook) { g.strokeStyle = '#566070'; g.lineWidth = 3; g.beginPath(); g.moveTo(x + tw / 2, r ? ty - hookPx + 8 : y + 20); g.lineTo(x + tw / 2, ty - 4); g.arc(x + tw / 2 - 6, ty - 4, 6, 0, Math.PI); g.stroke(); }
       g.save(); g.shadowColor = 'rgba(0,0,0,.25)'; g.shadowBlur = 6; g.shadowOffsetY = 3; g.fillStyle = '#fff'; rr(x, ty, tw, th, 6); g.fill(); g.restore();
@@ -1424,8 +1441,8 @@ function buildOne3d(plan, G) {
     }
     z.items.forEach((code, ii) => {
       if (!visOk(plan, code)) return;                // tidak cocok filter: tidak digambar
-      const r = Math.floor(ii / gm.perRow), c = ii % gm.perRow, inRow = Math.min(gm.perRow, gm.n - r * gm.perRow);
-      const cw = gm.tw - 0.5, ch = gm.th, x = (c - (inRow - 1) / 2) * gm.tw;
+      const r = gm.pl[ii].r;
+      const cw = gm.tw - 0.5, ch = gm.th, x = gm.pl[ii].x;
       const y = hook ? zTop - HOOK_CM * (r + 1) - r * ch - ch / 2 : yBase + (gm.rows - 1 - r) * ch + ch / 2;
       const bd = hook ? Math.max(3, Math.min(cw * 0.3, 6)) : Math.max(5, Math.min(cw * 0.7, D - 12)), zz = hook ? zc : D / 2 - 4 - bd / 2;
       const col = new THREE.Color().setHSL(hue(code) / 360, 0.45, 0.42), sm = std(col);
@@ -1435,6 +1452,10 @@ function buildOne3d(plan, G) {
       if (hook) {                                     // kawat gantung dari bar / kartu di atasnya
         const wire = add(new THREE.CylinderGeometry(0.25, 0.25, HOOK_CM, 6), mMetal, x, y + ch / 2 + HOOK_CM / 2, zc, false);
       }
+    });
+    gm.seps.forEach(q => {                            // garis pembatas antar series
+      const y = hook ? zTop - HOOK_CM * (q.r + 1) - q.r * gm.th - gm.th / 2 : yBase + (gm.rows - 1 - q.r) * gm.th + gm.th / 2;
+      add(new THREE.BoxGeometry(0.5, gm.th * 0.92, 0.5), new THREE.MeshBasicMaterial({ color: 0x5b6577 }), q.x, y, hook ? zc : D / 2 - 5, false);
     });
     cy = zTop;
   }
