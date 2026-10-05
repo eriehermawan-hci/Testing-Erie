@@ -332,7 +332,7 @@ main.tplmode #side-left{display:none}
 
     <section class="panel" hidden>
       <h2>Item terpilih</h2>
-      <div id="inspector" class="muted">Klik produk di rak untuk melihat detail dan memindahkannya.</div>
+      <div id="inspector" class="muted">Klik produk di shelving untuk melihat detail dan memindahkannya.</div>
     </section>
 
     <section class="panel" id="reportBox" hidden>
@@ -404,16 +404,16 @@ const PRESETS = {
 };
 // layout zona atas→bawah: R = rak, H = gantungan, angka = tinggi relatif
 const VARIANTS = {
-  w6:   { fam: 'WALL', label: 'Wall 6 Rack', z: 'R1 R1 R1 R1 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
-  w5:   { fam: 'WALL', label: 'Wall 5 Rack', z: 'R1.2 R1.2 R1.2 R1.2 R1.2', sizes: ['wall270', 'wall240'], mat: 'ash' },
-  w3h2: { fam: 'WALL', label: 'Wall 3 Rack + 2 Gantungan', z: 'H1.5 H1.5 R1 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
-  g4:   { fam: 'GONDOLA', label: 'Gondola 4 Rack', z: 'R1 R1 R1 R1', sizes: ['gondola'], mat: 'steel' },
-  g3:   { fam: 'GONDOLA', label: 'Gondola 3 Rack', z: 'R1 R1 R1', sizes: ['gondola'], mat: 'steel' },
-  gh2r2:{ fam: 'GONDOLA', label: 'Gondola 2 Gantungan + 2 Rack', z: 'H1 H1 R1 R1', sizes: ['gondola'], mat: 'steel' },
-  gr3h1:{ fam: 'GONDOLA', label: 'Gondola 3 Rack + 1 Gantungan', z: 'R1 H1 R1 R1', sizes: ['gondola'], mat: 'steel' },
-  gr2h2:{ fam: 'GONDOLA', label: 'Gondola 2 Rack + 2 Gantungan', z: 'R1 H1 H1 R1', sizes: ['gondola'], mat: 'steel' },
-  e4:   { fam: 'ENDCAP', label: 'Endcap 4 Rack', z: 'R1 R1 R1 R1', sizes: ['endcap'], mat: 'ash' },
-  e3:   { fam: 'ENDCAP', label: 'Endcap 3 Rack', z: 'R1 R1 R1', sizes: ['endcap'], mat: 'ash' },
+  w6:   { fam: 'WALL', label: 'Wall 6 Shelving', z: 'R1 R1 R1 R1 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
+  w5:   { fam: 'WALL', label: 'Wall 5 Shelving', z: 'R1.2 R1.2 R1.2 R1.2 R1.2', sizes: ['wall270', 'wall240'], mat: 'ash' },
+  w3h2: { fam: 'WALL', label: 'Wall 3 Shelving + 2 Gantungan', z: 'H1.5 H1.5 R1 R1 R1', sizes: ['wall270', 'wall240'], mat: 'ash' },
+  g4:   { fam: 'GONDOLA', label: 'Gondola 4 Shelving', z: 'R1 R1 R1 R1', sizes: ['gondola'], mat: 'steel' },
+  g3:   { fam: 'GONDOLA', label: 'Gondola 3 Shelving', z: 'R1 R1 R1', sizes: ['gondola'], mat: 'steel' },
+  gh2r2:{ fam: 'GONDOLA', label: 'Gondola 2 Gantungan + 2 Shelving', z: 'H1 H1 R1 R1', sizes: ['gondola'], mat: 'steel' },
+  gr3h1:{ fam: 'GONDOLA', label: 'Gondola 3 Shelving + 1 Gantungan', z: 'R1 H1 R1 R1', sizes: ['gondola'], mat: 'steel' },
+  gr2h2:{ fam: 'GONDOLA', label: 'Gondola 2 Shelving + 2 Gantungan', z: 'R1 H1 H1 R1', sizes: ['gondola'], mat: 'steel' },
+  e4:   { fam: 'ENDCAP', label: 'Endcap 4 Shelving', z: 'R1 R1 R1 R1', sizes: ['endcap'], mat: 'ash' },
+  e3:   { fam: 'ENDCAP', label: 'Endcap 3 Shelving', z: 'R1 R1 R1', sizes: ['endcap'], mat: 'ash' },
   p1:   { fam: 'PALLET', label: 'Pallet 90x90', z: 'R1', sizes: ['pallet'], mat: 'ash' },
 };
 const MATNAMES = { ash: 'Kayu terang', burnt: 'Kayu gelap', glass: 'Kaca', steel: 'Logam' };
@@ -421,7 +421,7 @@ const MATS = { ash: { b1: '#e8d3ae', b2: '#c9a877', u1: '#dcc59c', u2: '#b99a6a'
   burnt: { b1: '#7a5740', b2: '#47301f', u1: '#6e4e39', u2: '#3b281b', back: '#a8917f', ink: '#f3e6d8' },
   glass: { b1: '#c4e8f3', b2: '#7abace', u1: '#d0d5dd', u2: '#8d97a6', back: '#eef5f8', ink: '#2a3a44' },
   steel: { b1: '#d9dde4', b2: '#8f98a6', u1: '#c7ccd5', u2: '#808996', back: '#eef0f4', ink: '#2a313b' } };
-const ZNAME = { rack: 'Rak', hook: 'Gantungan' };
+const ZNAME = { rack: 'Shelving', hook: 'Gantungan' };
 const zonesOf = v => v.z.split(' ').map(t => ({ t: t[0] === 'H' ? 'hook' : 'rack', u: +t.slice(1) }));
 const zoneH = (H, zones, pallet) => { const avail = H - (pallet ? 0 : BASE), tu = zones.reduce((a, z) => a + z.u, 0);
   return zones.map(z => Math.max(5, avail * z.u / tu)); };   // tanpa pembulatan: total tinggi tepat sama untuk semua jenis dalam satu keluarga
@@ -433,7 +433,7 @@ function zoneLayout(plan) {            // tinggi tiap zona (cm) + sisa area koso
   return { hs: zoneH(p.h, zs, kind === 'pallet'), top: 0 };
 }
 const norm = s => String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, ' ');
-const VAR_BY_LABEL = Object.fromEntries(Object.entries(VARIANTS).map(([k, v]) => [norm(v.label), k]));
+const VAR_BY_LABEL = Object.fromEntries(Object.entries(VARIANTS).flatMap(([k, v]) => [[norm(v.label), k], [norm(v.label.replace(/Shelving/g, 'Rack')), k]]));   // nama lama "Rack" tetap diterima
 const VAR_ALIAS = { 'wall 4 rack': 'w5' };      // nama lama → layout pengganti
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const hue = str => { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) % 360; return h; };
@@ -523,7 +523,7 @@ function buildFixture2d(plan, sc) {
     const g = geom(plan, zi, hs), hookPx = Math.max(20, Math.round(HOOK_CM * sc));
     const row = document.createElement('div'); row.className = 'shelf';
     const lab = document.createElement('div'); lab.className = 'shelf-label';
-    lab.innerHTML = `${z.t === 'hook' ? 'Gantung' : 'Rak'} ${zi + 1}<span class="u">${g.n ? g.n + ' item' : 'stock'}</span>`;
+    lab.innerHTML = `${z.t === 'hook' ? 'Gantung' : 'Shelving'} ${zi + 1}<span class="u">${g.n ? g.n + ' item' : 'stock'}</span>`;
     const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
     const body = document.createElement('div'); body.className = 'shelf-body' + (z.t === 'hook' ? ' hook' : '');
     body.dataset.zone = zi; body.dataset.plan = plan.id; body.style.width = W + 'px'; body.style.height = hs[zi] * sc + 'px';
@@ -571,7 +571,7 @@ function renderLib() {
 function renderInspector() {
   const el = $('#inspector'), plan = cur();
   const code = plan && sel && plan.zones[sel.zone] && plan.zones[sel.zone].items[sel.idx];
-  if (!code) { el.className = 'muted'; el.textContent = 'Klik produk di rak untuk melihat detail dan memindahkannya.'; return; }
+  if (!code) { el.className = 'muted'; el.textContent = 'Klik produk di shelving untuk melihat detail dan memindahkannya.'; return; }
   const s = S.skus[code] || { code, name: code, img: '' }; el.className = '';
   el.innerHTML = `${s.img ? `<img src="${esc(s.img)}" onerror="this.style.display='none'">` : ''}
     <div style="margin-top:6px"><b>${esc(s.name)}</b></div><div class="muted">Kode ${esc(code)} • ${ZNAME[plan.zones[sel.zone].t]} ${sel.zone + 1}, urutan ${sel.idx + 1}</div>
@@ -923,7 +923,7 @@ function importRows(rows, daftar, sambung) {
       const zn = parseInt(x.zona, 10);
       if (!zn || zn < 1 || zn > plan.zones.length) { rep.push({ t: 'err', m: `${id} baris ${x.line} (fixture ${x.slot}): zona_no "${x.zona}" di luar layout (1-${plan.zones.length}).` }); continue; }
       const z = plan.zones[zn - 1], jz = norm(x.jz);
-      if (jz && jz !== norm(ZNAME[z.t]) && !warned.has(id + '|' + zn)) { warned.add(id + '|' + zn); rep.push({ t: 'warn', m: `${id} zona ${zn}: di Excel "${x.jz}", di layout ${ZNAME[z.t]}. Dipakai: ${ZNAME[z.t]}.` }); }
+      if (jz && !(z.t === 'rack' && ['rak', 'rack'].includes(jz)) && jz !== norm(ZNAME[z.t]) && !warned.has(id + '|' + zn)) { warned.add(id + '|' + zn); rep.push({ t: 'warn', m: `${id} zona ${zn}: di Excel "${x.jz}", di layout ${ZNAME[z.t]}. Dipakai: ${ZNAME[z.t]}.` }); }
       if (!x.code) continue;                                   // baris tanpa SKU = zona kosong (STOCK)
       z.items.push(x.code); cnt++;
     }
@@ -999,7 +999,7 @@ $('#btnCsv').onclick = () => {
   download('planogram_data.csv', '\ufeff' + rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
 };
 $('#btnTpl').onclick = () => download('template_planogram.csv',
-  '\ufeff' + CSV_HEAD.join(',') + '\nHomeware,Storage,Food Storage,10680419,MOSQUE DOME GLASS JAR SET OF 3 450ML,,PENYIMPANAN,E4. CANISTER,GLASS FANCY,,,GND-01,1,Rak,Gondola 4 Rack,,,,,,,,\nHomeware,Tableware,Serving Set,10681571,SERVING GLASS SQR PLATER ZEVY GOLD,,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,,,GND-01,2,Rak,Gondola 4 Rack,WLL-01,1,Rak,Wall 6 Rack,,,,\n', 'text/csv');
+  '\ufeff' + CSV_HEAD.join(',') + '\nHomeware,Storage,Food Storage,10680419,MOSQUE DOME GLASS JAR SET OF 3 450ML,,PENYIMPANAN,E4. CANISTER,GLASS FANCY,,,GND-01,1,Shelving,Gondola 4 Shelving,,,,,,,,\nHomeware,Tableware,Serving Set,10681571,SERVING GLASS SQR PLATER ZEVY GOLD,,MAKAN,A2. SERVINGWARE,W/GOLD RACK GLASS,,,GND-01,2,Rak,Gondola 4 Rack,WLL-01,1,Rak,Wall 6 Rack,,,,\n', 'text/csv');
 $('#btnSave').onclick = () => download('planogram.json', JSON.stringify(S, null, 2), 'application/json');
 $('#btnLoad').onclick = () => $('#fileJson').click();
 $('#fileJson').onchange = async e => {
@@ -1075,7 +1075,7 @@ $('#btnPng').onclick = async () => {
       g.fillStyle = lg(0, y, 0, y + 20, '#f6f8fb', '#6c7584'); rr(x0 - 6, y, W + 12, 20, 10); g.fill(); }
     else if (bh) { g.fillStyle = '#fff'; g.fillRect(x0, y + hh, W, 14); g.fillStyle = lg(0, y + hh + 14, 0, y + hh + bh, M.b1, M.b2); g.fillRect(x0 - up, y + hh + 14, W + up * 2, bh - 14); }
     g.fillStyle = '#6b7280'; g.font = '18px system-ui,sans-serif'; g.textAlign = 'right';
-    g.fillText(`${hook ? 'Gantung' : 'Rak'} ${zi + 1}`, x0 - up - 12, y + hh - 22); g.font = '15px system-ui,sans-serif'; g.fillText(`${gm.n} item`, x0 - up - 12, y + hh - 4); g.textAlign = 'left';
+    g.fillText(`${hook ? 'Gantung' : 'Shelving'} ${zi + 1}`, x0 - up - 12, y + hh - 22); g.font = '15px system-ui,sans-serif'; g.fillText(`${gm.n} item`, x0 - up - 12, y + hh - 4); g.textAlign = 'left';
     y += hh + bh;
   });
   if (kind === 'pallet') { g.fillStyle = lg(0, y, 0, y + base, '#d6a86a', '#bf915a'); g.fillRect(x0, y, W, base); g.strokeStyle = 'rgba(90,52,20,.16)'; g.lineWidth = 1.5;
@@ -1151,7 +1151,7 @@ function renderCatalog() {
   const fams = [['WALL', 'Wall'], ['GONDOLA', 'Gondola'], ['ENDCAP', 'Endcap'], ['PALLET', 'Pallet']];
   const card = k => { const v = VARIANTS[k];
     return `<div class="tcard"><div class="tv">${fixtureSvg(k)}</div><div class="tt"><b>${esc(v.label)}</b><span class="ts">${v.sizes.map(x => esc(PRESETS[x].label)).join(' · ')}</span>
-      <div class="tz">${zonesOf(v).map((z, i) => `<i class="${z.t === 'hook' ? 'zh' : 'zr'}">${i + 1} ${z.t === 'hook' ? 'Gantungan' : 'Rak'}</i>`).join('')}</div></div></div>`; };
+      <div class="tz">${zonesOf(v).map((z, i) => `<i class="${z.t === 'hook' ? 'zh' : 'zr'}">${i + 1} ${z.t === 'hook' ? 'Gantungan' : 'Shelving'}</i>`).join('')}</div></div></div>`; };
   $('#tplCat').innerHTML = `<div class="tpl-h"><h3>Template visual fixture</h3><span>${Object.keys(VARIANTS).length} jenis. Tulis nama jenis persis seperti ini di kolom JENIS FIXTURE (sheet DAFTAR_FIXTURE). Zona dihitung dari atas ke bawah.</span></div>` +
     fams.map(([f, lb]) => { const ks = Object.keys(VARIANTS).filter(k => VARIANTS[k].fam === f);
       return `<div class="tpl-h"><h3>${lb}</h3><span>${ks.length} jenis${JFAM.includes(f) ? ' · bisa disambung' : ' · tidak ikut sambung'}</span></div><div class="tpl-grid">${ks.map(card).join('')}</div>`; }).join('');
@@ -1162,7 +1162,7 @@ function renderTplTab() {                                              // tab kh
   const fams = [['WALL', 'Wall'], ['GONDOLA', 'Gondola'], ['ENDCAP', 'Endcap'], ['PALLET', 'Pallet']], ks = Object.keys(VARIANTS).filter(k => VARIANTS[k].fam === tplFam);
   const card = k => { const v = VARIANTS[k];
     return `<div class="tcard"><div class="tv">${fixtureSvg(k)}</div><div class="tt"><b>${esc(v.label)}</b><span class="ts">${v.sizes.map(x => { const P = PRESETS[x]; return `${P.w}×${P.d}×${P.h} cm`; }).join(' · ')}</span>
-      <div class="tz">${zonesOf(v).map((z, i) => `<i class="${z.t === 'hook' ? 'zh' : 'zr'}">${i + 1} ${z.t === 'hook' ? 'Gantungan' : 'Rak'}</i>`).join('')}</div></div></div>`; };
+      <div class="tz">${zonesOf(v).map((z, i) => `<i class="${z.t === 'hook' ? 'zh' : 'zr'}">${i + 1} ${z.t === 'hook' ? 'Gantungan' : 'Shelving'}</i>`).join('')}</div></div></div>`; };
   $('#tplTab').innerHTML = `<div class="tpl-h"><h3>Template modul fixture (kosong)</h3><span>${mode === '3d' ? 'Tampilan 3D: seret untuk memutar, scroll untuk zoom.' : 'Tampilan 2D skema.'} Tombol 2D / 3D di header berlaku di tab ini.</span></div>
     <div class="famchips">${fams.map(([f, l]) => `<button data-fam="${f}" class="${f === tplFam ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div class="tpl-h"><h3>${(fams.find(f => f[0] === tplFam) || [])[1]}</h3><span>${ks.length} jenis${JFAM.includes(tplFam) ? ' · bisa disambung' : ' · tidak ikut sambung'}</span></div>` +
@@ -1184,7 +1184,7 @@ function applyView() {
   if (J.on) jNormalize();
   JV = new Map(jView().map(v => [v.plan.id, v.sers]));
   const ok = ready();
-  $('#emptyMsg').hidden = ok; $('#tplCat').hidden = ok; if (!ok) renderCatalog();
+  $('#emptyMsg').hidden = ok; $('#tplCat').hidden = true;
   $('#stage').hidden = $('#stageNote').hidden = mode === '3d' || !ok; $('#view3d').hidden = mode === '2d' || !ok;
   const tabs = $('#planTabs'), list = ok ? S.plans.filter(planOk).slice(0, 12) : [];
   tabs.hidden = true; tabs.innerHTML = '';
