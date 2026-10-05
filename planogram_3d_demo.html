@@ -276,6 +276,7 @@ main.tplmode #side-left{display:none}
   <button class="primary" id="btnImport">Impor Excel / CSV</button>
   <input type="file" id="fileData" accept=".xlsx,.csv,.txt" hidden>
   <button id="btnTpl">Template CSV</button>
+  <button id="btnUrl" title="Muat data dari link Google Sheet yang dipublikasikan ke web (CSV)">🔗 Link Google Sheet</button>
   <span style="flex:1"></span>
   <button id="btnPng">Ekspor PNG</button>
   <button id="btnCsv">Ekspor CSV</button>
@@ -983,6 +984,25 @@ $('#fileData').onchange = async e => {
     else importRows(parseCSV(await f.text()));
   } catch (err) { toast('Gagal membaca berkas: ' + err.message + '. Coba simpan sheet DATA sebagai CSV.'); }
 };
+
+/* muat dari link Google Sheet (Publikasikan ke web, format CSV). Tanpa API; hanya baca. */
+const URL_KEY = 'planogram-sheet-url';
+async function loadFromUrl(url) {
+  url = url.trim().replace(/\/pubhtml(\?.*)?$/, '/pub?output=csv');
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const txt = await res.text();
+  if (/^\s*</.test(txt)) throw new Error('bukan CSV (sheet belum dipublikasikan sebagai CSV, atau link salah)');
+  importRows(parseCSV(txt));
+  try { localStorage.setItem(URL_KEY, url); } catch (e) {}
+}
+$('#btnUrl').onclick = async () => {
+  let last = ''; try { last = localStorage.getItem(URL_KEY) || ''; } catch (e) {}
+  const url = prompt('Tempel link Google Sheet (File > Bagikan > Publikasikan ke web > pilih sheet DATA > format CSV):', last);
+  if (!url) return;
+  try { await loadFromUrl(url); } catch (err) { toast('Gagal memuat link: ' + err.message + '. Pastikan sudah dipublikasikan ke web (CSV).'); }
+};
+{ const q = new URLSearchParams(location.search).get('data'); if (q) setTimeout(() => loadFromUrl(q).catch(err => toast('Gagal memuat link: ' + err.message)), 0); }   // ?data=<link csv> untuk deploy
 
 /* ---------- ekspor ---------- */
 function download(name, content, type) {

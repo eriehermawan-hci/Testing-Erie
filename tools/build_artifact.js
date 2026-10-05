@@ -35,7 +35,7 @@ const OUT = path.resolve(process.env.OUT_ARTIFACT || path.join(root, 'planogram_
   sub('\n/* init */\nrender();', '\n/* init */\nrender();\nsetMode(\'3d\');');
   sub("const KEY = 'planogram-v4';", "const KEY = 'planogram-v4-artifact';");
   // tombol yang tidak bisa berfungsi di frame artifact
-  for (const id of ['btnTpl', 'btnPng', 'btnCsv', 'btnPrint', 'btnSave', 'btnLoad', 'gl3png']) sub(`<button id="${id}"`, `<button hidden id="${id}"`);
+  for (const id of ['btnTpl', 'btnUrl', 'btnPng', 'btnCsv', 'btnPrint', 'btnSave', 'btnLoad', 'gl3png']) sub(`<button id="${id}"`, `<button hidden id="${id}"`);
   fs.writeFileSync(OUT, h);
   console.log('ditulis:', OUT, (h.length / 1024).toFixed(0) + ' KB');
 })();
