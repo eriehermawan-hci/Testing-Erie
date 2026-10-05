@@ -186,6 +186,9 @@ select.on{background:linear-gradient(90deg,#f5f3ff,#fff);border-color:#a78bfa;co
 .fxrow.joined .fixture:not(:first-child){padding-left:0}
 .fxrow.joined .fixture:not(:first-child) .shelf-label{display:none}
 .fxrow.joined .fixture:not(:first-child) .fx-title{margin-left:0;min-width:100%}
+#fFx{border-left:6px solid #f59e0b}
+.demo-btn{margin-top:6px;padding:11px 22px;border-radius:999px;font-weight:800;font-size:14px;letter-spacing:.02em;box-shadow:0 10px 24px rgba(99,102,241,.4)}
+.chip.c-fx i,.c-fx i{background:linear-gradient(135deg,#f59e0b,#f97316)}
 #fAdj{border-left:6px solid #ec4899}#fSer{border-left:6px solid #14b8a6}
 button{border-radius:12px;border:1.5px solid #e2e0f7;font-weight:600;transition:.15s}
 button:hover{background:#f5f3ff}
@@ -260,6 +263,7 @@ main{grid-template-columns:300px minmax(0,1fr)}
       <h2>🎯 Filter <span class="muted" id="fCount"></span></h2>
       <select id="fAdj" style="margin-bottom:6px"></select>
       <select id="fSer" style="margin-bottom:6px"></select>
+      <select id="fFx" style="margin-bottom:6px"></select>
       <label class="swrow" title="Series disusun berurutan dan fixture-nya dipasang menempel"><input type="checkbox" id="jOn"><i class="sw"></i><span>🔗 Sambung visual</span></label>
       <div id="chain" hidden></div>
       <details id="fMore" style="margin-bottom:6px"><summary class="muted" style="cursor:pointer;margin-bottom:6px">Filter lainnya (Dept, Comm, Class, Sub Series)</summary>
@@ -311,7 +315,7 @@ main{grid-template-columns:300px minmax(0,1fr)}
   <section class="panel" style="padding:8px">
     <div id="kpis" hidden></div>
     <div id="pvTitle" hidden></div>
-    <div id="emptyMsg"><div class="em-ico">🧭</div><div class="em-t">SILAHKAN PILIH DULU GRUP ADJACENCY ATAU SERIES<br>UNTUK MENAMPILKAN PREVIEW 3D/2D-NYA</div><div class="em-h">← gunakan filter di panel kiri</div></div>
+    <div id="emptyMsg"><div class="em-ico">🧭</div><div class="em-t">SILAHKAN PILIH DULU GRUP ADJACENCY ATAU SERIES<br>UNTUK MENAMPILKAN PREVIEW 3D/2D-NYA</div><div class="em-h">← gunakan filter di panel kiri</div><button id="jDemo" class="primary demo-btn">🔗 Lihat contoh fixture tersambung</button></div>
     <div id="planTabs" class="btns" style="margin:0 0 8px" hidden></div>
     <div id="stage"></div>
     <div id="view3d" hidden>
@@ -384,7 +388,7 @@ const MATS = { ash: { b1: '#e8d3ae', b2: '#c9a877', u1: '#dcc59c', u2: '#b99a6a'
 const ZNAME = { rack: 'Rak', hook: 'Gantungan' };
 const zonesOf = v => v.z.split(' ').map(t => ({ t: t[0] === 'H' ? 'hook' : 'rack', u: +t.slice(1) }));
 const zoneH = (H, zones, pallet) => { const avail = H - (pallet ? 0 : BASE), tu = zones.reduce((a, z) => a + z.u, 0);
-  return zones.map(z => Math.max(5, Math.floor(avail * z.u / tu))); };
+  return zones.map(z => Math.max(5, avail * z.u / tu)); };   // tanpa pembulatan: total tinggi tepat sama untuk semua jenis dalam satu keluarga
 const UNIT_CM = 35;                    // tinggi 1 satuan rak pada Wall = jarak rak Gondola (35 cm)
 const scaleFor = h => h > 200 ? 3.5 : h > 120 ? 4.5 : 5;
 function zoneLayout(plan) {            // tinggi tiap zona (cm) + sisa area kosong di atas
@@ -607,7 +611,7 @@ stage.addEventListener('drop', e => {
 function renderFilters() {
   // filter saling terkait (faceted): pilihan tiap filter hanya berisi nilai yang masih ada
   // pada SKU yang sudah ditempatkan di fixture dan cocok dengan filter LAINNYA
-  const placed = new Set(S.plans.flatMap(p => p.zones.flatMap(z => z.items)));
+  const placed = new Set(S.plans.filter(p => !F.fx || p.variant === F.fx).flatMap(p => p.zones.flatMap(z => z.items)));
   const base = Object.values(S.skus).filter(k => placed.has(k.code));
   const dims = [['#fAdj', 'Grup Adjacency', 'adj'], ['#fSer', 'Series', 'ser'], ['#fSub', 'Sub Series', 'sub'],
     ['#fDept', 'Dept', 'dept'], ['#fComm', 'Comm', 'comm'], ['#fCls', 'Class', 'cls']];
@@ -621,9 +625,16 @@ function renderFilters() {
     });
     return [...m].sort((a, b) => a[0].localeCompare(b[0], 'id', { numeric: true }));
   };
+  const matchAll = k => Object.keys(FKEY).every(o => !F[o] || k[FKEY[o]] === F[o]) && (!q || skuText(k).includes(q));
+  const fxOpts = () => {                                   // jenis fixture yang masih punya SKU cocok dengan filter lain; jumlah = planogram
+    const m = new Map();
+    S.plans.forEach(p => { if (p.zones.some(z => z.items.some(c => S.skus[c] && matchAll(S.skus[c])))) m.set(p.variant, (m.get(p.variant) || 0) + 1); });
+    return Object.keys(VARIANTS).filter(k => m.has(k)).map(k => [k, m.get(k)]);
+  };
   for (let it = 0; it < 4; it++) {                          // pilihan yang tidak valid lagi dikosongkan, ulangi sampai stabil
     let changed = false;
     dims.forEach(([, , f]) => { if (F[f] && !optsFor(f).some(o => o[0] === F[f])) { F[f] = ''; changed = true; } });
+    if (F.fx && !fxOpts().some(o => o[0] === F.fx)) { F.fx = ''; changed = true; }
     if (!changed) break;
   }
   dims.forEach(([id, label, f]) => {
@@ -634,7 +645,9 @@ function renderFilters() {
   $('#fSer').hidden = J.on; $('#jOn').checked = J.on; $('#chain').hidden = !J.on;
   if (J.on) renderChain(optsFor('ser'));
   $('#fMore').hidden = true;
-  F.fx = '';                                          // filter jenis fixture tidak dipakai
+  { const fo = fxOpts(), el = $('#fFx'); el.hidden = J.on;   // Jenis Fixture tampil; saat Sambung visual fixture dipilih per series
+    el.innerHTML = `<option value="">Jenis Fixture (semua)${F.fx ? '' : ' · ' + fo.length}</option>` + fo.map(([k, n]) => `<option value="${k}"${F.fx === k ? ' selected' : ''}>${esc(VARIANTS[k].label)} (${n})</option>`).join('');
+    el.classList.toggle('on', !!F.fx); }
   $('#fCount').textContent = J.on ? (jView().length ? `(${jView().length} fixture)` : '') : fActive() ? `(${S.plans.filter(planOk).length} planogram)` : '';
   $('#fReset').hidden = !(fActive() || jRows().length);
   const loc = $('#fLoc');
@@ -642,6 +655,25 @@ function renderFilters() {
   loc.hidden = true;
   loc.innerHTML = `<div class="muted">${hits.length} planogram${fActive() ? ' sesuai filter' : ''} — klik untuk memilih:</div>` + (hits.map(([p, n]) => `<button data-goto="${esc(p.id)}" class="${p.id === S.cur ? 'cur' : ''}">${esc(p.id)} — ${esc(VARIANTS[p.variant].label)} · <b>${n}</b> item${itemFilter() ? ' cocok' : ''}</button>`).join('') || '<div class="muted">Tidak ada planogram yang cocok dengan filter.</div>');
 }
+function jExample() {                                                   // contoh: 3 series terbanyak itemnya, tiap series di fixture berbeda (jenis fixture bervariasi)
+  const cnt = new Map();
+  S.plans.forEach(p => p.zones.forEach(z => z.items.forEach(c => { const sr = (S.skus[c] || {}).series; if (sr) { const m = cnt.get(sr) || new Map(); m.set(p.id, (m.get(p.id) || 0) + 1); cnt.set(sr, m); } })));
+  const order = [...cnt].sort((a, b) => [...b[1].values()].reduce((x, y) => x + y, 0) - [...a[1].values()].reduce((x, y) => x + y, 0));
+  const usedP = new Set(), usedF = new Set(), rows = [];
+  for (const [ser, m] of order) {
+    const ps = [...m].filter(([id]) => !usedP.has(id)).sort((a, b) => b[1] - a[1]).map(([id]) => S.plans.find(p => p.id === id));
+    if (!ps.length) continue;
+    const pick = ps.find(p => !usedF.has(VARIANTS[p.variant].fam)) || ps[0];
+    rows.push({ ser, plan: pick.id }); usedP.add(pick.id); usedF.add(VARIANTS[pick.variant].fam);
+    if (rows.length === 3) break;
+  }
+  return rows;
+}
+function startExample() {
+  const rows = jExample(); if (!rows.length) return toast('Belum ada data series untuk contoh.');
+  Object.keys(F).forEach(k => F[k] = ''); J.on = true; J.rows = rows; render();
+}
+$('#jDemo').onclick = startExample;
 function renderChain(serOpts) {
   const used = new Set(J.rows.map(r => r.ser).filter(Boolean));
   $('#chain').innerHTML = J.rows.map((r, i) => {
@@ -650,11 +682,11 @@ function renderChain(serOpts) {
       <select data-k="ser" aria-label="Series ${i + 1}"><option value="">Pilih Series ${i + 1}</option>${serOpts.filter(([v]) => v === r.ser || !used.has(v)).map(([v, n]) => `<option value="${esc(v)}"${r.ser === v ? ' selected' : ''}>${esc(v)} (${n})</option>`).join('')}</select>
       <select data-k="plan" aria-label="Fixture untuk series ${i + 1}"${r.ser ? '' : ' disabled'}>${ps.map(p => `<option value="${esc(p.id)}"${r.plan === p.id ? ' selected' : ''}>${esc(p.id)} · ${esc(VARIANTS[p.variant].label)}</option>`).join('') || '<option>Fixture</option>'}</select>
       <div class="cb"><button data-act="up" title="Naikkan"${i ? '' : ' disabled'}>▲</button><button data-act="rm" title="Hapus">×</button><button data-act="dn" title="Turunkan"${i < J.rows.length - 1 ? '' : ' disabled'}>▼</button></div></div>`;
-  }).join('') + '<button class="cadd" data-act="add">＋ Tambah series</button>';
+  }).join('') + '<button class="cadd" data-act="add">＋ Tambah series</button><button class="cadd" data-act="demo">✨ Isi contoh tersambung</button>';
 }
 $('#jOn').onchange = e => {
   J.on = e.target.checked;
-  if (J.on) { J.rows = F.ser ? [{ ser: F.ser, plan: '' }] : [{ ser: '', plan: '' }]; F.ser = ''; }   // series yang sudah dipilih jadi Series 1
+  if (J.on) { J.rows = F.ser ? [{ ser: F.ser, plan: '' }] : [{ ser: '', plan: '' }]; F.ser = ''; F.fx = ''; }   // series yang sudah dipilih jadi Series 1
   else F.ser = (J.rows.find(r => r.ser) || {}).ser || '';
   render();
 };
@@ -667,6 +699,7 @@ $('#chain').addEventListener('change', e => {
 $('#chain').addEventListener('click', e => {
   const b = e.target.closest('button[data-act]'); if (!b) return;
   const row = b.closest('.crow'), i = row ? +row.dataset.i : -1, a = b.dataset.act, R = J.rows;
+  if (a === 'demo') return startExample();
   if (a === 'add') R.push({ ser: '', plan: '' });
   else if (a === 'rm') { R.splice(i, 1); if (!R.length) R.push({ ser: '', plan: '' }); }
   else if (a === 'up' && i > 0) [R[i - 1], R[i]] = [R[i], R[i - 1]];
@@ -679,6 +712,7 @@ function afterFilter() {
   render();
 }
 [['#fAdj', 'adj'], ['#fSer', 'ser'], ['#fSub', 'sub'], ['#fDept', 'dept'], ['#fComm', 'comm'], ['#fCls', 'cls']].forEach(([id, k]) => $(id).onchange = e => { F[k] = e.target.value; afterFilter(); });
+$('#fFx').onchange = e => { F.fx = e.target.value; afterFilter(); };
 $('#fReset').onclick = () => { Object.keys(F).forEach(k => F[k] = ''); J.rows = [{ ser: '', plan: '' }]; $('#libSearch').value = ''; render(); };
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-goto]'); if (!g) return;
@@ -1007,7 +1041,7 @@ function setMode(m) {
 const J = { on: false, rows: [{ ser: '', plan: '' }] };
 let JV = new Map();                                                    // id planogram -> series yang ditampilkan di fixture itu
 const jRows = () => J.on ? J.rows.filter(r => r.ser) : [];
-const jPlansFor = ser => S.plans.filter(p => p.zones.some(z => z.items.some(c => (S.skus[c] || {}).series === ser)));
+const jPlansFor = ser => S.plans.filter(p => (!F.fx || p.variant === F.fx) && p.zones.some(z => z.items.some(c => (S.skus[c] || {}).series === ser)));
 function jView() {                                                     // [{plan, sers}] berurutan, satu fixture dihitung sekali
   const m = new Map();
   jRows().forEach(r => { const p = S.plans.find(x => x.id === r.plan); if (!p) return; if (!m.has(p.id)) m.set(p.id, { plan: p, sers: new Set() }); m.get(p.id).sers.add(r.ser); });
@@ -1019,7 +1053,7 @@ const visOk = (plan, code) => {                                        // item i
   const sers = JV.get(plan.id), k = S.skus[code]; return !!(sers && k && sers.has(k.series) && skuOk(code));
 };
 function jNormalize() {                                                 // series tidak valid dikosongkan; fixture bawaan = yang pertama memuat series itu
-  const placed = new Set(S.plans.flatMap(p => p.zones.flatMap(z => z.items))), valid = new Set();
+  const placed = new Set(S.plans.filter(p => !F.fx || p.variant === F.fx).flatMap(p => p.zones.flatMap(z => z.items))), valid = new Set();
   Object.values(S.skus).forEach(k => { if (placed.has(k.code) && k.series && Object.keys(FKEY).every(o => o === 'ser' || !F[o] || k[FKEY[o]] === F[o])) valid.add(k.series); });
   J.rows.forEach(r => {
     if (r.ser && !valid.has(r.ser)) r.ser = '';
@@ -1043,7 +1077,7 @@ function renderKpis() {
   list.forEach(p => p.zones.forEach(z => { if (!z.items.length) stock++; z.items.forEach(c => { if (visOk(p, c)) { items++; skus.add(c); } }); }));
   box.innerHTML = [['🏬', 'Fixture tampil', list.length, 'k1'], ['🏷️', 'SKU cocok', skus.size, 'k2'], ['📦', 'Item tampil', items, 'k3'], ['🗃️', 'Zona STOCK', stock, 'k4']]
     .map(([ic, lb, n, k]) => `<div class="kpi ${k}"><span class="ic">${ic}</span><span class="lb">${lb}</span><b>${n}</b></div>`).join('');
-  pv.innerHTML = (F.adj ? `<span class="chip c-adj"><i>Adjacency</i>${esc(F.adj)}</span>` : '') + (J.on ? jRows().map((r, i) => `<span class="chip c-ser"><i>Series ${i + 1}</i>${esc(r.ser)}</span>`).join('<span class="chip-ar">→</span>') : (F.ser ? `<span class="chip c-ser"><i>Series</i>${esc(F.ser)}</span>` : ''));
+  pv.innerHTML = (F.adj ? `<span class="chip c-adj"><i>Adjacency</i>${esc(F.adj)}</span>` : '') + (F.fx ? `<span class="chip c-fx"><i>Fixture</i>${esc(VARIANTS[F.fx].label)}</span>` : '') + (J.on ? jRows().map((r, i) => `<span class="chip c-ser"><i>Series ${i + 1}</i>${esc(r.ser)}</span>`).join('<span class="chip-ar">→</span>') : (F.ser ? `<span class="chip c-ser"><i>Series</i>${esc(F.ser)}</span>` : ''));
 }
 $('#vw2').onclick = () => setMode('2d'); $('#vw3').onclick = () => setMode('3d');
 
