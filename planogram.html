@@ -544,13 +544,19 @@ function renderPlanSel() {
 /* satu fixture berisi beberapa series = tampil sebagai fixture terpisah per series (salinan jenis yang sama, ID sama) */
 const serOf = c => (S.skus[c] || {}).series || '';
 function splitPlan(p) {
-  const sers = [...new Set(p.zones.flatMap(z => z.items.map(serOf)))];
+  const dOf = (z, i) => (z.disp || [])[i] || 0;
+  if (p.zones.some(z => z.items.some((c, i) => dOf(z, i) > 0))) {            // kolom URUTAN DISPLAY terisi: pisah per nomor display (kosong = 1)
+    const nos = [...new Set(p.zones.flatMap(z => z.items.map((c, i) => dOf(z, i) || 1)))].sort((a, b) => a - b);
+    if (nos.length < 2) return [p];
+    return nos.map(n => ({ ...p, tag: 'Display ' + n, dispNo: n, split: true, bySeries: false, zones: p.zones.map(z => { const ix = z.items.map((c, i) => i).filter(i => (dOf(z, i) || 1) === n); return { t: z.t, items: ix.map(i => z.items[i]), blank: !ix.length && z.items.length > 0 }; }) }));
+  }
+  const sers = [...new Set(p.zones.flatMap(z => z.items.map(serOf)))];       // tanpa nomor display: otomatis dipisah per series
   if (sers.length < 2) return [p];
-  return sers.map(sr => ({ ...p, series: sr, split: true, zones: p.zones.map(z => { const it = z.items.filter(c => serOf(c) === sr); return { t: z.t, items: it, blank: !it.length && z.items.length > 0 }; }) }));
+  return sers.map(sr => ({ ...p, series: sr, tag: sr || 'tanpa series', split: true, bySeries: true, zones: p.zones.map(z => { const it = z.items.filter(c => serOf(c) === sr); return { t: z.t, items: it, blank: !it.length && z.items.length > 0 }; }) }));
 }
 function viewPlans() {
   if (!ready()) return [];
-  if (J.on) return jView().flatMap(v => splitPlan(v.plan).filter(x => !x.split || v.sers.has('*') || v.sers.has(x.series)));
+  if (J.on) return jView().flatMap(v => splitPlan(v.plan).filter(x => !x.bySeries || v.sers.has('*') || v.sers.has(x.series)));
   return S.plans.filter(planOk).flatMap(splitPlan).filter(planOk).slice(0, 12);
 }
 function shown2d() { return viewPlans(); }   // sama dengan shown3d()
@@ -569,7 +575,7 @@ function buildFixture2d(plan, sc) {
   const { hs } = zoneLayout(plan);
   const fx = document.createElement('div'); fx.className = `fixture k-${kind} m-${plan.mat}`; fx.style.setProperty('--cm', sc + 'px'); if (kind !== 'pallet') fx.style.setProperty('--back', backC());
   const t = document.createElement('div'); t.className = 'fx-title'; const pk = kind === 'pallet' ? pkInfo(plan) : null, pkOn = !!(pk && pk.strips);
-  t.textContent = `${plan.id}${plan.split ? ' · ' + (plan.series || 'tanpa series') : ''} — ${v.label} — ${p.w}×${p.d}×${pkOn ? Math.round(pk.H) : p.h} cm${pkOn ? ' · 📦 ' + pk.total + ' pcs' : ''}`; fx.appendChild(t);
+  t.textContent = `${plan.id}${plan.split ? ' · ' + plan.tag : ''} — ${v.label} — ${p.w}×${p.d}×${pkOn ? Math.round(pk.H) : p.h} cm${pkOn ? ' · 📦 ' + pk.total + ' pcs' : ''}`; fx.appendChild(t);
   const head = document.createElement('div'); head.className = 'fx-head'; head.style.width = W + 24 + 'px';
   head.textContent = kind === 'endcap' || kind === 'wall' ? v.label : ''; fx.appendChild(head);
   plan.zones.forEach((z, zi) => {
@@ -962,7 +968,7 @@ function importRows(rows, daftar, sambung, dimensi) {
     dept: col('dept'), comm: col('comm'), cls: col('class'), stock: col('stock') };
   // penempatan: sampai 3 fixture per baris SKU (ID FIXTURE 1/2/3, ZONA NO 1/2/3, JENIS ZONA 1/2/3). Tanpa angka = fixture 1.
   const slots = [1, 2, 3].map(n => { const f = base => col(...(n === 1 ? [base + '_1', base] : [base + '_' + n]));
-    return { id: f('id_fixture'), zona: f('zona_no'), jz: f('jenis_zona'), jenis: f('jenis_fixture'), run: col('sambungan_' + n), ord: col('urutan_sambung_' + n) }; }).filter(sl => sl.id >= 0);
+    return { id: f('id_fixture'), zona: f('zona_no'), jz: f('jenis_zona'), jenis: f('jenis_fixture'), run: col('sambungan_' + n), ord: col('urutan_sambung_' + n), disp: col('urutan_display_' + n) }; }).filter(sl => sl.id >= 0);
   const need = [['SKU', ci.kode], ['ID FIXTURE', slots.length ? 0 : -1], ['ZONA NO', slots.length && slots[0].zona >= 0 ? 0 : -1]].filter(x => x[1] < 0).map(x => x[0]);
   if (need.length) { toast('Kolom wajib tidak ditemukan: ' + need.join(', ')); return; }
   const get = (r, i) => i < 0 || r[i] == null ? '' : String(r[i]).trim();
@@ -980,7 +986,7 @@ function importRows(rows, daftar, sambung, dimensi) {
     slots.forEach((sl, si) => {
       const id = get(r, sl.id); if (!id) return; placed = true;
       if (!groups.has(id)) groups.set(id, []);
-      groups.get(id).push({ code, line, slot: si + 1, zona: get(r, sl.zona), jz: get(r, sl.jz), jenis: get(r, sl.jenis) });
+      groups.get(id).push({ code, line, slot: si + 1, zona: get(r, sl.zona), jz: get(r, sl.jz), jenis: get(r, sl.jenis), disp: parseInt(get(r, sl.disp), 10) || 0 });
       if (get(r, sl.run)) slotRuns.push([get(r, sl.run), '', get(r, sl.ord), id, '', line]);
     });
     if (code && !placed) nMaster++;
@@ -997,7 +1003,7 @@ function importRows(rows, daftar, sambung, dimensi) {
       const z = plan.zones[zn - 1], jz = norm(x.jz);
       if (jz && !(z.t === 'rack' && ['rak', 'rack'].includes(jz)) && jz !== norm(ZNAME[z.t]) && !warned.has(id + '|' + zn)) { warned.add(id + '|' + zn); rep.push({ t: 'warn', m: `${id} zona ${zn}: di Excel "${x.jz}", di layout ${ZNAME[z.t]}. Dipakai: ${ZNAME[z.t]}.` }); }
       if (!x.code) continue;                                   // baris tanpa SKU = zona kosong (STOCK)
-      z.items.push(x.code); cnt++;
+      z.items.push(x.code); (z.disp = z.disp || []).push(x.disp || 0); cnt++;
     }
     const old = S.plans.findIndex(p => p.id === id);
     if (old >= 0) S.plans[old] = plan; else S.plans.push(plan);
@@ -1460,7 +1466,7 @@ function build3d() {
   T.W = totalW; T.D = Math.max(...infos.map(i => i.D)); T.total = Math.max(...infos.map(i => i.total));
   T.sun.position.set(totalW * 0.4, T.total * 1.3, 320); const half = Math.max(T.total, totalW, T.D) * 1.1, sc = T.sun.shadow.camera;
   sc.left = sc.bottom = -half; sc.right = sc.top = half; sc.near = 10; sc.far = 2500; sc.updateProjectionMatrix();
-  const key = plans.map(p => p.id + (p.series || '') + p.variant + p.size).join('|');
+  const key = plans.map(p => p.id + (p.tag || '') + p.variant + p.size).join('|');
   if (key !== T.key) { T.key = key; setView3d('persp'); }
   highlight3d();
 }
@@ -1536,7 +1542,7 @@ function buildOne3d(plan, G) {
     cy = zTop;
   }
 
-  const lt = labelTex(plan.tpl ? v.label : `${plan.id}${plan.split ? ' · ' + (plan.series || 'tanpa series') : ''} · ${v.label}`, 110, 12, '#ffffff', '#1f2430');   // papan nama di lantai depan fixture
+  const lt = labelTex(plan.tpl ? v.label : `${plan.id}${plan.split ? ' · ' + plan.tag : ''} · ${v.label}`, 110, 12, '#ffffff', '#1f2430');   // papan nama di lantai depan fixture
   const lab = add(new THREE.PlaneGeometry(110, 12), new THREE.MeshBasicMaterial({ map: lt }), 0, 0.3, D / 2 + 14, false); lab.rotation.x = -Math.PI / 2;
   return { W, D, total: total + 14, pitch: pallet ? W : W + 5 };       // + tinggi header
 }
