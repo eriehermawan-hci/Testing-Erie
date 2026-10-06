@@ -966,10 +966,10 @@ function importRows(rows, daftar, sambung, dimensi) {
   const ci = { kode: col('sku', 'kode_sku'), nama: col('sku_description', 'nama', 'deskripsi'),
     img: col('link_image'), disp: col('grup_display'), adj: col('grup_adjacency'), ser: col('series'), sub: col('sub_series'),
     dept: col('dept'), comm: col('comm'), cls: col('class'), stock: col('stock') };
-  // penempatan: sampai 3 fixture per baris SKU (ID FIXTURE 1/2/3, ZONA NO 1/2/3, JENIS ZONA 1/2/3). Tanpa angka = fixture 1.
+  // penempatan: sampai 3 fixture per baris SKU (ID FIXTURE 1/2/3, SHELVING KE 1/2/3, JENIS ZONA 1/2/3; nama lama ZONA NO tetap diterima). Tanpa angka = fixture 1.
   const slots = [1, 2, 3].map(n => { const f = base => col(...(n === 1 ? [base + '_1', base] : [base + '_' + n]));
-    return { id: f('id_fixture'), zona: f('zona_no'), jz: f('jenis_zona'), jenis: f('jenis_fixture'), run: col('sambungan_' + n), ord: col('urutan_sambung_' + n), disp: col('urutan_display_' + n) }; }).filter(sl => sl.id >= 0);
-  const need = [['SKU', ci.kode], ['ID FIXTURE', slots.length ? 0 : -1], ['ZONA NO', slots.length && slots[0].zona >= 0 ? 0 : -1]].filter(x => x[1] < 0).map(x => x[0]);
+    return { id: f('id_fixture'), zona: n === 1 ? col('shelving_ke_1', 'zona_no_1', 'shelving_ke', 'zona_no') : col('shelving_ke_' + n, 'zona_no_' + n), jz: f('jenis_zona'), jenis: f('jenis_fixture'), run: col('sambungan_' + n), ord: col('urutan_sambung_' + n), disp: col('urutan_display_' + n) }; }).filter(sl => sl.id >= 0);
+  const need = [['SKU', ci.kode], ['ID FIXTURE', slots.length ? 0 : -1], ['SHELVING KE', slots.length && slots[0].zona >= 0 ? 0 : -1]].filter(x => x[1] < 0).map(x => x[0]);
   if (need.length) { toast('Kolom wajib tidak ditemukan: ' + need.join(', ')); return; }
   const get = (r, i) => i < 0 || r[i] == null ? '' : String(r[i]).trim();
   const dmap = {};                                  // fallback id → jenis dari sheet DAFTAR_FIXTURE
@@ -999,7 +999,7 @@ function importRows(rows, daftar, sambung, dimensi) {
     const plan = newPlan(id, key); let cnt = 0;
     for (const x of list) {
       const zn = parseInt(x.zona, 10);
-      if (!zn || zn < 1 || zn > plan.zones.length) { rep.push({ t: 'err', m: `${id} baris ${x.line} (fixture ${x.slot}): zona_no "${x.zona}" di luar layout (1-${plan.zones.length}).` }); continue; }
+      if (!zn || zn < 1 || zn > plan.zones.length) { rep.push({ t: 'err', m: `${id} baris ${x.line} (fixture ${x.slot}): SHELVING KE "${x.zona}" di luar layout (1-${plan.zones.length}).` }); continue; }
       const z = plan.zones[zn - 1], jz = norm(x.jz);
       if (jz && !(z.t === 'rack' && ['rak', 'rack'].includes(jz)) && jz !== norm(ZNAME[z.t]) && !warned.has(id + '|' + zn)) { warned.add(id + '|' + zn); rep.push({ t: 'warn', m: `${id} zona ${zn}: di Excel "${x.jz}", di layout ${ZNAME[z.t]}. Dipakai: ${ZNAME[z.t]}.` }); }
       if (!x.code) continue;                                   // baris tanpa SKU = zona kosong (STOCK)
@@ -1092,7 +1092,7 @@ function download(name, content, type) {
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
 }
 const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-const CSV_HEAD = ['DEPT', 'COMM', 'CLASS', 'SKU', 'SKU DESCRIPTION', 'STOCK', 'GRUP DISPLAY', 'GRUP ADJACENCY', 'SERIES', 'SUB SERIES', 'LINK IMAGE', 'ID FIXTURE 1', 'ZONA NO 1', 'JENIS ZONA 1', 'JENIS FIXTURE 1', 'ID FIXTURE 2', 'ZONA NO 2', 'JENIS ZONA 2', 'JENIS FIXTURE 2', 'ID FIXTURE 3', 'ZONA NO 3', 'JENIS ZONA 3', 'JENIS FIXTURE 3'];
+const CSV_HEAD = ['DEPT', 'COMM', 'CLASS', 'SKU', 'SKU DESCRIPTION', 'STOCK', 'GRUP DISPLAY', 'GRUP ADJACENCY', 'SERIES', 'SUB SERIES', 'LINK IMAGE', 'ID FIXTURE 1', 'SHELVING KE 1', 'JENIS ZONA 1', 'JENIS FIXTURE 1', 'ID FIXTURE 2', 'SHELVING KE 2', 'JENIS ZONA 2', 'JENIS FIXTURE 2', 'ID FIXTURE 3', 'SHELVING KE 3', 'JENIS ZONA 3', 'JENIS FIXTURE 3'];
 $('#btnCsv').onclick = () => {
   if (!S.plans.length && !Object.keys(S.skus).length) return toast('Belum ada data.');
   const rows = [CSV_HEAD], placed = new Set();
