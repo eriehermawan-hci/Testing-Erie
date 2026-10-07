@@ -189,10 +189,8 @@ select.on{background:linear-gradient(90deg,#f5f3ff,#fff);border-color:#a78bfa;co
 .crow .cb button{padding:1px 8px;font-size:12px;line-height:1.3;border-radius:8px}
 #chain .cadd{border-style:dashed;color:#4338ca;font-weight:700}
 .fxrow.fxgrp{flex:none;min-width:0}
-.fxrow.joined{gap:0}
-.fxrow.joined .fixture{border-radius:0;box-shadow:none;border-left:0;border-right:0;background:linear-gradient(180deg,#eef1f6,#dde3ec)}
-.fxrow.joined .fixture:first-child{border-radius:10px 0 0 10px;border-left:1px solid #e6e4f8}
-.fxrow.joined .fixture:last-child{border-radius:0 10px 10px 0;border-right:1px solid #e6e4f8}
+.fxrow.joined{gap:8px}
+.fxrow.joined .fixture{background:linear-gradient(180deg,#eef1f6,#dde3ec)}
 .fxrow.joined .fixture:not(:first-child){padding-left:0}
 .fxrow.joined .fixture:not(:first-child) .shelf-label{display:none}
 .fxrow.joined .fixture:not(:first-child) .fx-title{margin-left:0;min-width:100%}
@@ -1523,7 +1521,7 @@ function build3d() {
   const joined = false, tplGap = tab === 'tpl', GAP = tplGap ? 10 : 45, infos = plans.map(plan => { const PG = new THREE.Group(); G.add(PG); const i = buildOne3d(plan, PG); i.PG = PG; return i; });
   const same = k => k >= 0 && k < plans.length - 1 && !!plans[k].join && plans[k].join === plans[k + 1].join;      // k dan k+1 satu rangkaian otomatis
   const pitch = (i, k) => joined || tplGap || same(k) || same(k - 1) ? i.pitch : i.W + 10;                       // menempel: lebar dasar fixture, tanpa jarak
-  const gapAfter = k => joined || same(k) ? 0 : GAP;
+  const gapAfter = k => same(k) ? 6 : GAP;                                         // tersambung = berjajar rapat dengan celah 6 cm agar rak tidak terlihat menyatu
   const totalW = infos.reduce((a, i, k) => a + pitch(i, k) + (k < infos.length - 1 ? gapAfter(k) : 0), 0); let x = -totalW / 2;
   infos.forEach((i, k) => { x += pitch(i, k) / 2; i.PG.position.x = x; x += pitch(i, k) / 2 + gapAfter(k); });
   T.W = totalW; T.D = Math.max(...infos.map(i => i.D)); T.total = Math.max(...infos.map(i => i.total));
