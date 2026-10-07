@@ -62,8 +62,8 @@ button.danger{color:var(--bad)}
 .k-pallet .shelf-body{background:linear-gradient(180deg,#f7f8fa,#e9edf3)}
 .shelf-body.blank{min-height:0}
 .shelf-body.over{outline:2px dashed var(--accent);outline-offset:-2px}
-.board{display:flex;flex-direction:column;height:15px}
-.rail{height:7px;background:#fff;border-bottom:1px solid rgba(0,0,0,.25)}
+.board{display:flex;flex-direction:column;height:calc(var(--cm)*2.5)}
+.rail{height:calc(var(--cm)*1);background:#fff;border-bottom:1px solid rgba(0,0,0,.25)}
 .plank{flex:1;background:linear-gradient(180deg,var(--board1),var(--board2));box-shadow:0 3px 4px rgba(0,0,0,.28)}
 .k-pallet .board{display:none}
 .fx-base{height:calc(var(--cm)*10);background:linear-gradient(180deg,var(--up2),var(--up1));border-top:2px solid rgba(0,0,0,.25);box-shadow:0 5px 9px rgba(0,0,0,.22);border-radius:0 0 3px 3px}
@@ -187,6 +187,7 @@ select.on{background:linear-gradient(90deg,#f5f3ff,#fff);border-color:#a78bfa;co
 .crow .cb{grid-column:3;grid-row:1 / span 2;display:flex;flex-direction:column;gap:3px}
 .crow .cb button{padding:1px 8px;font-size:12px;line-height:1.3;border-radius:8px}
 #chain .cadd{border-style:dashed;color:#4338ca;font-weight:700}
+.fxrow.fxgrp{flex:none;min-width:0}
 .fxrow.joined{gap:0}
 .fxrow.joined .fixture{border-radius:0;box-shadow:none;border-left:0;border-right:0;background:linear-gradient(180deg,#eef1f6,#dde3ec)}
 .fxrow.joined .fixture:first-child{border-radius:10px 0 0 10px;border-left:1px solid #e6e4f8}
@@ -527,7 +528,7 @@ function geom(plan, zi, hs) {
   }));
   pl.forEach(q => { q.x = (q.u - rowW[q.r] / 2) * tw; }); seps.forEach(q => { q.x = (q.u - rowW[q.r] / 2) * tw; });
   const rows = Math.max(1, r + 1), cols = Math.max(1, Math.min(n, perRow));
-  const th = Math.max(4, Math.min(tw * 1.15, (hs[zi] - (hook ? HOOK_CM * rows + 3 : 1.5)) / rows));
+  const th = Math.max(4, Math.min(tw * 1.15, (hs[zi] - (hook ? HOOK_CM * rows + 3 : 2.5)) / rows));
   return { n, perRow, cols, rows, tw, th, hook, pl, order, seps };
 }
 
@@ -574,7 +575,11 @@ function renderFixture() {
   const avail = Math.max(600, host.clientWidth || 900), sumW = plans.reduce((a, pl) => a + PRESETS[pl.size].w, 0), maxH = Math.max(...plans.map(fxH));
   const sc = Math.max(1.5, Math.min(scaleFor(maxH), (avail - (J.on ? 80 + plans.length * 30 : plans.length * 112)) / sumW));
   const row = document.createElement('div'); row.className = 'fxrow' + (J.on ? ' joined' : '');
-  plans.forEach(plan => row.appendChild(buildFixture2d(plan, sc)));
+  const grp = []; plans.forEach(pl => { const lst = grp[grp.length - 1]; if (pl.join && lst && lst.join === pl.join && !J.on) lst.items.push(pl); else grp.push({ join: pl.join, items: [pl] }); });
+  grp.forEach(g => {                                       // unit berurutan dari series dan blok yang sama ditampilkan menempel (sambung otomatis)
+    if (g.items.length > 1) { const w = document.createElement('div'); w.className = 'fxrow joined fxgrp'; g.items.forEach(pl => w.appendChild(buildFixture2d(pl, sc))); row.appendChild(w); }
+    else row.appendChild(buildFixture2d(g.items[0], sc));
+  });
   host.appendChild(row);
 }
 function buildFixture2d(plan, sc) {
@@ -592,7 +597,7 @@ function buildFixture2d(plan, sc) {
     lab.innerHTML = `${z.t === 'hook' ? 'Gantung' : 'Shelving'} ${zi + 1}<span class="u">${pkOn ? pk.total + ' pcs' : g.n ? g.n + ' item' : z.blank ? '' : emptyKind(plan, zi) === 'display' ? 'display' : 'stock'}</span>`;
     const wrap = document.createElement('div'); wrap.className = 'shelf-wrap';
     const body = document.createElement('div'); body.className = 'shelf-body' + (z.t === 'hook' ? ' hook' : '');
-    body.dataset.zone = zi; body.dataset.plan = plan.id; body.style.width = W + 'px'; body.style.height = hs[zi] * sc + 'px';
+    body.dataset.zone = zi; body.dataset.plan = plan.id; body.style.width = W + 'px'; body.style.height = (hs[zi] - (z.t === 'hook' || kind === 'pallet' ? 0 : 2.5)) * sc + 'px';   // papan 2,5 cm termasuk dalam tinggi zona
     if (pkOn) {
       const wrapPk = document.createElement('div'); wrapPk.className = 'pkwrap';
       pk.strips.slice().sort((a, b) => a.z0 - b.z0).forEach(st => {
@@ -982,7 +987,7 @@ function importRows(rows, daftar, sambung, dimensi) {
     return { id: f('id_fixture'), zona: n === 1 ? col('shelving_ke_1', 'zona_no_1', 'shelving_ke', 'zona_no') : col('shelving_ke_' + n, 'zona_no_' + n), jz: f('jenis_zona'), jenis: f('jenis_fixture'), run: col('sambungan_' + n), ord: col('urutan_sambung_' + n), disp: col('urutan_display_' + n) }; }).filter(sl => sl.id >= 0);
   /* format baru: tanpa ID FIXTURE; tiap SERIES punya sampai 3 fixture terkunci: 1 = Gondola/Endcap, 2 = Wall, 3 = Wall (kolom JENIS FIXTURE n + SHELVING KE n) */
   const zonaCol = n => n === 1 ? col('shelving_ke_1', 'zona_no_1', 'shelving_ke', 'zona_no') : col('shelving_ke_' + n, 'zona_no_' + n);
-  const nslots = [1, 2, 3].map(n => ({ n, zona: zonaCol(n), jenis: col('jenis_fixture_' + n) })).filter(x => x.zona >= 0 && x.jenis >= 0);
+  const nslots = [1, 2, 3].map(n => ({ n, zona: zonaCol(n), jenis: col('jenis_fixture_' + n), disp: col('urutan_display_' + n) })).filter(x => x.zona >= 0 && x.jenis >= 0);
   const newMode = !slots.length && nslots.length > 0, LOCK = { 1: ['GONDOLA', 'ENDCAP'], 2: ['WALL'], 3: ['WALL'] };
   const need = (newMode ? [['SKU', ci.kode]] : [['SKU', ci.kode], ['ID FIXTURE', slots.length ? 0 : -1], ['SHELVING KE', slots.length && slots[0].zona >= 0 ? 0 : -1]]).filter(x => x[1] < 0).map(x => x[0]);
   if (need.length) { toast('Kolom wajib tidak ditemukan: ' + need.join(', ')); return; }
@@ -1006,8 +1011,8 @@ function importRows(rows, daftar, sambung, dimensi) {
     if (newMode) {
       const skey = val(r, ci.ser, '') || val(r, ci.adj, '') || '(tanpa series)';
       nslots.forEach(sl => { const jenis = get(r, sl.jenis), zona = get(r, sl.zona); if (!jenis && !zona) return; placed = true;
-        const id = `${skey} · F${sl.n}`; if (!groups.has(id)) groups.set(id, []);
-        groups.get(id).push({ code, line, slot: sl.n, zona, jz: '', jenis, disp: 0, sk: skey }); });
+        const dn = Math.max(1, parseInt(get(r, sl.disp), 10) || 1), id = `${skey} · F${sl.n}${dn > 1 ? ' #' + dn : ''}`; if (!groups.has(id)) groups.set(id, []);
+        groups.get(id).push({ code, line, slot: sl.n, zona, jz: '', jenis, disp: 0, sk: skey, dn }); });
     }
     slots.forEach((sl, si) => {
       const id = get(r, sl.id); if (!id) return; placed = true;
@@ -1028,7 +1033,7 @@ function importRows(rows, daftar, sambung, dimensi) {
       const js = [...new Set(list.map(x => x.jenis).filter(Boolean))]; if (js.length > 1) rep.push({ t: 'warn', m: `${id}: jenis fixture berbeda di beberapa baris (${js.join(' / ')}). Dipakai: ${jenis}.` });
     }
     const plan = newPlan(id, key); let cnt = 0;
-    if (newMode) { plan.sk = list[0].sk; plan.slotNo = list[0].slot; }
+    if (newMode) { plan.sk = list[0].sk; plan.slotNo = list[0].slot; plan.dispNo = list[0].dn; plan.join = plan.sk + '|F' + plan.slotNo; }   // unit dengan series dan blok sama = otomatis disambung menurut URUTAN DISPLAY
     for (const x of list) {
       const zn = parseInt(x.zona, 10);
       if (!zn || zn < 1 || zn > plan.zones.length) { rep.push({ t: 'err', m: `${id} baris ${x.line} (fixture ${x.slot}): SHELVING KE "${x.zona}" di luar layout (1-${plan.zones.length}).` }); continue; }
@@ -1052,7 +1057,7 @@ function importRows(rows, daftar, sambung, dimensi) {
     S.plans.push(newPlan(id, key)); nPlans++;
     rep.push({ t: 'ok', m: `${id} — ${VARIANTS[key].label}: tidak ada di DATA, semua ${zonesOf(VARIANTS[key]).length} zona = STOCK.` });
   }
-  if (newMode) { const ord = [...new Set(S.plans.map(q => q.sk))]; S.plans.sort((a, b) => ord.indexOf(a.sk) - ord.indexOf(b.sk) || a.slotNo - b.slotNo); }
+  if (newMode) { const ord = [...new Set(S.plans.map(q => q.sk))]; S.plans.sort((a, b) => ord.indexOf(a.sk) - ord.indexOf(b.sk) || a.slotNo - b.slotNo || a.dispNo - b.dispNo); }
   if (added.length) { S.cur = added[0]; S.scale = scaleFor(PRESETS[cur().size].h); sel = null; }
   if (nMaster) rep.push({ t: 'ok', m: `${nMaster} SKU tanpa penempatan fixture masuk daftar SKU (belum ditempatkan).` });
   // template urutan sambung (kolom SAMBUNGAN di sheet DATA; sheet SAMBUNG lama tetap dibaca)
@@ -1494,9 +1499,11 @@ function build3d() {
   T.items = []; T.hl = null;
   const plans = shown3d(); if (!plans.length) return;
   const joined = J.on && tab !== 'tpl', tplGap = tab === 'tpl', GAP = joined ? 0 : tplGap ? 10 : 45, infos = plans.map(plan => { const PG = new THREE.Group(); G.add(PG); const i = buildOne3d(plan, PG); i.PG = PG; return i; });
-  const pitch = i => joined || tplGap ? i.pitch : i.W + 10;                       // menempel: lebar dasar fixture, tanpa jarak
-  const totalW = infos.reduce((a, i) => a + pitch(i), 0) + GAP * (infos.length - 1); let x = -totalW / 2;
-  infos.forEach(i => { x += pitch(i) / 2; i.PG.position.x = x; x += pitch(i) / 2 + GAP; });
+  const same = k => k >= 0 && k < plans.length - 1 && !!plans[k].join && plans[k].join === plans[k + 1].join;      // k dan k+1 satu rangkaian otomatis
+  const pitch = (i, k) => joined || tplGap || same(k) || same(k - 1) ? i.pitch : i.W + 10;                       // menempel: lebar dasar fixture, tanpa jarak
+  const gapAfter = k => joined || same(k) ? 0 : GAP;
+  const totalW = infos.reduce((a, i, k) => a + pitch(i, k) + (k < infos.length - 1 ? gapAfter(k) : 0), 0); let x = -totalW / 2;
+  infos.forEach((i, k) => { x += pitch(i, k) / 2; i.PG.position.x = x; x += pitch(i, k) / 2 + gapAfter(k); });
   T.W = totalW; T.D = Math.max(...infos.map(i => i.D)); T.total = Math.max(...infos.map(i => i.total));
   T.sun.position.set(totalW * 0.4, T.total * 1.3, 320); const half = Math.max(T.total, totalW, T.D) * 1.1, sc = T.sun.shadow.camera;
   sc.left = sc.bottom = -half; sc.right = sc.top = half; sc.near = 10; sc.far = 2500; sc.updateProjectionMatrix();
