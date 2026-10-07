@@ -565,7 +565,8 @@ function splitPlan(p) {
 function viewPlans() {
   if (!ready()) return [];
   if (J.on) {                                                          // rantai sambung: semua yang ada di rantai menempel (join = 'chain'); fixture di luar rantai (Endcap) tampil terpisah di akhir
-    const ch = jView().flatMap(v => splitPlan(v.plan).filter(x => !x.bySeries || v.sers.has('*') || v.sers.has(x.series))).map(x => ({ ...x, join: 'chain' }));
+    let run = 0, prev = '';                                              // menempel hanya bila bertemu keluarga yang sama (Wall-Wall, Gondola-Gondola, Pallet-Pallet); beda keluarga berjajar bebas dengan jarak
+    const ch = jView().flatMap(v => splitPlan(v.plan).filter(x => !x.bySeries || v.sers.has('*') || v.sers.has(x.series))).map(x => { const f = VARIANTS[x.variant].fam; if (f !== prev) run++; prev = f; return { ...x, join: 'chain' + run }; });
     const ex = J.auto ? S.plans.filter(q => !jOk(q) && planOk(q)).flatMap(splitPlan).filter(planOk).map(x => ({ ...x, join: '' })) : [];
     return ch.concat(ex).slice(0, 36);
   }
