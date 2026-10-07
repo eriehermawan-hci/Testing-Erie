@@ -58,8 +58,7 @@ button.danger{color:var(--bad)}
 .shelf-label .u{display:block;font-size:10px}
 .shelf-wrap{flex:none}
 .shelf-body{position:relative;display:flex;flex-wrap:wrap;justify-content:center;align-content:flex-end;align-items:flex-end;background:var(--back)}
-.k-wall .shelf-body{background:repeating-linear-gradient(to bottom,rgba(0,0,0,.13) 0 2px,transparent 2px calc(var(--cm)*7.5)),var(--back)}
-.k-gondola .shelf-body,.k-endcap .shelf-body{background:var(--back)}
+.k-wall .shelf-body,.k-gondola .shelf-body,.k-endcap .shelf-body{background:repeating-linear-gradient(to bottom,rgba(0,0,0,.13) 0 2px,transparent 2px calc(var(--cm)*7.5)),var(--back)}
 .k-pallet .shelf-body{background:linear-gradient(180deg,#f7f8fa,#e9edf3)}
 .shelf-body.blank{min-height:0}
 .shelf-body.over{outline:2px dashed var(--accent);outline-offset:-2px}
@@ -1194,7 +1193,7 @@ $('#btnPng').onclick = async () => {
   plan.zones.forEach((z, zi) => {
     const hh = hs[zi] * sc, bh = zb(z), hook = z.t === 'hook', gm = geom(plan, zi, hs);
     g.fillStyle = kind === 'pallet' ? '#eef1f5' : backC(); g.fillRect(x0, y, W, hh);
-    if (kind === 'wall') { g.fillStyle = 'rgba(0,0,0,.13)'; for (let gy = 0; gy < hh; gy += 75) g.fillRect(x0, y + gy, W, 3); }
+    if (kind !== 'pallet') { g.fillStyle = 'rgba(0,0,0,.13)'; for (let gy = 0; gy < hh; gy += 75) g.fillRect(x0, y + gy, W, 3); }
     else if (kind === 'gondola' || kind === 'endcap') { g.fillStyle = lg(0, y, 0, y + hh, 'rgba(255,255,255,.5)', 'rgba(0,0,0,.04)'); g.fillRect(x0, y, W, hh); }
     if (hook) { g.strokeStyle = 'rgba(0,0,0,.18)'; g.setLineDash([8, 6]); g.lineWidth = 1.5; g.beginPath(); g.moveTo(x0, y + hh); g.lineTo(x0 + W, y + hh); g.stroke(); g.setLineDash([]); }
     if (kind !== 'pallet')
@@ -1532,7 +1531,7 @@ function buildOne3d(plan, G) {
   } else {
     box(W + 5, b, D, mUp1, 0, b / 2, 0);             // kaki / base
     const bm = std(0xffffff, { roughness: 0.9 });
-    if (kind === 'wall') {                           // panel belakang bergaris tiap 7.5 cm
+    if (kind !== 'pallet') {                         // panel belakang bergaris tiap 7.5 cm, sama persis untuk Wall, Gondola, Endcap
       const c = document.createElement('canvas'); c.width = 8; c.height = 64; const g = c.getContext('2d');
       g.fillStyle = backC(); g.fillRect(0, 0, 8, 64); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(0, 0, 8, 3);
       const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, total / 7.5); t.encoding = THREE.sRGBEncoding; ownTex.add(t); bm.map = t;
