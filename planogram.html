@@ -564,7 +564,7 @@ function splitPlan(p) {
 function viewPlans() {
   if (!ready()) return [];
   if (J.on) return jView().flatMap(v => splitPlan(v.plan).filter(x => !x.bySeries || v.sers.has('*') || v.sers.has(x.series)));
-  return S.plans.filter(planOk).flatMap(splitPlan).filter(planOk).slice(0, 12);
+  return S.plans.filter(planOk).flatMap(splitPlan).filter(planOk).slice(0, 36);
 }
 function shown2d() { return viewPlans(); }   // sama dengan shown3d()
 function renderFixture() {
@@ -980,20 +980,35 @@ function importRows(rows, daftar, sambung, dimensi) {
   // penempatan: sampai 3 fixture per baris SKU (ID FIXTURE 1/2/3, SHELVING KE 1/2/3, JENIS ZONA 1/2/3; nama lama ZONA NO tetap diterima). Tanpa angka = fixture 1.
   const slots = [1, 2, 3].map(n => { const f = base => col(...(n === 1 ? [base + '_1', base] : [base + '_' + n]));
     return { id: f('id_fixture'), zona: n === 1 ? col('shelving_ke_1', 'zona_no_1', 'shelving_ke', 'zona_no') : col('shelving_ke_' + n, 'zona_no_' + n), jz: f('jenis_zona'), jenis: f('jenis_fixture'), run: col('sambungan_' + n), ord: col('urutan_sambung_' + n), disp: col('urutan_display_' + n) }; }).filter(sl => sl.id >= 0);
-  const need = [['SKU', ci.kode], ['ID FIXTURE', slots.length ? 0 : -1], ['SHELVING KE', slots.length && slots[0].zona >= 0 ? 0 : -1]].filter(x => x[1] < 0).map(x => x[0]);
+  /* format baru: tanpa ID FIXTURE; tiap SERIES punya sampai 3 fixture terkunci: 1 = Gondola/Endcap, 2 = Wall, 3 = Wall (kolom JENIS FIXTURE n + SHELVING KE n) */
+  const zonaCol = n => n === 1 ? col('shelving_ke_1', 'zona_no_1', 'shelving_ke', 'zona_no') : col('shelving_ke_' + n, 'zona_no_' + n);
+  const nslots = [1, 2, 3].map(n => ({ n, zona: zonaCol(n), jenis: col('jenis_fixture_' + n) })).filter(x => x.zona >= 0 && x.jenis >= 0);
+  const newMode = !slots.length && nslots.length > 0, LOCK = { 1: ['GONDOLA', 'ENDCAP'], 2: ['WALL'], 3: ['WALL'] };
+  const need = (newMode ? [['SKU', ci.kode]] : [['SKU', ci.kode], ['ID FIXTURE', slots.length ? 0 : -1], ['SHELVING KE', slots.length && slots[0].zona >= 0 ? 0 : -1]]).filter(x => x[1] < 0).map(x => x[0]);
   if (need.length) { toast('Kolom wajib tidak ditemukan: ' + need.join(', ')); return; }
   const get = (r, i) => i < 0 || r[i] == null ? '' : String(r[i]).trim();
   const dmap = {};                                  // fallback id → jenis dari sheet DAFTAR_FIXTURE
   (daftar || []).slice(1).forEach(r => { if (r[0]) dmap[String(r[0]).trim()] = String(r[1] || '').trim(); });
   const val = (r, i, o) => { const v = get(r, i); return (v && norm(v) !== 'x' ? v : o) || ''; };   // 'X' = isi bawaan dropdown, dianggap kosong
-  const regSku = r => { const code = get(r, ci.kode); if (!code) return; const old = S.skus[code] || {};
-    S.skus[code] = { code, name: get(r, ci.nama) || old.name || code, img: get(r, ci.img) || old.img || patUrl(code),
+  if (newMode) { S.plans = []; S.skus = {}; S.cur = null; }                 // format baru = penggantian data penuh
+  const keysOf = new Map();                                                // kode SKU sama dengan series/adjacency berbeda = entri terpisah
+  const regSku = r => { const code = get(r, ci.kode); if (!code) return; let key = code;
+    if (newMode) { const ad = val(r, ci.adj, ''), sr = val(r, ci.ser, ''), ks = keysOf.get(code) || [];
+      key = ks.find(k2 => S.skus[k2].adj === ad && S.skus[k2].series === sr) || (ks.length ? code + '~' + ks.length : code); if (!ks.includes(key)) { ks.push(key); keysOf.set(code, ks); } }
+    const old = S.skus[key] || {};
+    S.skus[key] = { code, name: get(r, ci.nama) || old.name || code, img: get(r, ci.img) || old.img || patUrl(code),
       disp: val(r, ci.disp, old.disp), adj: val(r, ci.adj, old.adj), series: val(r, ci.ser, old.series), sub: val(r, ci.sub, old.sub),
-      dept: val(r, ci.dept, old.dept), comm: val(r, ci.comm, old.comm), cls: val(r, ci.cls, old.cls), stock: val(r, ci.stock, old.stock) }; return code; };
+      dept: val(r, ci.dept, old.dept), comm: val(r, ci.comm, old.comm), cls: val(r, ci.cls, old.cls), stock: val(r, ci.stock, old.stock) }; return key; };
   const groups = new Map(), slotRuns = [];                         // id fixture → daftar penempatan (urut sesuai baris Excel)
   let nMaster = 0;
   rows.slice(1).forEach((r, k) => {
     const code = regSku(r) || '', line = k + 2; let placed = false;
+    if (newMode) {
+      const skey = val(r, ci.ser, '') || val(r, ci.adj, '') || '(tanpa series)';
+      nslots.forEach(sl => { const jenis = get(r, sl.jenis), zona = get(r, sl.zona); if (!jenis && !zona) return; placed = true;
+        const id = `${skey} · F${sl.n}`; if (!groups.has(id)) groups.set(id, []);
+        groups.get(id).push({ code, line, slot: sl.n, zona, jz: '', jenis, disp: 0, sk: skey }); });
+    }
     slots.forEach((sl, si) => {
       const id = get(r, sl.id); if (!id) return; placed = true;
       if (!groups.has(id)) groups.set(id, []);
@@ -1006,8 +1021,14 @@ function importRows(rows, daftar, sambung, dimensi) {
   for (const [id, list] of groups) {
     const jenis = list.map(x => x.jenis).find(Boolean) || dmap[id] || '', key = VAR_BY_LABEL[norm(jenis)] || VAR_ALIAS[norm(jenis)];
     if (VAR_ALIAS[norm(jenis)]) rep.push({ t: 'warn', m: `${id}: "${jenis}" sudah diganti menjadi ${VARIANTS[key].label}.` });
-    if (!key) { rep.push({ t: 'err', m: `${id}: jenis_fixture "${jenis || '(kosong)'}" tidak dikenal. Planogram dilewati.` }); continue; }
+    if (!key) { rep.push({ t: 'err', m: newMode ? `${id}: JENIS FIXTURE ${list[0].slot} ${jenis ? `"${jenis}" tidak dikenal` : 'belum diisi'}. Fixture dilewati.` : `${id}: jenis_fixture "${jenis || '(kosong)'}" tidak dikenal. Planogram dilewati.` }); continue; }
+    if (newMode) {
+      const ok = LOCK[list[0].slot];
+      if (!ok.includes(VARIANTS[key].fam)) { rep.push({ t: 'err', m: `${id}: Fixture ${list[0].slot} hanya untuk ${ok.map(f => f[0] + f.slice(1).toLowerCase()).join(' atau ')}, bukan ${VARIANTS[key].label}. Fixture dilewati.` }); continue; }
+      const js = [...new Set(list.map(x => x.jenis).filter(Boolean))]; if (js.length > 1) rep.push({ t: 'warn', m: `${id}: jenis fixture berbeda di beberapa baris (${js.join(' / ')}). Dipakai: ${jenis}.` });
+    }
     const plan = newPlan(id, key); let cnt = 0;
+    if (newMode) { plan.sk = list[0].sk; plan.slotNo = list[0].slot; }
     for (const x of list) {
       const zn = parseInt(x.zona, 10);
       if (!zn || zn < 1 || zn > plan.zones.length) { rep.push({ t: 'err', m: `${id} baris ${x.line} (fixture ${x.slot}): SHELVING KE "${x.zona}" di luar layout (1-${plan.zones.length}).` }); continue; }
@@ -1022,7 +1043,8 @@ function importRows(rows, daftar, sambung, dimensi) {
     const nStock = plan.zones.filter((z, zi) => !z.items.length && emptyKind(plan, zi) === 'stock').length, nDisp = plan.zones.filter((z, zi) => !z.items.length && emptyKind(plan, zi) === 'display').length;
     rep.push({ t: 'ok', m: `${id} — ${VARIANTS[key].label}: ${cnt} item di ${plan.zones.length - nStock}/${plan.zones.length} zona` + (nStock ? `, ${nStock} zona STOCK` : '') + (nDisp ? `, ${nDisp} zona Display Produk` : '') + '.' });
   }
-  for (const [id, jenis] of Object.entries(dmap)) {          // ID di DAFTAR_FIXTURE yang tidak ada di DATA → semua zona STOCK
+  for (const [id, jenis] of Object.entries(dmap)) {          // ID di DAFTAR_FIXTURE
+    if (newMode) break;                                      // ID di DAFTAR_FIXTURE yang tidak ada di DATA → semua zona STOCK
     if (groups.has(id)) continue;
     const key = VAR_BY_LABEL[norm(jenis)] || VAR_ALIAS[norm(jenis)];
     if (!key) { rep.push({ t: 'warn', m: `${id}: ada di DAFTAR_FIXTURE tetapi jenis "${jenis || '(kosong)'}" tidak dikenal. Dilewati.` }); continue; }
@@ -1030,8 +1052,9 @@ function importRows(rows, daftar, sambung, dimensi) {
     S.plans.push(newPlan(id, key)); nPlans++;
     rep.push({ t: 'ok', m: `${id} — ${VARIANTS[key].label}: tidak ada di DATA, semua ${zonesOf(VARIANTS[key]).length} zona = STOCK.` });
   }
+  if (newMode) { const ord = [...new Set(S.plans.map(q => q.sk))]; S.plans.sort((a, b) => ord.indexOf(a.sk) - ord.indexOf(b.sk) || a.slotNo - b.slotNo); }
   if (added.length) { S.cur = added[0]; S.scale = scaleFor(PRESETS[cur().size].h); sel = null; }
-  if (nMaster) rep.push({ t: 'ok', m: `${nMaster} SKU tanpa ID FIXTURE masuk daftar SKU (belum ditempatkan).` });
+  if (nMaster) rep.push({ t: 'ok', m: `${nMaster} SKU tanpa penempatan fixture masuk daftar SKU (belum ditempatkan).` });
   // template urutan sambung (kolom SAMBUNGAN di sheet DATA; sheet SAMBUNG lama tetap dibaca)
   if (dimensi) S.dims = readDims(dimensi);
   S.runs = [];
@@ -1108,7 +1131,7 @@ $('#btnCsv').onclick = () => {
   if (!S.plans.length && !Object.keys(S.skus).length) return toast('Belum ada data.');
   const rows = [CSV_HEAD], placed = new Set();
   const sk = c => S.skus[c] || { name: '', img: '' };
-  const row = (c, tail) => { const s = sk(c); return [s.dept || '', s.comm || '', s.cls || '', c, s.name || '', s.stock || '', s.disp || '', s.adj || '', s.series || '', s.sub || '', s.img || '', ...tail]; };
+  const row = (c, tail) => { const s = sk(c); return [s.dept || '', s.comm || '', s.cls || '', s.code || c, s.name || '', s.stock || '', s.disp || '', s.adj || '', s.series || '', s.sub || '', s.img || '', ...tail]; };
   for (const p of S.plans) p.zones.forEach((z, i) => {
     const base = [p.id, i + 1, ZNAME[z.t], VARIANTS[p.variant].label, '', '', '', '', '', '', '', ''];
     if (!z.items.length) rows.push(['', '', '', '', '', '', '', '', '', '', '', ...base]);
