@@ -50,6 +50,7 @@ button.danger{color:var(--bad)}
 .k-gondola .fx-head{height:12px;font-size:0}
 .k-endcap .fx-head{height:38px;font-size:13px;color:#fff;background:linear-gradient(135deg,#1d4fd0,#2563eb 60%,#5b93ff);border-radius:7px 7px 0 0}
 .k-pallet .fx-head{display:none}
+.fx-ser{height:22px;display:flex;align-items:center;justify-content:center;padding:0 8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#15803d,#16a34a 60%,#4ade80);border-radius:7px 7px 0 0;margin-bottom:2px}
 .shelf{position:relative;display:flex;align-items:stretch}
 .up{width:12px;flex:none;background:radial-gradient(circle,rgba(0,0,0,.32) 1.6px,transparent 2.1px) 0 0/12px 20px,linear-gradient(90deg,var(--up1),var(--up2))}
 .k-pallet .up{visibility:hidden}
@@ -500,7 +501,8 @@ function skuOk(code) {
   return Object.keys(FKEY).every(f => !F[f] || k[FKEY[f]] === F[f]) && (!q || skuText(k).includes(q));
 }
 const planHits = p => p.zones.reduce((a, z) => a + (itemFilter() ? z.items.filter(skuOk).length : z.items.length), 0);
-const planOk = p => (!F.fx || p.variant === F.fx) && (!itemFilter() || planHits(p) > 0);
+const FAMLB = { GONDOLA: 'Gondola', ENDCAP: 'Endcap', WALL: 'Wall', PALLET: 'Pallet' };       // filter jenis fixture = keluarga (tanpa detail modul)
+const planOk = p => (!F.fx || VARIANTS[p.variant].fam === F.fx) && (!itemFilter() || planHits(p) > 0);
 const cur = () => S.plans.find(p => p.id === S.cur) || null;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 function toast(msg) {
@@ -587,12 +589,14 @@ function renderFixture() {
   });
   host.appendChild(row);
 }
+const serLabel = pl => pl.sk || (pl.bySeries ? pl.series || '' : '');                  // nama series untuk header hijau di atas nama fixture
 function buildFixture2d(plan, sc) {
   const v = VARIANTS[plan.variant], p = PRESETS[plan.size], kind = v.fam.toLowerCase(), W = p.w * sc;
   const { hs } = zoneLayout(plan);
   const fx = document.createElement('div'); fx.className = `fixture k-${kind} m-${plan.mat}`; fx.style.setProperty('--cm', sc + 'px'); if (kind !== 'pallet') fx.style.setProperty('--back', backC());
   const t = document.createElement('div'); t.className = 'fx-title'; const pk = kind === 'pallet' ? pkInfo(plan) : null, pkOn = !!(pk && pk.strips);
   t.textContent = `${plan.id}${plan.split ? ' · ' + plan.tag : ''} — ${v.label} — ${p.w}×${p.d}×${pkOn ? Math.round(pk.H) : p.h} cm${pkOn ? ' · 📦 ' + pk.total + ' pcs' : ''}`; fx.appendChild(t);
+  if (serLabel(plan)) { const sh = document.createElement('div'); sh.className = 'fx-ser'; sh.style.width = W + 24 + 'px'; sh.textContent = serLabel(plan); sh.title = 'Series: ' + serLabel(plan); fx.appendChild(sh); }
   const head = document.createElement('div'); head.className = 'fx-head'; head.style.width = W + 24 + 'px';
   head.textContent = kind === 'endcap' || kind === 'wall' ? v.label : ''; fx.appendChild(head);
   plan.zones.forEach((z, zi) => {
@@ -649,7 +653,7 @@ function buildFixture2d(plan, sc) {
 function renderLib() {
   const q = $('#libSearch').value.trim().toLowerCase(), plan = cur();
   const inPlan = new Set(plan ? plan.zones.flatMap(z => z.items) : []);
-  const all = Object.values(S.skus), list = all.filter(k => skuOk(k.code));
+  const all = Object.values(S.skus), list = all.filter(k => skuOk(k.key || k.code));
   $('#libCount').textContent = itemFilter() ? `(${list.length}/${all.length})` : `(${all.length})`;
   $('#lib').innerHTML = list.map(k => `
     <div class="sku ${inPlan.has(k.code) ? 'placed' : ''}" style="border-left:5px solid hsl(${hue(k.series || k.adj || k.code)} 70% 58%)" draggable="true" data-sku="${esc(k.code)}" title="Klik dua kali untuk menambah ke zona terpilih">
@@ -739,8 +743,8 @@ stage.addEventListener('drop', e => {
 function renderFilters() {
   // filter saling terkait (faceted): pilihan tiap filter hanya berisi nilai yang masih ada
   // pada SKU yang sudah ditempatkan di fixture dan cocok dengan filter LAINNYA
-  const placed = new Set(S.plans.filter(p => !F.fx || p.variant === F.fx).flatMap(p => p.zones.flatMap(z => z.items)));
-  const base = Object.values(S.skus).filter(k => placed.has(k.code));
+  const placed = new Set(S.plans.filter(p => !F.fx || VARIANTS[p.variant].fam === F.fx).flatMap(p => p.zones.flatMap(z => z.items)));
+  const base = Object.values(S.skus).filter(k => placed.has(k.key || k.code));
   const dims = [['#fAdj', 'Grup Adjacency', 'adj'], ['#fSer', 'Series', 'ser'], ['#fSub', 'Sub Series', 'sub'],
     ['#fDept', 'Dept', 'dept'], ['#fComm', 'Comm', 'comm'], ['#fCls', 'Class', 'cls']];
   const q = qtext();
@@ -756,8 +760,8 @@ function renderFilters() {
   const matchAll = k => Object.keys(FKEY).every(o => !F[o] || k[FKEY[o]] === F[o]) && (!q || skuText(k).includes(q));
   const fxOpts = () => {                                   // jenis fixture yang masih punya SKU cocok dengan filter lain; jumlah = planogram
     const m = new Map();
-    S.plans.forEach(p => { if (p.zones.some(z => z.items.some(c => S.skus[c] && matchAll(S.skus[c])))) m.set(p.variant, (m.get(p.variant) || 0) + 1); });
-    return Object.keys(VARIANTS).filter(k => m.has(k)).map(k => [k, m.get(k)]);
+    S.plans.forEach(p => { if (p.zones.some(z => z.items.some(c => S.skus[c] && matchAll(S.skus[c])))) m.set(VARIANTS[p.variant].fam, (m.get(VARIANTS[p.variant].fam) || 0) + 1); });
+    return Object.keys(FAMLB).filter(k => m.has(k)).map(k => [k, m.get(k)]);
   };
   for (let it = 0; it < 4; it++) {                          // pilihan yang tidak valid lagi dikosongkan, ulangi sampai stabil
     let changed = false;
@@ -776,7 +780,7 @@ function renderFilters() {
   $('#runSel').innerHTML = '<option value="">📋 Template sambungan dari Excel…</option>' + (S.runs || []).map((r, i) => `<option value="${i}">${esc(r.name)} · ${esc(r.cat)} (${r.items.length} fixture)</option>`).join('');
   $('#fMore').hidden = true;
   { const fo = fxOpts(), el = $('#fFx'); el.hidden = J.on && !J.auto;   // Jenis Fixture tampil; saat Sambung visual fixture dipilih per series
-    el.innerHTML = `<option value="">Jenis Fixture (semua)${F.fx ? '' : ' · ' + fo.length}</option>` + fo.map(([k, n]) => `<option value="${k}"${F.fx === k ? ' selected' : ''}>${esc(VARIANTS[k].label)} (${n})</option>`).join('');
+    el.innerHTML = `<option value="">Jenis Fixture (semua)${F.fx ? '' : ' · ' + fo.length}</option>` + fo.map(([k, n]) => `<option value="${k}"${F.fx === k ? ' selected' : ''}>${esc(FAMLB[k])} (${n})</option>`).join('');
     el.classList.toggle('on', !!F.fx); }
   $('#fCount').textContent = J.on ? (jView().length ? `(${jView().length} fixture)` : '') : fActive() ? `(${S.plans.filter(planOk).length} planogram)` : '';
   $('#fReset').hidden = !(fActive() || jRows().length);
@@ -1007,7 +1011,7 @@ function importRows(rows, daftar, sambung, dimensi) {
     if (newMode) { const ad = val(r, ci.adj, ''), sr = val(r, ci.ser, ''), ks = keysOf.get(code) || [];
       key = ks.find(k2 => S.skus[k2].adj === ad && S.skus[k2].series === sr) || (ks.length ? code + '~' + ks.length : code); if (!ks.includes(key)) { ks.push(key); keysOf.set(code, ks); } }
     const old = S.skus[key] || {};
-    S.skus[key] = { code, name: get(r, ci.nama) || old.name || code, img: get(r, ci.img) || old.img || patUrl(code),
+    S.skus[key] = { key, code, name: get(r, ci.nama) || old.name || code, img: get(r, ci.img) || old.img || patUrl(code),
       disp: val(r, ci.disp, old.disp), adj: val(r, ci.adj, old.adj), series: val(r, ci.ser, old.series), sub: val(r, ci.sub, old.sub),
       dept: val(r, ci.dept, old.dept), comm: val(r, ci.comm, old.comm), cls: val(r, ci.cls, old.cls), stock: val(r, ci.stock, old.stock) }; return key; };
   const groups = new Map(), slotRuns = [];                         // id fixture → daftar penempatan (urut sesuai baris Excel)
@@ -1261,7 +1265,7 @@ let JV = new Map();                                                    // id pla
 const jRows = () => J.on ? J.rows.filter(r => r.ser) : [];
 const JFAM = ['WALL', 'GONDOLA', 'PALLET'];                              // sambung visual hanya untuk Wall, Gondola, Pallet (Endcap tidak)
 const jOk = p => JFAM.includes(VARIANTS[p.variant].fam);
-const jPlansFor = ser => S.plans.filter(p => jOk(p) && (!F.fx || p.variant === F.fx) && (ser === '*' || p.zones.some(z => z.items.some(c => (S.skus[c] || {}).series === ser))));   // '*' = semua isi fixture
+const jPlansFor = ser => S.plans.filter(p => jOk(p) && (!F.fx || VARIANTS[p.variant].fam === F.fx) && (ser === '*' || p.zones.some(z => z.items.some(c => (S.skus[c] || {}).series === ser))));   // '*' = semua isi fixture
 function jView() {                                                     // [{plan, sers}] berurutan, satu fixture dihitung sekali
   const m = new Map();
   jRows().forEach(r => { const p = S.plans.find(x => x.id === r.plan); if (!p) return; if (!m.has(p.id)) m.set(p.id, { plan: p, sers: new Set() }); m.get(p.id).sers.add(r.ser); });
@@ -1273,8 +1277,8 @@ const visOk = (plan, code) => {                                        // item i
   const sers = JV.get(plan.id), k = S.skus[code]; if (J.auto && !sers) return skuOk(code); if (sers && sers.has('*')) return skuOk(code); return !!(sers && k && sers.has(k.series) && skuOk(code));
 };
 function jNormalize() {                                                 // series tidak valid dikosongkan; fixture bawaan = yang pertama memuat series itu
-  const placed = new Set(S.plans.filter(p => jOk(p) && (!F.fx || p.variant === F.fx)).flatMap(p => p.zones.flatMap(z => z.items))), valid = new Set();
-  Object.values(S.skus).forEach(k => { if (placed.has(k.code) && k.series && Object.keys(FKEY).every(o => o === 'ser' || !F[o] || k[FKEY[o]] === F[o])) valid.add(k.series); });
+  const placed = new Set(S.plans.filter(p => jOk(p) && (!F.fx || VARIANTS[p.variant].fam === F.fx)).flatMap(p => p.zones.flatMap(z => z.items))), valid = new Set();
+  Object.values(S.skus).forEach(k => { if (placed.has(k.key || k.code) && k.series && Object.keys(FKEY).every(o => o === 'ser' || !F[o] || k[FKEY[o]] === F[o])) valid.add(k.series); });
   J.rows.forEach(r => {
     if (r.ser && r.ser !== '*' && !valid.has(r.ser)) r.ser = '';
     const ps = r.ser ? jPlansFor(r.ser) : [];
@@ -1359,7 +1363,7 @@ function renderKpis() {
   list.forEach(p => p.zones.forEach((z, zi) => { if (!z.items.length && !z.blank && emptyKind(p, zi) === 'stock') stock++; z.items.forEach(c => { if (visOk(p, c)) { items++; skus.add(c); } }); }));
   box.innerHTML = [['🏬', 'Fixture tampil', list.length, 'k1'], ['🏷️', 'SKU cocok', skus.size, 'k2'], ['📦', 'Item tampil', items, 'k3'], ['🗃️', 'Zona STOCK', stock, 'k4']]
     .map(([ic, lb, n, k]) => `<div class="kpi ${k}"><span class="ic">${ic}</span><span class="lb">${lb}</span><b>${n}</b></div>`).join('');
-  pv.innerHTML = (F.adj ? `<span class="chip c-adj"><i>Adjacency</i>${esc(F.adj)}</span>` : '') + (F.fx ? `<span class="chip c-fx"><i>Fixture</i>${esc(VARIANTS[F.fx].label)}</span>` : '') + (J.on ? jRows().map((r, i) => J.auto ? `<span class="chip c-ser"><i>${i + 1}</i>${esc(r.plan)}</span>` : `<span class="chip c-ser"><i>Series ${i + 1}</i>${esc(r.ser === '*' ? 'Semua isi fixture' : r.ser)}</span>`).join('<span class="chip-ar">→</span>') : (F.ser ? `<span class="chip c-ser"><i>Series</i>${esc(F.ser)}</span>` : ''));
+  pv.innerHTML = (F.adj ? `<span class="chip c-adj"><i>Adjacency</i>${esc(F.adj)}</span>` : '') + (F.fx ? `<span class="chip c-fx"><i>Fixture</i>${esc(FAMLB[F.fx])}</span>` : '') + (J.on ? jRows().map((r, i) => J.auto ? `<span class="chip c-ser"><i>${i + 1}</i>${esc(r.plan)}</span>` : `<span class="chip c-ser"><i>Series ${i + 1}</i>${esc(r.ser === '*' ? 'Semua isi fixture' : r.ser)}</span>`).join('<span class="chip-ar">→</span>') : (F.ser ? `<span class="chip c-ser"><i>Series</i>${esc(F.ser)}</span>` : ''));
 }
 $('#vw2').onclick = () => setMode('2d'); $('#vw3').onclick = () => setMode('3d');
 
@@ -1551,6 +1555,10 @@ function buildOne3d(plan, G) {
     const front = new THREE.MeshStandardMaterial({ map: labelTex(v.label, hw, hh, hc, '#ffffff'), roughness: 0.6 });
     if (pallet) for (const sx of [-1, 1]) box(2, total, 2, mMetal, sx * (W / 2 - 3), total / 2, -D / 2 + 4);   // tiang penyangga papan nama
     add(new THREE.BoxGeometry(hw, hh, 8), [side, side, side, side, front, side], 0, total + hh / 2, -D / 2 + 4).castShadow = true;
+    if (serLabel(plan)) {                                   // header hijau nama series di atas header fixture
+      const gs = std('#16a34a'), gf = new THREE.MeshStandardMaterial({ map: labelTex(serLabel(plan), hw, 9, '#16a34a', '#ffffff'), roughness: 0.6 });
+      add(new THREE.BoxGeometry(hw, 9, 8), [gs, gs, gs, gs, gf, gs], 0, total + hh + 4.5, -D / 2 + 4).castShadow = true;
+    }
   }
 
   let cy = b;
@@ -1606,7 +1614,7 @@ function buildOne3d(plan, G) {
 
   const lt = labelTex(plan.tpl ? v.label : `${plan.id}${plan.split ? ' · ' + plan.tag : ''} · ${v.label}`, 110, 12, '#ffffff', '#1f2430');   // papan nama di lantai depan fixture
   const lab = add(new THREE.PlaneGeometry(110, 12), new THREE.MeshBasicMaterial({ map: lt }), 0, 0.3, D / 2 + 14, false); lab.rotation.x = -Math.PI / 2;
-  return { W, D, total: total + 14, pitch: pallet ? W : W + 5 };       // + tinggi header
+  return { W, D, total: total + 14 + (serLabel(plan) ? 9 : 0), pitch: pallet ? W : W + 5 };       // + tinggi header
 }
 
 /* init */
