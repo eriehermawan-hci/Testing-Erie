@@ -564,7 +564,11 @@ function splitPlan(p) {
 }
 function viewPlans() {
   if (!ready()) return [];
-  if (J.on) return jView().flatMap(v => splitPlan(v.plan).filter(x => !x.bySeries || v.sers.has('*') || v.sers.has(x.series)));
+  if (J.on) {                                                          // rantai sambung: semua yang ada di rantai menempel (join = 'chain'); fixture di luar rantai (Endcap) tampil terpisah di akhir
+    const ch = jView().flatMap(v => splitPlan(v.plan).filter(x => !x.bySeries || v.sers.has('*') || v.sers.has(x.series))).map(x => ({ ...x, join: 'chain' }));
+    const ex = J.auto ? S.plans.filter(q => !jOk(q) && planOk(q)).flatMap(splitPlan).filter(planOk).map(x => ({ ...x, join: '' })) : [];
+    return ch.concat(ex).slice(0, 36);
+  }
   return S.plans.filter(planOk).flatMap(splitPlan).filter(planOk).slice(0, 36);
 }
 function shown2d() { return viewPlans(); }   // sama dengan shown3d()
@@ -573,9 +577,9 @@ function renderFixture() {
   if (!plans.length) { if (!S.plans.length) host.innerHTML = '<div class="empty" style="padding:30px;color:var(--muted)">Belum ada planogram. Klik <b>Impor Excel / CSV</b> untuk memuat data.</div>'; return; }
   // satu skala (px per cm) untuk semua fixture agar ukuran relatifnya sama dengan 3D
   const avail = Math.max(600, host.clientWidth || 900), sumW = plans.reduce((a, pl) => a + PRESETS[pl.size].w, 0), maxH = Math.max(...plans.map(fxH));
-  const sc = Math.max(1.5, Math.min(scaleFor(maxH), (avail - (J.on ? 80 + plans.length * 30 : plans.length * 112)) / sumW));
-  const row = document.createElement('div'); row.className = 'fxrow' + (J.on ? ' joined' : '');
-  const grp = []; plans.forEach(pl => { const lst = grp[grp.length - 1]; if (pl.join && lst && lst.join === pl.join && !J.on) lst.items.push(pl); else grp.push({ join: pl.join, items: [pl] }); });
+  const sc = Math.max(1.5, Math.min(scaleFor(maxH), (avail - (J.on && !J.auto ? 80 + plans.length * 30 : plans.length * 112)) / sumW));
+  const row = document.createElement('div'); row.className = 'fxrow';
+  const grp = []; plans.forEach(pl => { const lst = grp[grp.length - 1]; if (pl.join && lst && lst.join === pl.join) lst.items.push(pl); else grp.push({ join: pl.join, items: [pl] }); });
   grp.forEach(g => {                                       // unit berurutan dari series dan blok yang sama ditampilkan menempel (sambung otomatis)
     if (g.items.length > 1) { const w = document.createElement('div'); w.className = 'fxrow joined fxgrp'; g.items.forEach(pl => w.appendChild(buildFixture2d(pl, sc))); row.appendChild(w); }
     else row.appendChild(buildFixture2d(g.items[0], sc));
@@ -765,12 +769,12 @@ function renderFilters() {
     el.innerHTML = `<option value="">${label} (semua)${F[f] ? '' : ' · ' + opts.length}</option>` + opts.map(([v, n]) => `<option value="${esc(v)}"${F[f] === v ? ' selected' : ''}>${esc(v)} (${n})</option>`).join('');
     el.classList.toggle('on', !!F[f]);
   });
-  $('#fSer').hidden = J.on; $('#jOn').checked = J.on; $('#chain').hidden = !J.on;
+  $('#fSer').hidden = J.on && !J.auto; $('#jOn').checked = J.on; $('#chain').hidden = !J.on;
   if (J.on) renderChain(optsFor('ser').filter(([v]) => jPlansFor(v).length));
   $('#runBox').hidden = !(S.runs && S.runs.length);
   $('#runSel').innerHTML = '<option value="">📋 Template sambungan dari Excel…</option>' + (S.runs || []).map((r, i) => `<option value="${i}">${esc(r.name)} · ${esc(r.cat)} (${r.items.length} fixture)</option>`).join('');
   $('#fMore').hidden = true;
-  { const fo = fxOpts(), el = $('#fFx'); el.hidden = J.on;   // Jenis Fixture tampil; saat Sambung visual fixture dipilih per series
+  { const fo = fxOpts(), el = $('#fFx'); el.hidden = J.on && !J.auto;   // Jenis Fixture tampil; saat Sambung visual fixture dipilih per series
     el.innerHTML = `<option value="">Jenis Fixture (semua)${F.fx ? '' : ' · ' + fo.length}</option>` + fo.map(([k, n]) => `<option value="${k}"${F.fx === k ? ' selected' : ''}>${esc(VARIANTS[k].label)} (${n})</option>`).join('');
     el.classList.toggle('on', !!F.fx); }
   $('#fCount').textContent = J.on ? (jView().length ? `(${jView().length} fixture)` : '') : fActive() ? `(${S.plans.filter(planOk).length} planogram)` : '';
@@ -795,7 +799,7 @@ function jExample() {                                                   // conto
 }
 function startExample() {
   const rows = jExample(); if (!rows.length) return toast('Belum ada data series untuk contoh.');
-  Object.keys(F).forEach(k => F[k] = ''); J.on = true; J.rows = rows; render();
+  Object.keys(F).forEach(k => F[k] = ''); J.on = true; J.auto = false; J.rows = rows; render();
 }
 $('#jDemo').onclick = startExample;
 function renderChain(serOpts) {
@@ -810,13 +814,14 @@ function renderChain(serOpts) {
 }
 $('#runSel').onchange = e => {
   const r = (S.runs || [])[+e.target.value]; if (!r) return;
-  Object.keys(F).forEach(k => F[k] = ''); J.on = true; J.rows = r.items.map(it => ({ ser: it.ser || '*', plan: it.plan })); render();
+  Object.keys(F).forEach(k => F[k] = ''); J.on = true; J.auto = false; J.rows = r.items.map(it => ({ ser: it.ser || '*', plan: it.plan })); render();
 };
 $('#pkOn').onchange = e => { PK.on = e.target.checked; render(); };
 $('#jOn').onchange = e => {
-  J.on = e.target.checked;
-  if (J.on) { J.rows = F.ser ? [{ ser: F.ser, plan: '' }] : [{ ser: '', plan: '' }]; F.ser = ''; F.fx = ''; }   // series yang sudah dipilih jadi Series 1
-  else F.ser = (J.rows.find(r => r.ser) || {}).ser || '';
+  const wasAuto = J.auto; J.on = e.target.checked; J.auto = J.on && S.plans.some(q => q.sk); J.sig = '';
+  if (J.auto) { /* rantai dibentuk otomatis dari filter */ }
+  else if (J.on) { J.rows = F.ser ? [{ ser: F.ser, plan: '' }] : [{ ser: '', plan: '' }]; F.ser = ''; F.fx = ''; }   // series yang sudah dipilih jadi Series 1
+  else if (!wasAuto) F.ser = (J.rows.find(r => r.ser) || {}).ser || '';
   render();
 };
 $('#chain').addEventListener('change', e => {
@@ -842,7 +847,7 @@ function afterFilter() {
 }
 [['#fAdj', 'adj'], ['#fSer', 'ser'], ['#fSub', 'sub'], ['#fDept', 'dept'], ['#fComm', 'comm'], ['#fCls', 'cls']].forEach(([id, k]) => $(id).onchange = e => { F[k] = e.target.value; afterFilter(); });
 $('#fFx').onchange = e => { F.fx = e.target.value; afterFilter(); };
-$('#fReset').onclick = () => { Object.keys(F).forEach(k => F[k] = ''); J.rows = [{ ser: '', plan: '' }]; $('#libSearch').value = ''; render(); };
+$('#fReset').onclick = () => { Object.keys(F).forEach(k => F[k] = ''); J.rows = J.auto ? [] : [{ ser: '', plan: '' }]; J.sig = ''; $('#libSearch').value = ''; render(); };
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-goto]'); if (!g) return;
   e.preventDefault(); S.cur = g.dataset.goto; sel = null; render();
@@ -995,7 +1000,7 @@ function importRows(rows, daftar, sambung, dimensi) {
   const dmap = {};                                  // fallback id → jenis dari sheet DAFTAR_FIXTURE
   (daftar || []).slice(1).forEach(r => { if (r[0]) dmap[String(r[0]).trim()] = String(r[1] || '').trim(); });
   const val = (r, i, o) => { const v = get(r, i); return (v && norm(v) !== 'x' ? v : o) || ''; };   // 'X' = isi bawaan dropdown, dianggap kosong
-  if (newMode) { S.plans = []; S.skus = {}; S.cur = null; }                 // format baru = penggantian data penuh
+  if (newMode) { S.plans = []; S.skus = {}; S.cur = null; J.on = true; J.auto = true; J.sig = ''; J.rows = []; }   // format baru = penggantian data penuh; sambung visual otomatis aktif
   const keysOf = new Map();                                                // kode SKU sama dengan series/adjacency berbeda = entri terpisah
   const regSku = r => { const code = get(r, ci.kode); if (!code) return; let key = code;
     if (newMode) { const ad = val(r, ci.adj, ''), sr = val(r, ci.ser, ''), ks = keysOf.get(code) || [];
@@ -1249,7 +1254,8 @@ function setMode(m) {
 }
 /* dashboard kosong sampai Grup Adjacency atau Series dipilih */
 /* sambung visual: Series 1, 2, 3 ... diurutkan, tiap series memilih satu fixture; fixture dipasang menempel */
-const J = { on: false, rows: [{ ser: '', plan: '' }] };
+/* sambung visual: pada data format baru otomatis aktif; rantai fixture dibentuk dari filter (series, lalu Fixture 1-3), urutan boleh ditukar pengguna */
+const J = (() => { const nf = S.plans.some(p => p.sk); return { on: nf, auto: nf, sig: '', rows: nf ? [] : [{ ser: '', plan: '' }] }; })();
 let JV = new Map();                                                    // id planogram -> series yang ditampilkan di fixture itu
 const jRows = () => J.on ? J.rows.filter(r => r.ser) : [];
 const JFAM = ['WALL', 'GONDOLA', 'PALLET'];                              // sambung visual hanya untuk Wall, Gondola, Pallet (Endcap tidak)
@@ -1260,10 +1266,10 @@ function jView() {                                                     // [{plan
   jRows().forEach(r => { const p = S.plans.find(x => x.id === r.plan); if (!p) return; if (!m.has(p.id)) m.set(p.id, { plan: p, sers: new Set() }); m.get(p.id).sers.add(r.ser); });
   return [...m.values()];
 }
-const ready = () => J.on ? jRows().length > 0 : !!(F.adj || F.ser);
+const ready = () => J.on && !J.auto ? jRows().length > 0 : !!(F.adj || F.ser);
 const visOk = (plan, code) => {                                        // item ini tampil di fixture ini?
   if (!J.on) return skuOk(code);
-  const sers = JV.get(plan.id), k = S.skus[code]; if (sers && sers.has('*')) return skuOk(code); return !!(sers && k && sers.has(k.series) && skuOk(code));
+  const sers = JV.get(plan.id), k = S.skus[code]; if (J.auto && !sers) return skuOk(code); if (sers && sers.has('*')) return skuOk(code); return !!(sers && k && sers.has(k.series) && skuOk(code));
 };
 function jNormalize() {                                                 // series tidak valid dikosongkan; fixture bawaan = yang pertama memuat series itu
   const placed = new Set(S.plans.filter(p => jOk(p) && (!F.fx || p.variant === F.fx)).flatMap(p => p.zones.flatMap(z => z.items))), valid = new Set();
@@ -1329,6 +1335,10 @@ function applyView() {
     $('#tplTab').hidden = false; $('#view3d').hidden = mode === '2d'; renderTplTab(); return;
   }
   $('#tplTab').hidden = true;
+  if (J.on && J.auto) {                                                // bentuk rantai otomatis bila filter berubah; selama filter sama, urutan hasil tukar pengguna dipertahankan
+    const sig = [F.adj, F.ser, F.fx].join('|');
+    if (sig !== J.sig) { J.sig = sig; J.rows = F.adj || F.ser ? S.plans.filter(q => jOk(q) && planOk(q)).map(q => ({ ser: '*', plan: q.id })) : []; }
+  }
   if (J.on) jNormalize();
   JV = new Map(jView().map(v => [v.plan.id, v.sers]));
   const hasDims = Object.keys(S.dims || {}).length > 0; if (!hasDims) PK.on = false;
@@ -1348,7 +1358,7 @@ function renderKpis() {
   list.forEach(p => p.zones.forEach((z, zi) => { if (!z.items.length && !z.blank && emptyKind(p, zi) === 'stock') stock++; z.items.forEach(c => { if (visOk(p, c)) { items++; skus.add(c); } }); }));
   box.innerHTML = [['🏬', 'Fixture tampil', list.length, 'k1'], ['🏷️', 'SKU cocok', skus.size, 'k2'], ['📦', 'Item tampil', items, 'k3'], ['🗃️', 'Zona STOCK', stock, 'k4']]
     .map(([ic, lb, n, k]) => `<div class="kpi ${k}"><span class="ic">${ic}</span><span class="lb">${lb}</span><b>${n}</b></div>`).join('');
-  pv.innerHTML = (F.adj ? `<span class="chip c-adj"><i>Adjacency</i>${esc(F.adj)}</span>` : '') + (F.fx ? `<span class="chip c-fx"><i>Fixture</i>${esc(VARIANTS[F.fx].label)}</span>` : '') + (J.on ? jRows().map((r, i) => `<span class="chip c-ser"><i>Series ${i + 1}</i>${esc(r.ser === '*' ? 'Semua isi fixture' : r.ser)}</span>`).join('<span class="chip-ar">→</span>') : (F.ser ? `<span class="chip c-ser"><i>Series</i>${esc(F.ser)}</span>` : ''));
+  pv.innerHTML = (F.adj ? `<span class="chip c-adj"><i>Adjacency</i>${esc(F.adj)}</span>` : '') + (F.fx ? `<span class="chip c-fx"><i>Fixture</i>${esc(VARIANTS[F.fx].label)}</span>` : '') + (J.on ? jRows().map((r, i) => J.auto ? `<span class="chip c-ser"><i>${i + 1}</i>${esc(r.plan)}</span>` : `<span class="chip c-ser"><i>Series ${i + 1}</i>${esc(r.ser === '*' ? 'Semua isi fixture' : r.ser)}</span>`).join('<span class="chip-ar">→</span>') : (F.ser ? `<span class="chip c-ser"><i>Series</i>${esc(F.ser)}</span>` : ''));
 }
 $('#vw2').onclick = () => setMode('2d'); $('#vw3').onclick = () => setMode('3d');
 
@@ -1498,7 +1508,7 @@ function build3d() {
   }
   T.items = []; T.hl = null;
   const plans = shown3d(); if (!plans.length) return;
-  const joined = J.on && tab !== 'tpl', tplGap = tab === 'tpl', GAP = joined ? 0 : tplGap ? 10 : 45, infos = plans.map(plan => { const PG = new THREE.Group(); G.add(PG); const i = buildOne3d(plan, PG); i.PG = PG; return i; });
+  const joined = false, tplGap = tab === 'tpl', GAP = tplGap ? 10 : 45, infos = plans.map(plan => { const PG = new THREE.Group(); G.add(PG); const i = buildOne3d(plan, PG); i.PG = PG; return i; });
   const same = k => k >= 0 && k < plans.length - 1 && !!plans[k].join && plans[k].join === plans[k + 1].join;      // k dan k+1 satu rangkaian otomatis
   const pitch = (i, k) => joined || tplGap || same(k) || same(k - 1) ? i.pitch : i.W + 10;                       // menempel: lebar dasar fixture, tanpa jarak
   const gapAfter = k => joined || same(k) ? 0 : GAP;
