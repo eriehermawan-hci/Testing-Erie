@@ -400,7 +400,7 @@ main.tplmode #side-left{display:none}
 </script>
 <script>
 const $ = s => document.querySelector(s);
-const KEY = 'planogram-v4-demo';
+const KEY = 'planogram-v4-demo-118330a1';
 const BASE = 10;                       // tinggi dasar fixture (cm)
 const HOOK_CM = 6.5;                   // jarak bar gantungan ke kartu (cm)
 const MAXTILE = 40, MINTILE = 7.5;     // lebar kartu maksimum / minimum (cm): n SKU dalam 1 baris rak = lebar rak / n (maks. 16 per baris untuk lebar 120 cm)
@@ -1617,6 +1617,7 @@ function buildOne3d(plan, G) {
 }
 
 /* init */
+if (!ready()) { const a0 = S.plans.flatMap(p => p.zones.flatMap(z => z.items)).map(c => (S.skus[c] || {}).adj).find(Boolean); if (a0) F.adj = a0; }   // pratinjau langsung menampilkan data mockup
 render();
 setMode('3d');
 </script>

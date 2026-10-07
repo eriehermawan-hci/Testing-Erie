@@ -31,9 +31,9 @@ const CDN = '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/t
   sub(CDN, '<script>' + three + '</script>');
   sub('let S = (() => { try {', 'const SAMPLE = ' + state + ';\nlet S = (() => { try {');
   sub('return fresh(); })();', 'return Object.assign(fresh(), JSON.parse(JSON.stringify(SAMPLE))); })();');
-  sub('\n/* init */\nrender();', '\n/* init */\nrender();\nsetMode(\'3d\');');
+  sub('\n/* init */\nrender();', '\n/* init */\nif (!ready()) { const a0 = S.plans.flatMap(p => p.zones.flatMap(z => z.items)).map(c => (S.skus[c] || {}).adj).find(Boolean); if (a0) F.adj = a0; }   // pratinjau langsung menampilkan data mockup\nrender();\nsetMode(\'3d\');');
   sub('<title>Planogram Generator</title>', '<title>Planogram Generator 3D (sampel)</title>');
-  sub("const KEY = 'planogram-v4';", "const KEY = 'planogram-v4-demo';");
+  sub("const KEY = 'planogram-v4';", "const KEY = 'planogram-v4-demo-" + require('crypto').createHash('md5').update(state).digest('hex').slice(0, 8) + "';");
   fs.writeFileSync(OUT, h);
   console.log('ditulis:', OUT, (h.length / 1024).toFixed(0) + ' KB');
 })();

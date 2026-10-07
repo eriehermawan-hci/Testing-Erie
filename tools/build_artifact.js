@@ -32,8 +32,8 @@ const OUT = path.resolve(process.env.OUT_ARTIFACT || path.join(root, 'planogram_
   // data sampel tertanam + kunci penyimpanan khusus artifact + mulai di 3D
   sub('let S = (() => { try {', 'const SAMPLE = ' + state + ';\nlet S = (() => { try {');
   sub('return fresh(); })();', 'return Object.assign(fresh(), JSON.parse(JSON.stringify(SAMPLE))); })();');
-  sub('\n/* init */\nrender();', '\n/* init */\nrender();\nsetMode(\'3d\');');
-  sub("const KEY = 'planogram-v4';", "const KEY = 'planogram-v4-artifact';");
+  sub('\n/* init */\nrender();', '\n/* init */\nif (!ready()) { const a0 = S.plans.flatMap(p => p.zones.flatMap(z => z.items)).map(c => (S.skus[c] || {}).adj).find(Boolean); if (a0) F.adj = a0; }   // pratinjau langsung menampilkan data mockup\nrender();\nsetMode(\'3d\');');
+  sub("const KEY = 'planogram-v4';", "const KEY = 'planogram-v4-artifact-" + require('crypto').createHash('md5').update(state).digest('hex').slice(0, 8) + "';");
   // tombol yang tidak bisa berfungsi di frame artifact
   for (const id of ['btnTpl', 'btnUrl', 'btnPng', 'btnCsv', 'btnPrint', 'btnSave', 'btnLoad', 'gl3png']) sub(`<button id="${id}"`, `<button hidden id="${id}"`);
   fs.writeFileSync(OUT, h);
