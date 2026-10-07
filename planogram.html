@@ -279,20 +279,16 @@ main{grid-template-columns:minmax(0,1fr) 330px!important;grid-template-areas:"fi
 #filterPanel select{flex:1 1 190px;min-width:170px;width:auto;margin:0!important}
 #filterPanel .swrow{flex:0 0 auto;margin:0}
 #filterPanel #pkNote,#filterPanel #runBox{flex:1 1 100%;margin:0}
-#filterPanel #chain{flex:1 1 100%;flex-direction:row;overflow-x:auto;margin:0;padding-bottom:4px}
-#filterPanel #chain .crow{flex:0 0 260px}
-#filterPanel #chain .cadd{flex:0 0 auto;align-self:center;white-space:nowrap}
 #filterPanel #fMore{flex:1 1 100%;margin:0!important}
 #filterPanel #fReset{width:auto!important;margin:0!important;padding:8px 16px}
 main>section.panel{grid-area:view;min-width:0}
 #side-right{grid-area:sku;display:block}
-#side-right #skuPanel{border-top:5px solid #ec4899}
-#libSearch{width:100%;margin-bottom:8px}
-#lib{max-height:calc(100vh - 260px);overflow:auto}
+#side-right #chainPanel{border-top:5px solid #14b8a6}
+#chainPanel #chain{max-height:calc(100vh - 220px);overflow-y:auto;margin:0;padding-right:2px}
 .sku{cursor:default}
 #matPanel{grid-area:bahan}
 #reportBox{grid-area:report}
-@media(max-width:1100px){main{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"filter" "view" "sku" "bahan" "report"}#lib{max-height:50vh}}
+@media(max-width:1100px){main{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:"filter" "view" "sku" "bahan" "report"}}
 main.tplmode{grid-template-areas:"view"!important}
 main.tplmode #side-right{display:none}
 </style>
@@ -329,7 +325,6 @@ main.tplmode #side-right{display:none}
       <label class="swrow" title="Hanya Pallet: kemasan SKU digambar utuh sesuai sheet DIMENSI, mengisi volume pallet dengan tinggi 120 cm (+/- 10)"><input type="checkbox" id="pkOn"><i class="sw"></i><span>📦 Activation Packaging</span></label>
       <div id="pkNote" class="muted" style="font-size:11.5px;margin:2px 4px 6px" hidden></div>
       <div id="runBox" hidden><select id="runSel" aria-label="Template sambungan dari Excel"></select></div>
-      <div id="chain" hidden></div>
       <details id="fMore" style="margin-bottom:6px"><summary class="muted" style="cursor:pointer;margin-bottom:6px">Filter lainnya (Dept, Comm, Class, Sub Series)</summary>
         <select id="fDept" style="margin-bottom:6px"></select><select id="fComm" style="margin-bottom:6px"></select><select id="fCls" style="margin-bottom:6px"></select><select id="fSub" style="margin-bottom:6px"></select>
       </details>
@@ -396,10 +391,9 @@ main.tplmode #side-right{display:none}
   </section>
 
   <div id="side-right">
-    <section class="panel" id="skuPanel">
-      <h2>🏷️ Daftar SKU <span class="muted" id="libCount"></span></h2>
-      <input id="libSearch" type="search" placeholder="Cari SKU (kode, nama, series)" aria-label="Cari SKU">
-      <div id="lib"></div>
+    <section class="panel" id="chainPanel" hidden>
+      <h2>↔ Urutan posisi <span class="muted">(geser dengan ▲ ▼)</span></h2>
+      <div id="chain" hidden></div>
     </section>
     <section class="panel" hidden>
       <h2>Tambah SKU</h2>
@@ -672,19 +666,7 @@ function buildFixture2d(plan, sc) {
   return fx;
 }
 
-function renderLib() {                                                  // daftar SKU yang sedang tampil di pratinjau (hanya baca)
-  const q = $('#libSearch').value.trim().toLowerCase(), box = $('#lib'), seen = new Map();
-  if (ready()) viewPlans().forEach(pl => pl.zones.forEach(z => z.items.forEach(c => { if (!visOk(pl, c) || !S.skus[c]) return; const e = seen.get(c) || { k: S.skus[c], n: 0, fx: new Set() }; e.n++; e.fx.add(pl.id); seen.set(c, e); })));
-  const list = [...seen.values()].filter(e => !q || skuText(e.k).includes(q));
-  $('#libCount').textContent = ready() ? `(${list.length}${q ? '/' + seen.size : ''} SKU)` : '';
-  box.innerHTML = !ready() ? '<div class="muted">Pilih Grup Adjacency atau Series untuk melihat daftar SKU.</div>' :
-    list.map(({ k, n, fx }) => `
-    <div class="sku" style="border-left:5px solid hsl(${hue(k.series || k.adj || k.code)} 70% 58%)" title="${esc(k.code)} — ${esc(k.name)}">
-      ${k.img ? `<img class="th" src="${esc(k.img)}" loading="lazy" onerror="this.style.visibility='hidden'">` : '<div class="th"></div>'}
-      <div class="nm"><div>${esc(k.name)}</div><div class="muted">${esc(k.code)}${k.series ? ' • ' + esc(k.series) : ''}</div><div class="muted">${n}× di ${fx.size} fixture</div></div>
-    </div>`).join('') || '<div class="muted">Tidak ada SKU yang cocok dengan pencarian.</div>';
-}
-
+function renderLib() {}                                                // daftar SKU dihapus dari tampilan
 function renderInspector() {
   const el = $('#inspector'), plan = cur();
   const code = plan && sel && plan.zones[sel.zone] && plan.zones[sel.zone].items[sel.idx];
@@ -792,7 +774,7 @@ function renderFilters() {
     el.innerHTML = `<option value="">${label} (semua)${F[f] ? '' : ' · ' + opts.length}</option>` + opts.map(([v, n]) => `<option value="${esc(v)}"${F[f] === v ? ' selected' : ''}>${esc(v)} (${n})</option>`).join('');
     el.classList.toggle('on', !!F[f]);
   });
-  $('#fSer').hidden = J.on && !J.auto; $('#jOn').checked = J.on; $('#chain').hidden = !J.on;
+  $('#fSer').hidden = J.on && !J.auto; $('#jOn').checked = J.on; $('#chain').hidden = !J.on; $('#chainPanel').hidden = !J.on;
   if (J.on) renderChain(optsFor('ser').filter(([v]) => jPlansFor(v).length));
   $('#runBox').hidden = !(S.runs && S.runs.length);
   $('#runSel').innerHTML = '<option value="">📋 Template sambungan dari Excel…</option>' + (S.runs || []).map((r, i) => `<option value="${i}">${esc(r.name)} · ${esc(r.cat)} (${r.items.length} fixture)</option>`).join('');
@@ -870,7 +852,7 @@ function afterFilter() {
 }
 [['#fAdj', 'adj'], ['#fSer', 'ser'], ['#fSub', 'sub'], ['#fDept', 'dept'], ['#fComm', 'comm'], ['#fCls', 'cls']].forEach(([id, k]) => $(id).onchange = e => { F[k] = e.target.value; afterFilter(); });
 $('#fFx').onchange = e => { F.fx = e.target.value; afterFilter(); };
-$('#fReset').onclick = () => { Object.keys(F).forEach(k => F[k] = ''); J.rows = J.auto ? [] : [{ ser: '', plan: '' }]; J.sig = ''; $('#libSearch').value = ''; render(); };
+$('#fReset').onclick = () => { Object.keys(F).forEach(k => F[k] = ''); J.rows = J.auto ? [] : [{ ser: '', plan: '' }]; J.sig = ''; render(); };
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-goto]'); if (!g) return;
   e.preventDefault(); S.cur = g.dataset.goto; sel = null; render();
@@ -896,7 +878,6 @@ $('#inspector').addEventListener('change', e => {
   const to = +e.target.value, code = p.zones[sel.zone].items.splice(sel.idx, 1)[0];
   p.zones[to].items.push(code); sel = { zone: to, idx: p.zones[to].items.length - 1 }; render();
 });
-$('#libSearch').addEventListener('input', afterFilter);   // pencarian ikut menyaring pratinjau
 $('#fSave').onclick = () => {
   const code = $('#fCode').value.trim(), name = $('#fName').value.trim();
   if (!code || !name) return toast('Kode SKU dan nama wajib diisi.');
