@@ -54,6 +54,14 @@ footer{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var
 #tray button[aria-current="true"]{border-color:var(--accent)}
 #tray img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:2px}
 #tray b{position:absolute;left:4px;bottom:4px;background:var(--fg);color:var(--bg);font-size:.7rem;padding:1px 6px;border-radius:3px;line-height:1.4}
+.endpage{aspect-ratio:939/1400;height:100%;max-width:100%;box-sizing:border-box;box-shadow:var(--shadow);background:#fff4c9 radial-gradient(circle at 50% 38%,#ffd84d 0,#ffb800 55%,#e8590c 100%);color:#2a1205;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5%;text-align:center;padding:8%;container-type:inline-size}
+.endpage small{font-family:var(--body);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:clamp(.6rem,4.2cqw,1rem)}
+.endpage strong{font-family:var(--display);font-weight:400;font-size:clamp(1.6rem,17cqw,5rem);line-height:1.02;letter-spacing:.03em;color:#d6361f;text-shadow:3px 3px 0 #fff4c9,5px 5px 0 #2a1205}
+.endpage i{width:30%;height:6px;background:#2a1205;border-radius:3px}
+.endpage.mini{height:auto;width:100%;padding:0;box-shadow:none;border-radius:2px}
+.endpage.mini strong{font-size:.9rem;text-shadow:none;padding:30% 4%}
+#scroll .endpage{height:auto;width:100%}
+#book.spread .endpage{max-width:50%}
 @media (max-width:640px){
   #book{inset:8px 8px}
   .nav{width:36px;background:rgba(127,127,127,.12);font-size:1.4rem;top:auto;bottom:8px;height:44px;border-radius:8px}
@@ -111,8 +119,20 @@ function step(dir){
   render();
 }
 function label(v){
-  const f = i => i === 0 ? 'Cover' : i;
-  return v.length === 2 ? `${f(v[0])}–${f(v[1])} / ${N-1}` : (v[0] === 0 ? `Cover` : `${v[0]} / ${N-1}`);
+  const f = i => i === 0 ? 'Cover' : i + 1;
+  return v.length === 2 ? `${f(v[0])}–${f(v[1])} / ${N}` : (v[0] === 0 ? `Cover` : `${v[0] + 1} / ${N}`);
+}
+// "END" marks the closing page, drawn in HTML instead of an image
+function pageEl(i){
+  if (PAGES[i] === 'END') {
+    const d = document.createElement('div');
+    d.className = 'endpage'; d.setAttribute('role', 'img'); d.setAttribute('aria-label', 'Nantikan episode selanjutnya');
+    d.innerHTML = '<small>4 Sekawan Volume 1</small><strong>Nantikan<br>episode<br>selanjutnya</strong><i></i>';
+    return d;
+  }
+  const im = new Image(); im.src = PAGES[i]; im.draggable = false;
+  im.alt = i === 0 ? 'Cover 4 Sekawan Volume 1' : 'Halaman ' + (i + 1);
+  return im;
 }
 function render(){
   const stage = $('#stage');
@@ -123,7 +143,7 @@ function render(){
     const book = $('#book');
     book.className = v.length === 2 ? 'spread' : '';
     book.innerHTML = '';
-    v.forEach(i => { const im = new Image(); im.src = PAGES[i]; im.alt = i === 0 ? 'Cover 4 Sekawan Volume 1' : 'Halaman ' + i; im.draggable = false; book.appendChild(im); });
+    v.forEach(i => book.appendChild(pageEl(i)));
     $('#prev').disabled = v[0] === 0;
     $('#next').disabled = v[v.length-1] === N - 1;
   }
@@ -140,11 +160,10 @@ function setMode(m){
 
 // build scroll column + thumbnails
 PAGES.forEach((src, i) => {
-  const im = new Image(); im.src = src; im.loading = 'lazy'; im.alt = i === 0 ? 'Cover' : 'Halaman ' + i;
-  $('#scroll .col').appendChild(im);
+  $('#scroll .col').appendChild(pageEl(i));
   const b = document.createElement('button');
-  b.innerHTML = `<img src="${src}" alt=""><b>${i === 0 ? 'Cover' : i}</b>`;
-  b.setAttribute('aria-label', i === 0 ? 'Buka cover' : 'Buka halaman ' + i);
+  b.innerHTML = (src === 'END' ? '<div class="endpage mini"><strong>Nantikan</strong></div>' : `<img src="${src}" alt="">`) + `<b>${i === 0 ? 'Cover' : i + 1}</b>`;
+  b.setAttribute('aria-label', i === 0 ? 'Buka cover' : 'Buka halaman ' + (i + 1));
   b.onclick = () => { cur = i; $('#tray').classList.remove('open'); $('#thumbs').setAttribute('aria-pressed','false'); setMode(mode); render(); };
   $('#tray .grid').appendChild(b);
 });
