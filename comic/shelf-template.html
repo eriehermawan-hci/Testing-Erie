@@ -1,0 +1,81 @@
+<title>Pojok Receh</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: wrapped bookshelf grid of cover buttons; clicking opens a centered "Coming Soon" card, no comic content ships */
+:root{
+  --bg:#f3efe6; --fg:#1d1b17; --muted:#6b6557; --accent:#d6361f; --sun:#ffc62e;
+  --card:#faf7f0; --line:#cfc6b0; --shadow:0 10px 26px rgba(40,30,10,.25);
+  --display:"Bangers","Impact",sans-serif; --body:"DM Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14120f; --fg:#f3ecdc; --muted:#a39a85; --accent:#ff6a4d; --sun:#ffc62e;
+  --card:#1d1a15; --line:#3a352b; --shadow:0 12px 30px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14120f; --fg:#f3ecdc; --muted:#a39a85; --accent:#ff6a4d; --sun:#ffc62e;
+  --card:#1d1a15; --line:#3a352b; --shadow:0 12px 30px rgba(0,0,0,.6); color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);padding-inline:16px;padding-block:28px 40px}
+main{max-width:1100px;margin:0 auto}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(2.4rem,8vw,4rem);letter-spacing:.04em;line-height:1;margin:0}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);margin:.5rem 0 0;font-size:1rem}
+.shelf{list-style:none;padding:0;margin:28px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:22px 18px}
+.book{display:flex;flex-direction:column;gap:10px;min-width:0}
+.cover{padding:0;border:0;background:none;cursor:pointer;display:block;position:relative;border-radius:4px;transition:transform .18s ease,box-shadow .18s ease;box-shadow:var(--shadow);line-height:0}
+.cover img{width:100%;height:auto;aspect-ratio:900/1205;object-fit:cover;border-radius:4px;display:block}
+.cover:hover{transform:translateY(-6px) rotate(-1deg)}
+.cover:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.cover::after{content:"";position:absolute;inset:0;border-radius:4px;box-shadow:inset 8px 0 10px -8px rgba(0,0,0,.45)}
+.name{font-weight:700;font-size:.95rem;line-height:1.25;overflow-wrap:anywhere}
+.tag{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+/* coming-soon card */
+#soon{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,8,4,.72)}
+#soon.open{display:flex}
+.panel{position:relative;width:min(100%,340px);max-height:100%;display:flex;flex-direction:column;align-items:center;gap:14px}
+.panel .pic{position:relative;width:100%;line-height:0;box-shadow:var(--shadow);border-radius:4px;overflow:hidden}
+.panel img{width:100%;height:auto;aspect-ratio:900/1205;object-fit:cover;filter:brightness(.55) saturate(.85)}
+.stamp{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-8deg);font-family:var(--display);font-size:clamp(2.4rem,14vw,3.4rem);letter-spacing:.05em;line-height:1;color:var(--sun);text-align:center;text-shadow:3px 3px 0 #7a1608,5px 5px 0 rgba(0,0,0,.35);white-space:nowrap}
+.panel h2{margin:0;color:#fff;font-size:1.05rem;text-align:center;font-weight:700}
+.close{background:var(--sun);color:#1d1b17;border:2px solid #1d1b17;border-radius:8px;padding:8px 22px;font:700 .9rem var(--body);cursor:pointer}
+.close:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){.panel{animation:pop .2s ease}.stamp{animation:stamp .35s ease}}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+@keyframes stamp{from{transform:translate(-50%,-50%) rotate(-8deg) scale(1.6);opacity:0}to{transform:translate(-50%,-50%) rotate(-8deg) scale(1);opacity:1}}
+</style>
+
+<main>
+  <h1>Pojok <span>Receh</span></h1>
+  <p class="sub">Pilih sampul untuk membaca chapter. Semua chapter segera hadir.</p>
+  <ul class="shelf" id="shelf"></ul>
+</main>
+
+<div id="soon" role="dialog" aria-modal="true" aria-labelledby="soonTitle">
+  <div class="panel">
+    <div class="pic"><img id="soonImg" alt=""><div class="stamp">COMING<br>SOON</div></div>
+    <h2 id="soonTitle"></h2>
+    <button class="close" id="close">Tutup</button>
+  </div>
+</div>
+
+<script>
+const BOOKS = __BOOKS__;
+const shelf = document.getElementById('shelf'), soon = document.getElementById('soon');
+let opener = null;
+BOOKS.forEach(b => {
+  const li = document.createElement('li'); li.className = 'book';
+  li.innerHTML = '<button class="cover" aria-label="Buka ' + b.title + '"><img alt="Sampul ' + b.title + '"></button><div><div class="name"></div><div class="tag">Coming soon</div></div>';
+  li.querySelector('img').src = b.src;
+  li.querySelector('.name').textContent = b.title;
+  li.querySelector('.cover').onclick = e => {
+    opener = e.currentTarget;
+    document.getElementById('soonImg').src = b.src;
+    document.getElementById('soonTitle').textContent = b.title;
+    soon.classList.add('open');
+    document.getElementById('close').focus();
+  };
+  shelf.appendChild(li);
+});
+function closeSoon(){ soon.classList.remove('open'); if (opener) opener.focus(); }
+document.getElementById('close').onclick = closeSoon;
+soon.addEventListener('click', e => { if (e.target === soon) closeSoon(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && soon.classList.contains('open')) closeSoon(); });
+</script>
