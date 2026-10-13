@@ -1,7 +1,7 @@
 <title>Pojok Receh</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
-/* Layout: wrapped bookshelf grid of cover buttons; clicking opens a centered "Coming Soon" card, no comic content ships */
+/* Layout: wrapped bookshelf grid of cover buttons; clicking opens a 2-page reader: one preview page, then "Coming Soon" */
 :root{
   --bg:#f3efe6; --fg:#1d1b17; --muted:#6b6557; --accent:#d6361f; --sun:#ffc62e;
   --card:#faf7f0; --line:#cfc6b0; --shadow:0 10px 26px rgba(40,30,10,.25);
@@ -30,29 +30,38 @@ h1 span{color:var(--accent)}
 /* coming-soon card */
 #soon{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,8,4,.72)}
 #soon.open{display:flex}
-.panel{position:relative;width:min(100%,340px);max-height:100%;display:flex;flex-direction:column;align-items:center;gap:14px}
-.panel .pic{position:relative;width:100%;line-height:0;box-shadow:var(--shadow);border-radius:4px;overflow:hidden}
-.panel img{width:100%;height:auto;aspect-ratio:900/1205;object-fit:cover;filter:brightness(.55) saturate(.85)}
+.reader{width:min(100%,520px);height:100%;max-height:100%;display:flex;flex-direction:column;gap:10px;min-height:0}
+.rbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rnav{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#fff;font-weight:700;font-size:.85rem}
+.rnav .close:disabled{opacity:.35;cursor:default}
+#rcount{font-variant-numeric:tabular-nums}
+.reader .pic{position:relative;flex:1;min-height:0;display:flex;justify-content:center;align-items:center;line-height:0}
+.reader img{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;box-shadow:var(--shadow);border-radius:3px;background:#fff}
+.reader.dim img{filter:brightness(.45) saturate(.8)}
 .stamp{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-8deg);font-family:var(--display);font-size:clamp(2.4rem,14vw,3.4rem);letter-spacing:.05em;line-height:1;color:var(--sun);text-align:center;text-shadow:3px 3px 0 #7a1608,5px 5px 0 rgba(0,0,0,.35);white-space:nowrap}
-.panel h2{margin:0;color:#fff;font-size:1.05rem;text-align:center;font-weight:700}
+.rbar h2{margin:0;color:#fff;font-size:1.05rem;font-weight:700;min-width:0;overflow-wrap:anywhere}
 .close{background:var(--sun);color:#1d1b17;border:2px solid #1d1b17;border-radius:8px;padding:8px 22px;font:700 .9rem var(--body);cursor:pointer}
 .close:focus-visible{outline:3px solid #fff;outline-offset:2px}
-@media (prefers-reduced-motion:no-preference){.panel{animation:pop .2s ease}.stamp{animation:stamp .35s ease}}
-@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:no-preference){.reader{animation:pop .2s ease}.stamp{animation:stamp .35s ease}}
+@keyframes pop{from{transform:scale(.97);opacity:0}to{transform:none;opacity:1}}
 @keyframes stamp{from{transform:translate(-50%,-50%) rotate(-8deg) scale(1.6);opacity:0}to{transform:translate(-50%,-50%) rotate(-8deg) scale(1);opacity:1}}
 </style>
 
 <main>
   <h1>Pojok <span>Receh</span></h1>
-  <p class="sub">Pilih sampul untuk membaca chapter. Semua chapter segera hadir.</p>
+  <p class="sub">Pilih sampul untuk membaca satu halaman pratinjau. Chapter lengkapnya segera hadir.</p>
   <ul class="shelf" id="shelf"></ul>
 </main>
 
 <div id="soon" role="dialog" aria-modal="true" aria-labelledby="soonTitle">
-  <div class="panel">
-    <div class="pic"><img id="soonImg" alt=""><div class="stamp">COMING<br>SOON</div></div>
-    <h2 id="soonTitle"></h2>
-    <button class="close" id="close">Tutup</button>
+  <div class="reader">
+    <div class="rbar"><h2 id="soonTitle"></h2><button class="close" id="close">Tutup</button></div>
+    <div class="pic"><img id="soonImg" alt=""><div class="stamp" id="stamp" hidden>COMING<br>SOON</div></div>
+    <div class="rnav">
+      <button class="close" id="rprev" aria-label="Halaman sebelumnya">&#8249; Sebelumnya</button>
+      <span id="rcount"></span>
+      <button class="close" id="rnext" aria-label="Halaman berikutnya">Berikutnya &#8250;</button>
+    </div>
   </div>
 </div>
 
@@ -66,16 +75,38 @@ BOOKS.forEach(b => {
   li.querySelector('img').src = b.src;
   li.querySelector('.name').textContent = b.title;
   li.querySelector('.cover').onclick = e => {
-    opener = e.currentTarget;
-    document.getElementById('soonImg').src = b.src;
+    opener = e.currentTarget; book = b; pg = 0; draw();
     document.getElementById('soonTitle').textContent = b.title;
     soon.classList.add('open');
-    document.getElementById('close').focus();
+    document.getElementById('rnext').focus();
   };
   shelf.appendChild(li);
 });
+// each chapter has 2 pages: its one real page, then a Coming Soon page (cover dimmed + stamp)
+let book = null, pg = 0;
+function draw(){
+  const img = document.getElementById('soonImg'), soonPage = pg === 1;
+  img.src = soonPage ? book.src : book.page;
+  img.alt = soonPage ? 'Coming Soon' : 'Halaman ' + book.title;
+  document.querySelector('.reader').classList.toggle('dim', soonPage);
+  document.getElementById('stamp').hidden = !soonPage;
+  document.getElementById('rcount').textContent = (pg + 1) + ' / 2';
+  document.getElementById('rprev').disabled = pg === 0;
+  document.getElementById('rnext').disabled = pg === 1;
+}
+function go(d){ pg = Math.max(0, Math.min(1, pg + d)); draw(); }
 function closeSoon(){ soon.classList.remove('open'); if (opener) opener.focus(); }
 document.getElementById('close').onclick = closeSoon;
+document.getElementById('rprev').onclick = () => go(-1);
+document.getElementById('rnext').onclick = () => go(1);
 soon.addEventListener('click', e => { if (e.target === soon) closeSoon(); });
-addEventListener('keydown', e => { if (e.key === 'Escape' && soon.classList.contains('open')) closeSoon(); });
+addEventListener('keydown', e => {
+  if (!soon.classList.contains('open')) return;
+  if (e.key === 'Escape') closeSoon();
+  if (e.key === 'ArrowRight') go(1);
+  if (e.key === 'ArrowLeft') go(-1);
+});
+let sx = null;
+soon.addEventListener('pointerdown', e => { sx = e.clientX; });
+soon.addEventListener('pointerup', e => { if (sx === null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); });
 </script>
