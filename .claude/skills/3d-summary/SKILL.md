@@ -18,9 +18,9 @@ Status terakhir: grup **MAKAN & MINUM** selesai (31 SKU, Wall P1 dan P2). Grup T
 |---|---|
 | Daftar SKU, grup, fixture, kode posisi (S1–S5, PLT1–3), prioritas, qty display | Drive: folder `_Summary Accs` → `2_FOLDER_DATA_DRIVE` → **Dashboard.html** (id `1DSZ05boMvBHzmRVI-txuKgmnMHimrF4x`). Data ada di `const D = {...}` (field `arts`). Sheet aslinya (`List Item Summary Accessories`) terlalu besar untuk diekspor lewat Drive. |
 | Dimensi dan foto produk | `https://www.ruparupa.com/p/<SKU>` (data di `__NEXT_DATA__`). Foto: `cdn.ruparupa.io/.../Products/<SKU>_1.jpg` |
-| Layout rak | Logika `planogram.html` di repo: Wall 5 Rack = zona `R1 R1 R2 R1 R1`, 1 satuan = 35 cm, BASE 10 cm, Wall 120×50×270. Panel belakang **diputihkan** (di preview saja; `planogram.html` tidak diubah). |
+| Layout rak | Bahan/gaya dari `planogram.html` (ash, upright berlubang, papan + lip putih), Wall 120×50×270, BASE 10 cm. **6 shelving bernomor 0–5**, jarak antar papan **45 cm** mulai dari bawah (papan bawah di atas plinth 10 cm). Shelving 0 (paling atas) **kosong untuk Media Komunikasi**; S1–S5 di sheet = Shelving 1–5. Panel belakang **diputihkan** (di preview saja; `planogram.html` tidak diubah). |
 
-Matriks: Makan & Minum memakai S1–S4 di Wall (S5 kosong = STOCK). Fixture pertama grup diisi SKU **P1**, fixture kedua **P2**. Shelving ke-1 paling atas.
+Matriks: Makan & Minum memakai S1–S4 di Wall (S0 = Media Komunikasi, S5 kosong = STOCK). Fixture pertama grup diisi SKU **P1**, fixture kedua **P2**. Shelving 0 paling atas, 5 paling bawah.
 
 ## Persiapan environment (cloud)
 
@@ -38,7 +38,7 @@ Matriks: Makan & Minum memakai S1–S4 di Wall (S5 kosong = STOCK). Fixture pert
 
 ## Aturan susun racking (viewer.js `packShelf`)
 
-- Per shelving: lebar 120 cm, kedalaman 50 cm (dikurangi lip 1 cm), tinggi bebas = tinggi zona − 2,5 cm papan.
+- Per shelving: lebar 120 cm, kedalaman 50 cm (dikurangi lip 1 cm), tinggi bebas = 45 − 2,5 = 42,5 cm (jarak antar papan dikurangi tebal papan).
 - SKU diisi kiri→kanan sesuai urutan sheet; deret ke belakang sampai kedalaman habis; boleh diputar 90° bila menghemat lebar (set toples).
 - Piring/mangkuk/gelas boleh ditumpuk (`stack.inc` = tambahan tinggi per unit, `max` = batas), selebihnya 1 lapis.
 - SKU lebih tinggi dari zona → tidak dirender, status "Terlalu tinggi". Lebar habis → "Tidak muat".
@@ -50,7 +50,7 @@ Matriks: Makan & Minum memakai S1–S4 di Wall (S5 kosong = STOCK). Fixture pert
 - **Darya 500 ml**: ruparupa 8,2×8,8×25 cm; terlihat lebih gemuk dari foto, kemungkinan ukuran kemasan, tapi angka ruparupa tetap dipakai.
 - **Gelas di set Halli**: dimensi tidak ada → diasumsikan dia atas 7 × tinggi 9 cm.
 - Mug Arvid berwarna "Random" di ruparupa → dipakai abu-abu seri Arvid Grey.
-- Temuan: qty display di sheet **tidak muat** di Wall berukuran asli (mis. Wall P2 hanya 54%); Starlight Dish Rack (36,5 cm) lebih tinggi dari shelving (32,5 cm). Laporkan ini ke pengguna.
+- Temuan: qty display di sheet **tidak muat** di Wall berukuran asli (mis. Wall P2 hanya 54%); Laporkan ini ke pengguna. (Dengan jarak lama 35 cm, Starlight Dish Rack 36,5 cm tidak muat; dengan 45 cm muat.)
 - Bahan transparan memakai mode "lite" (opacity) di scene racking supaya ringan; render per SKU memakai transmission penuh.
 - Screenshot headless (SwiftShader) lambat untuk scene dengan banyak objek transparan: beri `timeout` besar di `goto` dan `screenshot`.
 - Keluaran lama ada di `renders/makan-minum/` (PNG per SKU, `_manifest.csv`, `racking/`, `preview_racking.html`).

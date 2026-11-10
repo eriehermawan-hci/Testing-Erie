@@ -13,13 +13,13 @@ def shelves(fx,pr,codes,kind):
     out=[]
     for c in codes:
         its=[a for a in arts if a['fx']==fx and a['pr']==pr and a['code']==c]
-        out.append({'code':c,'items':[{'k':a['k'],'qd':int(a['qd'])} for a in its]})
+        out.append({'code':c,'media':c=='S0','items':[{'k':a['k'],'qd':int(a['qd'])} for a in its]})
     return out
 fixtures=[
- {'id':'wall-p1','kind':'wall','tab':'Wall 1 · P1','title':'Wall ke-1 · SKU prioritas P1','size':{'w':120,'d':50,'h':270},'zones':[35,35,70,35,35],'label':'WALL 5 RACK',
-  'shelves':shelves('WALL','P1',['S1','S2','S3','S4','S5'],'wall')},
- {'id':'wall-p2','kind':'wall','tab':'Wall 2 · P2','title':'Wall ke-2 · SKU prioritas P2','size':{'w':120,'d':50,'h':270},'zones':[35,35,70,35,35],'label':'WALL 5 RACK',
-  'shelves':shelves('WALL','P2',['S1','S2','S3','S4','S5'],'wall')},
+ {'id':'wall-p1','kind':'wall','tab':'Wall 1 · P1','title':'Wall ke-1 · SKU prioritas P1','size':{'w':120,'d':50,'h':270},'zones':[45,45,45,45,45,45],'label':'WALL 5 RACK',
+  'shelves':shelves('WALL','P1',['S0','S1','S2','S3','S4','S5'],'wall')},
+ {'id':'wall-p2','kind':'wall','tab':'Wall 2 · P2','title':'Wall ke-2 · SKU prioritas P2','size':{'w':120,'d':50,'h':270},'zones':[45,45,45,45,45,45],'label':'WALL 5 RACK',
+  'shelves':shelves('WALL','P2',['S0','S1','S2','S3','S4','S5'],'wall')},
  {'id':'pallet-1','kind':'pallet','tab':'Pallet 1 · P1','title':'Pallet ke-1 · SKU prioritas P1','size':{'w':90,'d':90,'h':100},'zones':[100],'label':'PALLET 90x90',
   'shelves':shelves('PALLET','P1',['PLT1'],'pallet')},
  {'id':'pallet-2','kind':'pallet','tab':'Pallet 2 · P2','title':'Pallet ke-2 · SKU prioritas P2','size':{'w':90,'d':90,'h':100},'zones':[100],'label':'PALLET 90x90',

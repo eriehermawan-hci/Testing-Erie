@@ -82,7 +82,7 @@ function packShelf(sh, W, D, C) {
 /* ---------- membangun fixture ---------- */
 let group = null, cur = 0, labels = [];
 function buildWall(fx, g) {
-  const { w: W, d: D, h: H } = fx.size, UP = 3.4, hs = fx.zones, sum = hs.reduce((a, b) => a + b, 0), topBlank = H - BASE - sum;
+  const { w: W, d: D, h: H } = fx.size, UP = 3.4, hs = fx.zones, sum = hs.reduce((a, b) => a + b, 0);
   g.add(box(W + UP * 2, BASE, D, std(ASH.base), 0, BASE / 2, 0));
   const groove = canvasTex(8, 75, (c, w, h) => { c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(0,0,0,.14)'; c.fillRect(0, h - 3, w, 3); }, [1, (H - BASE) / 7.5]);
   g.add(box(W, H - BASE, 1.2, new THREE.MeshStandardMaterial({ color: 0xffffff, map: groove, roughness: 0.9 }), 0, BASE + (H - BASE) / 2, -D / 2 + 0.6));
@@ -121,8 +121,8 @@ function place(fx, geo, g) {
         for (let u = 0; u < units; u++) { const c = TPL[r.k].piv.clone(true); c.position.set(x, band.top + u * (r.inc || 0), z); if (r.rot) c.rotation.y = Math.PI / 2; c.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); g.add(c); }
       }
     });
-    if (fx.kind === 'wall' && !sh.items.length) { const p = textPlane('S T O C K', 60, 7, 'rgba(40,50,66,.55)'); p.position.set(0, band.top + band.clear / 2, -geo.D / 2 + 1.3); g.add(p); }
-    reps.push({ code: sh.code, band, rep, used, qty: sh.items.reduce((a, b) => a + b.qd, 0) });
+    if (fx.kind === 'wall' && !sh.items.length) { const p = textPlane(sh.media ? 'MEDIA KOMUNIKASI' : 'S T O C K', sh.media ? 80 : 60, 7, 'rgba(40,50,66,.55)'); p.position.set(0, band.top + Math.min(band.clear, 32) / 2, -geo.D / 2 + 1.3); g.add(p); }
+    reps.push({ code: sh.code, media: !!sh.media, band, rep, used, qty: sh.items.reduce((a, b) => a + b.qd, 0) });
   });
   return reps;
 }
@@ -162,7 +162,7 @@ function show(i) {
   labelsEl.innerHTML = ''; labels = [];
   repsCur.forEach((r, si) => {
     const el = document.createElement('div'); el.className = 'lab'; const pl = r.rep.reduce((a, b) => a + b.placed, 0);
-    el.innerHTML = fx.kind === 'wall' ? `<b>Shelving ${si + 1}</b><span>${r.code} · ${r.qty ? nf(r.qty) + ' pcs' : 'stock'}</span>` : `<b>${esc(fx.label)}</b><span>${r.code} · ${nf(r.qty)} pcs</span>`;
+    el.innerHTML = fx.kind === 'wall' ? `<b>Shelving ${si}</b><span>${r.media ? 'Media Komunikasi' : r.code + ' · ' + (r.qty ? nf(r.qty) + ' pcs' : 'stock')}</span>` : `<b>${esc(fx.label)}</b><span>${r.code} · ${nf(r.qty)} pcs</span>`;
     labelsEl.appendChild(el);
     labels.push({ el, pos: new THREE.Vector3(-geoCur.W / 2 - (fx.kind === 'wall' ? 6 : 4), r.band.top + Math.min(r.band.clear, 40) / 2, geoCur.D / 2) });
   });
@@ -174,11 +174,11 @@ const STATUS = { muat: ['Muat', 'ok'], sebagian: ['Sebagian', 'warn'], tinggi: [
 function renderPanel(fx) {
   const tot = repsCur.reduce((a, r) => a + r.qty, 0), pl = repsCur.reduce((a, r) => a + r.rep.reduce((x, y) => x + y.placed, 0), 0);
   $('#sum').innerHTML = `<div><span>Rencana qty</span><b>${nf(tot)}</b><i>pcs</i></div><div><span>Muat di rak</span><b>${nf(pl)}</b><i>pcs</i></div><div><span>Terisi</span><b>${tot ? Math.round(pl / tot * 100) : 0}%</b><i>dari rencana</i></div>`;
-  $('#ttl').textContent = fx.title; $('#dim').textContent = `${fx.size.w} × ${fx.size.d} × ${fx.size.h} cm` + (fx.kind === 'wall' ? ' · tinggi shelving 35 / 35 / 70 / 35 / 35 cm' : '');
+  $('#ttl').textContent = fx.title; $('#dim').textContent = `${fx.size.w} × ${fx.size.d} × ${fx.size.h} cm` + (fx.kind === 'wall' ? ' · 6 shelving (0–5) · jarak antarshelving 45 cm' : '');
   $('#shelves').innerHTML = repsCur.map((r, si) => {
     const p = r.rep.reduce((a, b) => a + b.placed, 0), pct = r.qty ? Math.round(p / r.qty * 100) : 0;
-    const head = fx.kind === 'wall' ? `Shelving ${si + 1} <i>${r.code}</i>` : `Pallet <i>${r.code}</i>`;
-    if (!r.rep.length) return `<section class="sh"><header><h3>${head}</h3><span class="mut">Kosong · area STOCK</span></header></section>`;
+    const head = fx.kind === 'wall' ? `Shelving ${si} <i>${r.code}</i>` : `Pallet <i>${r.code}</i>`;
+    if (!r.rep.length) return `<section class="sh"><header><h3>${head}</h3><span class="mut">${r.media ? 'Kosong · Media Komunikasi' : 'Kosong · area STOCK'}</span></header></section>`;
     return `<section class="sh"><header><h3>${head}</h3><span class="mut">${nf(p)} / ${nf(r.qty)} pcs</span></header>
       <div class="bar" role="img" aria-label="Terisi ${pct}%"><u style="width:${pct}%"></u></div>
       <p class="clr">Tinggi bebas ${r.band.clear.toFixed(1)} cm · lebar terpakai ${r.used.toFixed(0)} dari ${geoCur.W} cm</p>
