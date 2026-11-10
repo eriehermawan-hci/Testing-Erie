@@ -16,12 +16,13 @@ def fill_for(txt):
 
 def note(i, sh, W):
     fl = i['flag']
+    pre = f"Qty diubah dari {i['qs']} (sheet) menjadi {i['qd']} pcs sesuai arahan. " if i.get('qs') else ''
     if fl == 'cukup':
-        t = f"Kapasitas {i['cap']} pcs sudah mencapai qty sheet {i['qd']} pcs."
+        t = pre + f"Kapasitas {i['cap']} pcs sudah mencapai qty sheet {i['qd']} pcs."
         if i['extra']: t += f" Ada {i['extra']} facing tambahan agar shelving penuh, jadi tampil {i['disp']} pcs."
         return t
     if fl == 'kurang':
-        return f"Kapasitas {i['cap']} pcs kurang {i['qd'] - i['cap']} pcs dari qty sheet {i['qd']} pcs. Butuh {i['need']} kolom (lebar {i['need'] * i['fw']:.0f} cm), hanya {i['cols']} kolom muat."
+        return pre + f"Kapasitas {i['cap']} pcs kurang {i['qd'] - i['cap']} pcs dari qty sheet {i['qd']} pcs. Butuh {i['need']} kolom (lebar {i['need'] * i['fw']:.0f} cm), hanya {i['cols']} kolom muat."
     if fl == 'lebar':
         return f"Tidak kebagian tempat: unit selebar {i['fw']:.0f} cm tidak muat di sisa lebar shelving ({W} cm)."
     if fl == 'tinggi':
@@ -113,6 +114,9 @@ A = [('Fixture', 'Wall 120 x 50 x 270 cm, plinth 10 cm, 6 shelving (0-5), jarak 
      ('PDQ', 'Tray berisi N pcs sesuai pola (12=4x3, 54=3x3 tumpuk 6, 32=4x4 tumpuk 2, 30=6x5, 25=5x5). Jumlah tray = qty / N. Tray boleh ditumpuk sampai batas tinggi (maks 20 tingkat).'),
      ('Display + packing', '1 unit terbuka di depan, kotak packing di belakangnya (ukuran kotak dari data kemasan). Flat pack berdiri menghadap depan. Kotak boleh ditumpuk sesuai tinggi bebas.'),
      ('Logika isi penuh', 'Qty sheet dipenuhi dulu; sisa lebar diisi dengan menggandakan SKU bergiliran (facing tambahan) sampai shelving penuh. Kedalaman shelving diisi penuh sampai sisi belakang. Produk Display only diberi jarak 0,5 cm.'),
+     ('Qty Greta', 'Gelas Greta (360 dan 440) memakai qty 300 pcs per artikel sesuai arahan pengguna (di sheet 150).'),
+     ('Tumpukan piring/mangkuk', 'Antar pcs dalam tumpukan diberi jarak 0,5 cm di atas tinggi rim, jadi tidak rapat.'),
+     ('Kardus stok', 'Kardus stok disusun rapat (tanpa jarak), menempel ke belakang shelving, diisi penuh baris ke belakang x 2 tumpukan. Unit terbuka diberi jarak 0,5 cm.'),
      ('Kapasitas maks', 'Kolom x baris ke belakang x tumpukan maksimum sesuai tinggi bebas.'),
      ('Qty saran', 'Jumlah yang tampil saat shelving penuh. Untuk SKU yang tidak muat sama sekali nilainya 0.'),
      ('Batasan', 'Bentuk 3D produk berupa perkiraan dari dimensi; hasil fit bergantung pada dimensi tersebut.')]

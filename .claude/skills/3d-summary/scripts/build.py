@@ -2,7 +2,7 @@ import json,sys,re
 variant=sys.argv[1]; out=sys.argv[2]
 data=json.load(open('rack_data.json'))
 models=open('models.js').read().replace("import * as THREE from 'three';\n","").replace("export function","function").replace("export const","const")
-viewer=open('viewer.js').read().replace("/*DATA*/null",json.dumps({'skus':data['skus'],'fixtures':data['fixtures']},ensure_ascii=False,separators=(',',':')))
+viewer=open('viewer.js').read().replace("/*DATA*/null",json.dumps({'skus':data['skus'],'fixtures':data['fixtures'],'trayMax':data['trayMax']},ensure_ascii=False,separators=(',',':')))
 t=open('template.html').read()
 if variant=='cdn':
     three='https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js'; addons='https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/'

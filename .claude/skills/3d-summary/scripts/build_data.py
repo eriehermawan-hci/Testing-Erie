@@ -3,7 +3,8 @@ h=open('dash.html').read(); i=h.find('const D = ')+len('const D = ')
 D,_=json.JSONDecoder().raw_decode(h[i:])
 P=json.load(open('products.json')); rr={r['sku']:r for r in json.load(open('rr.json'))}
 arts=[a for a in D['arts'] if a['grup']=='MAKAN & MINUM']
-STACK={'10554839':(0.9,12),'10554840':(0.9,12),'10559642':(1.0,12),'10554842':(1.1,16),'10581181':(0.8,16),'10559641':(0.8,16),'10590319':(1.2,8),'10590320':(1.2,8)}
+# tambahan tinggi per pcs dalam tumpukan = rim piring/mangkuk + jarak 0,5 cm agar tumpukan tidak rapat
+STACK={'10554839':(1.4,12),'10554840':(1.4,12),'10559642':(1.5,12),'10554842':(1.6,16),'10581181':(1.3,16),'10559641':(1.3,16),'10590319':(1.2,8),'10590320':(1.2,8)}
 skus={}
 for a in arts:
     k=a['k']; st=STACK.get(k)
@@ -35,6 +36,12 @@ for n,(oid,ol,sku) in enumerate(OPT):
     f=json.loads(json.dumps(p1)); f['id']='pallet-1-'+oid; f['group']='pallet-1'; f['opt']=ol
     f['title']=f'Pallet ke-1 · SKU prioritas P1 · Opsi {ol} Arvid'; f['xl']=f'Pallet ke-1 (P1) · Opsi {ol}'
     f['shelves'][0]['items']=[i for i in f['shelves'][0]['items'] if i['k']==sku]; fixtures.insert(pos+n,f)
+
+QTY_OVERRIDE={'10590319':300,'10590320':300}      # arahan pengguna: gelas Greta 300 pcs per artikel
+for f in fixtures:
+    for sh in f['shelves']:
+        for it in sh['items']:
+            if it['k'] in QTY_OVERRIDE: it['qs']=it['qd']; it['qd']=QTY_OVERRIDE[it['k']]
 ORDER=['10566440','10587677','10587678','10560521','10560522','10560523','10560524','10554839','10554840','10554842','10581181','10137002','10612063',
  '10631044','10631045','10631046','10631047','10542394','10542395','10542396','10565042','10568377','10568378','10100885','10497060','10519116',
  '10559641','10559642','10559812','10590319','10590320']          # urutan baris di tabel pengguna (sheet)

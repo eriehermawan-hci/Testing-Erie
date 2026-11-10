@@ -22,7 +22,7 @@ const BOXLINE = new LineMaterial({ color: 0x1b2230, linewidth: 2.2 }), TRAYLINE 
 const GUIDELINE = new LineMaterial({ color: 0xd04b4b, linewidth: 1.6, dashed: true, dashSize: 3, gapSize: 2.5 });
 LINEMATS.push(BOXLINE, TRAYLINE, GUIDELINE);
 function outline(mesh, lm) { const lg = new LineSegmentsGeometry().fromEdgesGeometry(new THREE.EdgesGeometry(mesh.geometry, 20)); mesh.add(new LineSegments2(lg, lm)); }
-const STEP = 0.35, LSTEP = 0.25, OGAP = 0.5;   // OGAP: jarak antar produk pada Display only            // jarak kecil antar kotak supaya tiap pcs terlihat terpisah
+const STEP = 0.35, LSTEP = 0.25, OGAP = 0.5, CARTON_LAYERS = 2;   // OGAP: jarak antar produk pada Display only            // jarak kecil antar kotak supaya tiap pcs terlihat terpisah
 const stdM = (c, r = 0.85) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: 0 });
 function makeBox(k) {
   const b = DATA.skus[k].box, side = stdM(0xd9d0bd), front = stdM(0xffffff, 0.55);
@@ -92,13 +92,13 @@ const TRAY_MAX = DATA.trayMax || 10;
 function packShelf(sh, W, D, C) {
   const rep = sh.items.map(it => {
     const s = DATA.skus[it.k], t = TPL[it.k];
-    const r = { k: it.k, qd: it.qd, nm: s.nm, pr: s.pr, mode: s.mode, dw: s.dw, h: t.h, placed: 0, capPcs: 0, cols: 0, rows: 0, n: 1, rot: false, flag: '', unitPcs: 1, inc: 0, tp: t, need: 0, extra: 0 };
+    const r = { k: it.k, qd: it.qd, qs: it.qs || null, nm: s.nm, pr: s.pr, mode: s.mode, dw: s.dw, h: t.h, placed: 0, capPcs: 0, cols: 0, rows: 0, n: 1, rot: false, flag: '', unitPcs: 1, inc: 0, tp: t, need: 0, extra: 0 };
     if (s.mode === 'pack') {                                   // 1 unit terbuka di depan, kotak packing di belakangnya
       const bx = BOX[it.k]; r.h = Math.max(t.h, bx.h);
       if (r.h > C + 0.01) { r.flag = 'tinggi'; return r; }
       if (D < t.d - 0.01) { r.flag = 'dalam'; return r; }
-      const L = Math.max(1, Math.floor((C + LSTEP) / (bx.h + LSTEP))), kmax = Math.max(0, Math.floor((D - t.d + STEP) / (bx.d + STEP))), cap = 1 + kmax * L;
-      Object.assign(r, { fw: Math.max(t.w, bx.w) + STEP, fd: D, L, kmax, cap, need: Math.ceil(it.qd / cap), bx });
+      const L = Math.max(1, Math.min(CARTON_LAYERS, Math.floor(C / bx.h))), kmax = Math.max(0, Math.floor((D - t.d) / bx.d)), cap = 1 + kmax * L;   // kardus stok rapat: baris ke belakang x tumpukan
+      Object.assign(r, { fw: Math.max(t.w + OGAP, bx.w), fd: D, L, kmax, cap, need: Math.ceil(it.qd / cap), bx });
       return r;
     }
     let tp = t, qdU = it.qd, maxStack = s.stack ? s.stack.max : 1;
@@ -136,7 +136,7 @@ function packShelf(sh, W, D, C) {
   for (const r of ok) {
     if (!r.cols) continue;
     r.extra = Math.max(0, r.cols - r.need); r.capPcs = capPcs(r);
-    if (r.mode === 'pack') { const base = r.cols * (1 + r.kmax); r.disp = Math.min(r.cols * r.cap, Math.max(r.qd, base)); }
+    if (r.mode === 'pack') r.disp = r.cols * r.cap;                   // blok kardus diisi penuh (baris x tumpukan)
     else { const slots = r.cols * r.rows, un = Math.ceil(r.qd / r.unitPcs); r.dispUnits = Math.min(slots * r.n, Math.max(un, slots)); r.disp = r.dispUnits * r.unitPcs; }
     r.placed = r.disp;
   }
@@ -159,7 +159,7 @@ window.__report = () => DATA.fixtures.map(fx => {
   return { id: fx.id, title: fx.title, xl: fx.xl, kind: fx.kind, W, D, shelves: fx.shelves.map((sh, si) => {
     const { rep, used, wNeed } = packShelf(sh, W, D, bands[si].clear);
     return { code: sh.code, no: si, media: !!sh.media, clear: bands[si].clear, used, wNeed, qty: sh.items.reduce((a, b) => a + b.qd, 0),
-      items: rep.map(r => ({ k: r.k, nm: r.nm, pr: r.pr, mode: r.mode, dw: r.dw, qd: r.qd, flag: r.flag, fw: r.fw || 0, cols: r.cols, need: r.need, extra: r.extra, rows: r.rows || r.kmax || 0, n: r.n || r.L || 1, unitPcs: r.unitPcs, h: r.h, disp: r.disp || 0, cap: r.capPcs || 0 })) };
+      items: rep.map(r => ({ k: r.k, qs: r.qs, nm: r.nm, pr: r.pr, mode: r.mode, dw: r.dw, qd: r.qd, flag: r.flag, fw: r.fw || 0, cols: r.cols, need: r.need, extra: r.extra, rows: r.rows || r.kmax || 0, n: r.n || r.L || 1, unitPcs: r.unitPcs, h: r.h, disp: r.disp || 0, cap: r.capPcs || 0 })) };
   }) };
 });
 
@@ -199,14 +199,10 @@ function place(fx, geo, g) {
     const { rep, used, wNeed } = packShelf(sh, geo.W, D, band.clear), zFront = geo.D / 2 - lip;
     rep.forEach(r => {
       if (!r.placed) return;
-      if (r.mode === 'pack') {                                  // tiap kolom: 1 unit terbuka di depan, kotak di belakang (isi kedalaman dulu, baru tumpuk)
-        const o = TPL[r.k], bx = r.bx;
-        for (let c = 0; c < r.cols; c++) {
-          const u = Math.floor(r.disp / r.cols) + (c < r.disp % r.cols ? 1 : 0), x = r.x0 + c * r.fw + r.fw / 2;
-          put(o, x, band.top, zFront - o.d / 2, 0);
-          const gapEq = r.kmax ? (D - o.d - r.kmax * bx.d) / r.kmax : 0;      // sisa kedalaman dibagi rata, kotak terakhir menempel ke belakang
-          for (let j = 0; j < u - 1; j++) { const row = r.kmax ? j % r.kmax : 0, layer = r.kmax ? Math.floor(j / r.kmax) : 0; put(bx, x, band.top + layer * (bx.h + LSTEP), zFront - o.d - gapEq * (row + 1) - row * bx.d - bx.d / 2, 0); }
-        }
+      if (r.mode === 'pack') {                                  // unit terbuka diberi jarak 0,5 cm di depan; kardus stok rapat dan menempel ke belakang
+        const o = TPL[r.k], bx = r.bx, zBack = zFront - D, xs = r.x0 + (r.cols * r.fw - r.cols * bx.w) / 2;
+        for (let c = 0; c < r.cols; c++) put(o, r.x0 + c * r.fw + r.fw / 2, band.top, zFront - o.d / 2, 0);
+        for (let c = 0; c < r.cols; c++) for (let row = 0; row < r.kmax; row++) for (let layer = 0; layer < r.L; layer++) put(bx, xs + c * bx.w + bx.w / 2, band.top + layer * bx.h, zBack + row * bx.d + bx.d / 2, 0);
         return;
       }
       const slots = r.cols * r.rows;
