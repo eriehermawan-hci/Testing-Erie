@@ -1,0 +1,110 @@
+<title>Preview Racking Summary Accs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: kiri panggung 3D (latar putih), kanan daftar shelving. Di layar sempit panggung di atas, daftar di bawah. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#18222d; --muted:#5b6978; --line:#dce2ea; --accent:#1457c6; --accent-soft:#e6eefb;
+  --ok:#157a3d; --ok-bg:#e3f4ea; --warn:#9a5b06; --warn-bg:#fbefd9; --bad:#ad1f1f; --bad-bg:#fbe5e5;
+  --stage:#ffffff; --stage-ink:#1c2531; --stage-line:#d5dbe3;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e141b; --surface:#161e27; --ink:#e5ebf2; --muted:#92a0af; --line:#2a3541; --accent:#7db0ff; --accent-soft:#1c2c44;
+  --ok:#5fd08a; --ok-bg:#15301f; --warn:#f0b64e; --warn-bg:#392a10; --bad:#f48a8a; --bad-bg:#3a1b1b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e141b; --surface:#161e27; --ink:#e5ebf2; --muted:#92a0af; --line:#2a3541; --accent:#7db0ff; --accent-soft:#1c2c44;
+  --ok:#5fd08a; --ok-bg:#15301f; --warn:#f0b64e; --warn-bg:#392a10; --bad:#f48a8a; --bad-bg:#3a1b1b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45;
+  padding-block:20px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1360px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:22px;line-height:1.2;font-weight:600;margin:0;text-wrap:balance}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.top{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:end;justify-content:space-between}
+.top p{margin:6px 0 0;color:var(--muted);max-width:64ch}
+#tabs{display:flex;flex-wrap:wrap;gap:6px}
+#tabs button,.seg button{font:inherit;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+#tabs button[aria-selected="true"],.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+#tabs button:hover:not([aria-selected="true"]),.seg button:hover:not([aria-pressed="true"]){background:var(--accent-soft)}
+button:focus-visible,li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;align-items:start}
+.stagebox{position:relative;border:1px solid var(--stage-line);border-radius:10px;overflow:hidden;background:var(--stage)}
+#stage{position:relative;height:min(78vh,860px);min-height:420px;background:var(--stage)}
+#cv{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+#cv:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lab{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding:4px 8px;border-radius:5px;background:rgba(255,255,255,.88);border:1px solid var(--stage-line);color:var(--stage-ink);white-space:nowrap;font-size:12px;line-height:1.2}
+.lab span{font:400 11px/1.2 var(--mono);color:#5b6978}
+.seg{position:absolute;top:12px;right:12px;display:flex;gap:0}
+.seg button{border-radius:0;color:#18222d;background:#fff;border-color:var(--stage-line)}
+.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0;border-left:0}
+.hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:#6b7684;background:rgba(255,255,255,.85);padding:2px 8px;border-radius:4px}
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h2{font-size:16px;font-weight:600;margin:0}
+.card .dim{margin:2px 0 0;color:var(--muted);font:400 12px/1.4 var(--mono)}
+#sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+#sum div{display:flex;flex-direction:column;gap:1px;padding:8px 10px;background:var(--bg);border-radius:7px}
+#sum span{font-size:11px;color:var(--muted)}#sum b{font:500 20px/1.15 var(--mono);font-variant-numeric:tabular-nums}#sum i{font-style:normal;font-size:11px;color:var(--muted)}
+#shelves{display:flex;flex-direction:column;gap:10px}
+.sh{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.sh header{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.sh h3{font-size:14px;margin:0;font-weight:600}.sh h3 i{font:400 12px var(--mono);color:var(--muted);font-style:normal;margin-left:4px}
+.mut{color:var(--muted);font:400 12px var(--mono);font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--bg);border-radius:3px;margin:8px 0 4px;overflow:hidden}.bar u{display:block;height:100%;background:var(--accent);border-radius:3px}
+.clr{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.sh ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.sh li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:2px 10px;align-items:center;padding:7px 4px;border-top:1px solid var(--line);border-radius:4px}
+.sh li:hover{background:var(--accent-soft)}
+.sh code{font:400 12px var(--mono);color:var(--muted)}
+.nm{overflow-wrap:anywhere;font-size:13px}
+.q{font:500 13px var(--mono);font-variant-numeric:tabular-nums;text-align:right}.q small{font-weight:400;color:var(--muted);font-size:12px}
+.chip{justify-self:end;font-style:normal;font-size:11px;font-weight:500;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.chip.ok{color:var(--ok);background:var(--ok-bg)}.chip.warn{color:var(--warn);background:var(--warn-bg)}.chip.bad{color:var(--bad);background:var(--bad-bg)}
+.note{grid-column:2/-1;margin:0;font-size:12px;color:var(--muted)}
+.notes{font-size:12.5px;color:var(--muted);display:grid;gap:4px}.notes p{margin:0;max-width:78ch}.notes b{color:var(--ink);font-weight:500}
+@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}#stage{height:70vh;min-height:360px}}
+@media (max-width:480px){.sh li{grid-template-columns:minmax(0,1fr) auto}.sh li code{grid-column:1/-1}.sh li .chip{grid-column:1/-1;justify-self:start}.note{grid-column:1/-1}.lab{font-size:11px;padding:3px 6px}}
+body.shot{padding:0;background:#fff}body.shot .wrap{max-width:none;gap:0}body.shot .top,body.shot .panel,body.shot .seg,body.shot .hint,body.shot .notes{display:none}
+body.shot .grid{display:block}body.shot .stagebox{border:0;border-radius:0}body.shot #stage{height:100vh;min-height:0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+<script type="importmap">{"imports":{"three":"{{THREE}}","three/addons/":"{{ADDONS}}"}}</script>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Makan &amp; Minum · Dept Homeware</div>
+      <h1>Preview racking Summary Accs</h1>
+      <p>Setiap SKU diletakkan di Wall sesuai posisi shelving dan qty display dari sheet. Pallet dan Dumbin belum dimasukkan. Ukuran produk dari ruparupa, ukuran rak dari layout Planogram Generator.</p>
+    </div>
+    <div id="tabs" role="tablist" aria-label="Pilih fixture"></div>
+  </div>
+  <div class="grid">
+    <div class="stagebox">
+      <div id="stage"><canvas id="cv" aria-label="Tampilan 3D racking, geser untuk memutar"></canvas><div id="labels"></div>
+        <div class="seg" role="group" aria-label="Sudut pandang"><button data-view="front" aria-pressed="true">Depan</button><button data-view="angle" aria-pressed="false">Miring</button></div>
+        <div class="hint">Geser untuk memutar · scroll untuk zoom</div></div>
+    </div>
+    <div class="panel">
+      <div class="card"><h2 id="ttl"></h2><p class="dim" id="dim"></p><div id="sum"></div></div>
+      <div id="shelves"></div>
+    </div>
+  </div>
+  <div class="notes">
+    <p><b>Cara membaca.</b> Angka “muat / rencana” membandingkan qty display di sheet dengan jumlah yang benar-benar muat di rak berukuran asli. Arahkan kursor ke baris SKU untuk menyorot produknya di gambar.</p>
+    <p><b>Aturan susun.</b> SKU diisi dari kiri ke kanan sesuai urutan sheet, deret ke belakang sampai kedalaman rak habis. Piring, mangkuk, dan gelas boleh ditumpuk selama tinggi rak cukup. Set toples diputar 90° bila itu menghemat lebar.</p>
+    <p><b>Bentuk produk.</b> Model 3D dibuat dari dimensi ruparupa, jadi bentuk detail (tutup, gagang, rangka kawat) berupa perkiraan. Panel belakang rak diputihkan. Data sheet ditarik {{DITARIK}}.</p>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+{{MODELS}}
+{{VIEWER}}
+</script>

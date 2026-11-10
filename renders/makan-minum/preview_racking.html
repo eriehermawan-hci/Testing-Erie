@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<title>Preview Racking Summary Accs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: kiri panggung 3D (latar putih), kanan daftar shelving. Di layar sempit panggung di atas, daftar di bawah. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --ink:#18222d; --muted:#5b6978; --line:#dce2ea; --accent:#1457c6; --accent-soft:#e6eefb;
+  --ok:#157a3d; --ok-bg:#e3f4ea; --warn:#9a5b06; --warn-bg:#fbefd9; --bad:#ad1f1f; --bad-bg:#fbe5e5;
+  --stage:#ffffff; --stage-ink:#1c2531; --stage-line:#d5dbe3;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e141b; --surface:#161e27; --ink:#e5ebf2; --muted:#92a0af; --line:#2a3541; --accent:#7db0ff; --accent-soft:#1c2c44;
+  --ok:#5fd08a; --ok-bg:#15301f; --warn:#f0b64e; --warn-bg:#392a10; --bad:#f48a8a; --bad-bg:#3a1b1b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e141b; --surface:#161e27; --ink:#e5ebf2; --muted:#92a0af; --line:#2a3541; --accent:#7db0ff; --accent-soft:#1c2c44;
+  --ok:#5fd08a; --ok-bg:#15301f; --warn:#f0b64e; --warn-bg:#392a10; --bad:#f48a8a; --bad-bg:#3a1b1b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45;
+  padding-block:20px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1360px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:22px;line-height:1.2;font-weight:600;margin:0;text-wrap:balance}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.top{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:end;justify-content:space-between}
+.top p{margin:6px 0 0;color:var(--muted);max-width:64ch}
+#tabs{display:flex;flex-wrap:wrap;gap:6px}
+#tabs button,.seg button{font:inherit;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+#tabs button[aria-selected="true"],.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+#tabs button:hover:not([aria-selected="true"]),.seg button:hover:not([aria-pressed="true"]){background:var(--accent-soft)}
+button:focus-visible,li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;align-items:start}
+.stagebox{position:relative;border:1px solid var(--stage-line);border-radius:10px;overflow:hidden;background:var(--stage)}
+#stage{position:relative;height:min(78vh,860px);min-height:420px;background:var(--stage)}
+#cv{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+#cv:active{cursor:grabbing}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lab{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding:4px 8px;border-radius:5px;background:rgba(255,255,255,.88);border:1px solid var(--stage-line);color:var(--stage-ink);white-space:nowrap;font-size:12px;line-height:1.2}
+.lab span{font:400 11px/1.2 var(--mono);color:#5b6978}
+.seg{position:absolute;top:12px;right:12px;display:flex;gap:0}
+.seg button{border-radius:0;color:#18222d;background:#fff;border-color:var(--stage-line)}
+.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0;border-left:0}
+.hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:#6b7684;background:rgba(255,255,255,.85);padding:2px 8px;border-radius:4px}
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h2{font-size:16px;font-weight:600;margin:0}
+.card .dim{margin:2px 0 0;color:var(--muted);font:400 12px/1.4 var(--mono)}
+#sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+#sum div{display:flex;flex-direction:column;gap:1px;padding:8px 10px;background:var(--bg);border-radius:7px}
+#sum span{font-size:11px;color:var(--muted)}#sum b{font:500 20px/1.15 var(--mono);font-variant-numeric:tabular-nums}#sum i{font-style:normal;font-size:11px;color:var(--muted)}
+#shelves{display:flex;flex-direction:column;gap:10px}
+.sh{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.sh header{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.sh h3{font-size:14px;margin:0;font-weight:600}.sh h3 i{font:400 12px var(--mono);color:var(--muted);font-style:normal;margin-left:4px}
+.mut{color:var(--muted);font:400 12px var(--mono);font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--bg);border-radius:3px;margin:8px 0 4px;overflow:hidden}.bar u{display:block;height:100%;background:var(--accent);border-radius:3px}
+.clr{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.sh ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.sh li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:2px 10px;align-items:center;padding:7px 4px;border-top:1px solid var(--line);border-radius:4px}
+.sh li:hover{background:var(--accent-soft)}
+.sh code{font:400 12px var(--mono);color:var(--muted)}
+.nm{overflow-wrap:anywhere;font-size:13px}
+.q{font:500 13px var(--mono);font-variant-numeric:tabular-nums;text-align:right}.q small{font-weight:400;color:var(--muted);font-size:12px}
+.chip{justify-self:end;font-style:normal;font-size:11px;font-weight:500;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.chip.ok{color:var(--ok);background:var(--ok-bg)}.chip.warn{color:var(--warn);background:var(--warn-bg)}.chip.bad{color:var(--bad);background:var(--bad-bg)}
+.note{grid-column:2/-1;margin:0;font-size:12px;color:var(--muted)}
+.notes{font-size:12.5px;color:var(--muted);display:grid;gap:4px}.notes p{margin:0;max-width:78ch}.notes b{color:var(--ink);font-weight:500}
+@media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}#stage{height:70vh;min-height:360px}}
+@media (max-width:480px){.sh li{grid-template-columns:minmax(0,1fr) auto}.sh li code{grid-column:1/-1}.sh li .chip{grid-column:1/-1;justify-self:start}.note{grid-column:1/-1}.lab{font-size:11px;padding:3px 6px}}
+body.shot{padding:0;background:#fff}body.shot .wrap{max-width:none;gap:0}body.shot .top,body.shot .panel,body.shot .seg,body.shot .hint,body.shot .notes{display:none}
+body.shot .grid{display:block}body.shot .stagebox{border:0;border-radius:0}body.shot #stage{height:100vh;min-height:0}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Makan &amp; Minum · Dept Homeware</div>
+      <h1>Preview racking Summary Accs</h1>
+      <p>Setiap SKU diletakkan di Wall sesuai posisi shelving dan qty display dari sheet. Pallet dan Dumbin belum dimasukkan. Ukuran produk dari ruparupa, ukuran rak dari layout Planogram Generator.</p>
+    </div>
+    <div id="tabs" role="tablist" aria-label="Pilih fixture"></div>
+  </div>
+  <div class="grid">
+    <div class="stagebox">
+      <div id="stage"><canvas id="cv" aria-label="Tampilan 3D racking, geser untuk memutar"></canvas><div id="labels"></div>
+        <div class="seg" role="group" aria-label="Sudut pandang"><button data-view="front" aria-pressed="true">Depan</button><button data-view="angle" aria-pressed="false">Miring</button></div>
+        <div class="hint">Geser untuk memutar · scroll untuk zoom</div></div>
+    </div>
+    <div class="panel">
+      <div class="card"><h2 id="ttl"></h2><p class="dim" id="dim"></p><div id="sum"></div></div>
+      <div id="shelves"></div>
+    </div>
+  </div>
+  <div class="notes">
+    <p><b>Cara membaca.</b> Angka “muat / rencana” membandingkan qty display di sheet dengan jumlah yang benar-benar muat di rak berukuran asli. Arahkan kursor ke baris SKU untuk menyorot produknya di gambar.</p>
+    <p><b>Aturan susun.</b> SKU diisi dari kiri ke kanan sesuai urutan sheet, deret ke belakang sampai kedalaman rak habis. Piring, mangkuk, dan gelas boleh ditumpuk selama tinggi rak cukup. Set toples diputar 90° bila itu menghemat lebar.</p>
+    <p><b>Bentuk produk.</b> Model 3D dibuat dari dimensi ruparupa, jadi bentuk detail (tutup, gagang, rangka kawat) berupa perkiraan. Panel belakang rak diputihkan. Data sheet ditarik 2026-10-28 10:19.</p>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+/* ---------- helpers ---------- */
+const matSolid = (hex, rough = 0.45) => new THREE.MeshPhysicalMaterial({ color: hex, roughness: rough, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.4 });
+let CLEAR_MODE = 'high';
+const setClearMode = m => { CLEAR_MODE = m; };
+const matClear = (tint = 0xffffff, att = 6) => CLEAR_MODE === 'lite' ? new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color(tint).lerp(new THREE.Color(0xffffff), 0.55), roughness: 0.05, metalness: 0, transparent: true, opacity: 0.34, depthWrite: false, clearcoat: 1, side: THREE.DoubleSide }) : new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color(tint).lerp(new THREE.Color(0xffffff), 0.75), transmission: 1, roughness: 0.02, thickness: 0.5, ior: 1.5,
+  attenuationColor: new THREE.Color(tint), attenuationDistance: att * 1.2, specularIntensity: 1, side: THREE.DoubleSide });
+const mk = (geo, mat, cast = true) => { const m = new THREE.Mesh(geo, mat); m.castShadow = cast; m.receiveShadow = false; return m; };
+
+function rrShape(w, d, r) {
+  const s = new THREE.Shape(), x = -w / 2, y = -d / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + d - r); s.quadraticCurveTo(x + w, y + d, x + w - r, y + d);
+  s.lineTo(x + r, y + d); s.quadraticCurveTo(x, y + d, x, y + d - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y); return s;
+}
+// extrude a shape upward (+y), base at y0
+function ext(shape, h, y0, bevel = 0.12) {
+  const g = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 24 });
+  g.rotateX(-Math.PI / 2); g.translate(0, y0, 0); return g;
+}
+function lathe(pts, seg = 96, flutes = 0, amp = 0.025) {
+  const g = new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), seg);
+  if (flutes) {
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i), r = Math.hypot(x, z); if (r < 1e-4) continue;
+      const k = 1 + amp * Math.cos(Math.atan2(z, x) * flutes);
+      pos.setX(i, x * k); pos.setZ(i, z * k);
+    }
+    g.computeVertexNormals();
+  }
+  return g;
+}
+
+let G;
+
+/* ---------- product builders (units = cm) ---------- */
+
+const steel = () => new THREE.MeshStandardMaterial({ color: 0xcfd2d6, metalness: 1, roughness: 0.22 });
+const porcelain = (hex = 0xf7f7f4) => new THREE.MeshPhysicalMaterial({ color: hex, roughness: 0.18, clearcoat: 0.7, clearcoatRoughness: 0.12 });
+const rod = (p, q, r, mat, seg = 8) => {
+  const v = new THREE.Vector3().subVectors(new THREE.Vector3(...q), new THREE.Vector3(...p));
+  const m = mk(new THREE.CylinderGeometry(r, r, v.length(), seg), mat);
+  m.position.set(...p).addScaledVector(v, 0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.clone().normalize()); return m;
+};
+const tube = (pts, r, mat, sx = 1, sz = 1) => { const m = mk(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), 48, r, 10, false), mat); return m; };
+const builders = {
+  // Tavia 1L pitcher: 6.5 x 6.5 x 23
+  tavia(o) {
+    const W = 6.5, H = 23, lidH = 2.6, wall = 0.28;
+    const outer = rrShape(W, W, 1.3), inner = rrShape(W - 2 * wall, W - 2 * wall, 1.05);
+    const tube = rrShape(W, W, 1.3); tube.holes.push(new THREE.Path(inner.getPoints(24)));
+    G.add(mk(new THREE.ExtrudeGeometry(tube, { depth: H - lidH - 0.3, bevelEnabled: false, curveSegments: 24 }).rotateX(-Math.PI / 2).translate(0, 0.3, 0), matClear(0xc9dbe6, 12)));
+    G.add(mk(ext(rrShape(W - 0.1, W - 0.1, 1.3), 0.3, 0, 0), matClear(0xc9dbe6, 12)));
+    const lidMat = matSolid(o.lid, 0.4);
+    G.add(mk(ext(rrShape(W + 0.25, W + 0.25, 1.4), lidH - 0.3, H - lidH, 0.15), lidMat));
+    const flap = mk(new THREE.BoxGeometry(W * 0.62, 0.55, W * 0.55), lidMat); flap.position.set(0, H + 0.1, W * 0.12); G.add(flap);
+    const nub = mk(new THREE.BoxGeometry(W * 0.62, 0.9, 0.5), lidMat); nub.position.set(0, H + 0.0, W * 0.12 + W * 0.3); G.add(nub);
+  },
+  // Kirby vacuum tumbler: ~8.6 x 7.3 x 12
+  kirby(o) {
+    const body = lathe([[0, 0], [2.55, 0], [2.78, 0.3], [3.35, 3.0], [3.62, 9.8], [3.66, 10.3], [0, 10.3]], 96);
+    G.add(mk(body, matSolid(o.body, 0.5)));
+    G.add(mk(lathe([[3.78, 10.2], [3.84, 10.5], [3.84, 11.3], [3.4, 11.75], [0, 11.8]], 96), matSolid(o.lid, 0.45)));
+    const tab = mk(new THREE.BoxGeometry(2.9, 0.5, 2.3), matSolid(o.tab, 0.4)); tab.position.set(0.5, 11.85, 0); tab.rotation.z = -0.04; G.add(tab);
+    const hinge = mk(new THREE.BoxGeometry(1.5, 0.7, 1.8), matSolid(o.tab, 0.4)); hinge.position.set(-1.9, 11.75, 0); G.add(hinge);
+    // strap
+    const strap = mk(new THREE.BoxGeometry(0.16, 6.6, 1.15), matSolid(0xe4e4df, 0.9)); strap.position.set(-4.12, 7.2, 0); G.add(strap);
+    const loop = mk(new THREE.TorusGeometry(0.6, 0.09, 8, 24, Math.PI), matSolid(0xe4e4df, 0.9)); loop.position.set(-3.95, 10.5, 0); loop.rotation.z = Math.PI / 2 * 0 + Math.PI / 2; G.add(loop);
+    const snap = mk(new THREE.CylinderGeometry(0.32, 0.32, 0.12, 20), matSolid(0xb9bcc0, 0.3)); snap.rotation.z = Math.PI / 2; snap.position.set(-4.24, 5.1, 0); G.add(snap);
+  },
+  // Halli jug 1 pc + 4 glasses
+  halli(o) {
+    const tint = 0xcfe6dc;
+    const jug = lathe([[0, 0.0], [3.9, 0.0], [4.2, 0.35], [4.65, 2.0], [4.75, 16.5], [4.55, 17.2], [4.2, 17.2], [4.35, 16.5], [4.45, 2.2], [4.0, 0.9], [0, 0.9]], 120, 28, 0.03);
+    const jugG = new THREE.Group();
+    jugG.add(mk(jug, matClear(0xcfe6dc, 5)));
+    const lid = mk(lathe([[0, 17.0], [4.6, 17.0], [4.7, 17.3], [4.7, 18.3], [4.2, 18.7], [0, 18.75]], 96), matSolid(0xf3efe2, 0.45)); jugG.add(lid);
+    const knob = mk(new THREE.SphereGeometry(0.75, 24, 16), matSolid(0xf3efe2, 0.45)); knob.position.y = 19.1; knob.scale.y = 0.75; jugG.add(knob);
+    const curve = new THREE.CatmullRomCurve3([[4.5, 16.2, 0], [6.6, 16.0, 0], [8.0, 13.5, 0], [8.1, 8.5, 0], [7.0, 4.8, 0], [4.6, 3.6, 0]].map(p => new THREE.Vector3(...p)));
+    jugG.add(mk(new THREE.TubeGeometry(curve, 48, 0.55, 12, false), matSolid(0x9fcdbb, 0.4)));
+    jugG.position.x = -3.2; G.add(jugG);
+    const glassPts = [[0, 0], [2.55, 0], [2.7, 0.4], [3.55, 8.8], [3.4, 9.0], [3.25, 8.8], [2.4, 0.9], [0, 0.9]];
+    [[10.0, 3.6], [17.0, 3.6], [10.0, -3.8], [17.0, -3.8]].forEach(([x, z]) => {
+      const gl = mk(lathe(glassPts, 96, 24, 0.03), matClear(0xd3e3ea, 8)); gl.position.set(x, 0, z); G.add(gl);
+    });
+  }
+,
+  // Porcelain bowl
+  bowl(o) {
+    const r = o.d / 2, h = o.h, N = 14, pts = [[0, 0], [0.5 * r, 0], [0.54 * r, 0.06 * h]];
+    for (let i = 1; i <= N; i++) { const t = i / N; pts.push([r * (0.54 + 0.46 * Math.sin(t * Math.PI / 2)), h * (0.06 + 0.94 * t)]); }
+    const th = 0.035 * r;
+    for (let i = N; i >= 1; i--) { const t = i / N; pts.push([r * (0.54 + 0.46 * Math.sin(t * Math.PI / 2)) - th, h * (0.06 + 0.94 * t) - (i === N ? 0.0 : 0.0)]); }
+    pts.push([0.46 * r, h * 0.2], [0, h * 0.17]);
+    G.add(mk(lathe(pts, 128), porcelain(o.color)));
+  },
+  // Plate / soup plate
+  plate(o) {
+    const r = o.d / 2, h = o.h, k = o.deep ? 0.28 : 0.12;
+    const pts = [[0, 0], [0.58 * r, 0], [0.6 * r, 0.08 * h], [0.95 * r, 0.55 * h], [r, h], [0.975 * r, h], [0.93 * r, 0.62 * h], [0.7 * r, k * h + 0.05], [0.4 * r, k * h], [0, k * h]];
+    G.add(mk(lathe(pts, 128), porcelain(o.color)));
+  },
+  // Mug with handle
+  mug(o) {
+    const r = o.d / 2, h = o.h;
+    G.add(mk(lathe([[0, 0], [r * 0.82, 0], [r * 0.9, 0.5], [r, 2.5], [r * 1.02, h], [r * 0.93, h], [r * 0.9, 1.2], [0, 1.1]], 96), porcelain(o.color)));
+    const hr = o.hand;
+    G.add(mk(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[r * 0.98, h * 0.84, 0], [r + hr * 0.9, h * 0.78, 0], [r + hr, h * 0.5, 0], [r + hr * 0.6, h * 0.2, 0], [r * 0.9, h * 0.2, 0]].map(p => new THREE.Vector3(...p))), 40, 0.5, 10), porcelain(o.color)));
+  },
+  // Faceted glass tumbler
+  glass(o) {
+    const pts = [[0, 0], [o.rb * 0.92, 0], [o.rb, 0.3], [o.rt, o.h], [o.rt - 0.25, o.h], [o.rb - 0.2, 1.25], [0, 1.1]];
+    G.add(mk(lathe(pts, 120, o.facets, 0.035), matClear(0xe3eef2, 10)));
+  },
+  // Kay 880ml tumbler with handle + straw
+  kay(o) {
+    const m = matSolid(o.color, 0.55), st = steel();
+    G.add(mk(lathe([[0, 0], [2.3, 0], [2.45, 0.4], [3.0, 5], [3.5, 12], [3.6, 20.4], [0, 20.4]], 96), m));
+    G.add(mk(lathe([[3.7, 20.4], [3.7, 21.2], [0, 21.2]], 96), st));
+    G.add(mk(lathe([[3.55, 21.2], [3.5, 21.9], [3.0, 22.5], [0, 22.5]], 96), m));
+    const hd = tube([[3.3, 19.6, 0], [5.8, 18.6, 0], [6.1, 14.5, 0], [6.0, 11.5, 0], [3.4, 9.5, 0]], 0.62, m); hd.scale.z = 1.7; G.add(hd);
+    const strw = mk(new THREE.CylinderGeometry(0.38, 0.38, 8.5, 14), matClear(0xffffff, 20)); strw.position.set(-0.9, 21.5 + 1.2, 0.3); strw.rotation.z = 0.12; G.add(strw);
+  },
+  // Darya 500ml bottle
+  darya(o) {
+    const m = matSolid(o.color, 0.5);
+    G.add(mk(lathe([[0, 0], [3.9, 0], [4.1, 0.4], [4.1, 17.5], [3.9, 19.5], [3.1, 21.3], [2.0, 22.6], [1.75, 23.0], [0, 23.0]], 96), m));
+    const cap = mk(new THREE.CylinderGeometry(2.1, 2.1, 2.3, 48), steel()); cap.position.y = 23.85; G.add(cap);
+    const lip = mk(new THREE.CylinderGeometry(2.3, 2.3, 0.4, 48), steel()); lip.position.y = 22.9; G.add(lip);
+  },
+  // Sets of jars (n pieces in a row)
+  jars(o) {
+    const n = o.n || 3, r = o.d / 2, L = o.L || (n * o.d + (n - 1) * 0.6), gap = (L - n * o.d) / (n - 1);
+    const lidH = o.lidH, bodyH = o.h - lidH;
+    for (let i = 0; i < n; i++) {
+      const x = -L / 2 + r + i * (o.d + gap), jar = new THREE.Group();
+      const bulge = o.barrel ? 0.1 : 0.0;
+      const pts = [[0, 0], [r * 0.82, 0], [r * 0.9, 0.35]];
+      for (let t = 0; t <= 8; t++) { const y = 0.9 + (bodyH - 1.5) * t / 8; pts.push([r * (0.93 + bulge * Math.sin(Math.PI * t / 8)), y]); }
+      pts.push([r * 0.86, bodyH - 0.25], [r * 0.86, bodyH], [r * 0.80, bodyH], [r * 0.80, bodyH - 0.5]);
+      const wall = 0.28; const inner = []; for (let t = 8; t >= 0; t--) { const y = 0.9 + (bodyH - 1.5) * t / 8; inner.push([r * (0.93 + bulge * Math.sin(Math.PI * t / 8)) - wall, y]); }
+      const prof = [[0, 0], [r * 0.82, 0], [r * 0.9, 0.35]];
+      for (let t = 0; t <= 8; t++) { const y = 0.9 + (bodyH - 1.5) * t / 8; prof.push([r * (0.93 + bulge * Math.sin(Math.PI * t / 8)), y]); }
+      prof.push([r * 0.88, bodyH]); prof.push([r * 0.88 - wall, bodyH]); inner.forEach(p => prof.push(p)); prof.push([r * 0.8, 0.5], [0, 0.45]);
+      jar.add(mk(lathe(prof, 96), matClear(o.tint || 0xe3eef2, 10)));
+      const lc = o.lidColor;
+      if (o.style === 'wood') { const l = mk(new THREE.CylinderGeometry(r * 0.9, r * 0.9, lidH, 64), matSolid(0xcf9f61, 0.6)); l.position.y = bodyH + lidH / 2; jar.add(l); const rim = mk(new THREE.CylinderGeometry(r * 0.93, r * 0.93, 0.3, 64), matSolid(0x9b7340, 0.5)); rim.position.y = bodyH + 0.15; jar.add(rim); }
+      else if (o.style === 'glass') { const l = mk(lathe([[0, bodyH], [r * 0.9, bodyH], [r * 0.9, bodyH + 0.35], [r * 0.45, bodyH + lidH * 0.8], [r * 0.12, bodyH + lidH], [0, bodyH + lidH]], 64), matClear(0xe8f1f4, 10)); jar.add(l); }
+      else if (o.style === 'handle') { const l = mk(new THREE.CylinderGeometry(r * 0.96, r * 0.96, lidH * 0.55, 64), matSolid(lc, 0.4)); l.position.y = bodyH + lidH * 0.275; jar.add(l); const band = mk(new THREE.CylinderGeometry(r * 0.99, r * 0.99, lidH * 0.18, 64), matSolid(o.band || 0xa9b6c4, 0.4)); band.position.y = bodyH + lidH * 0.64; jar.add(band); const lp = mk(new THREE.TorusGeometry(r * 0.5, 0.35, 10, 32, Math.PI), matSolid(lc, 0.4)); lp.position.y = bodyH + lidH * 0.72; jar.add(lp); }
+      else { const l = mk(new THREE.CylinderGeometry(r * 1.0, r * 1.0, lidH, 64), matSolid(lc, 0.35)); l.position.y = bodyH + lidH / 2; jar.add(l); if (o.style === 'flip') { const f = mk(new THREE.BoxGeometry(r * 1.2, 0.45, r * 0.9), matSolid(lc, 0.35)); f.position.set(0, bodyH + lidH + 0.2, 0); jar.add(f); } }
+      jar.position.x = x; G.add(jar);
+    }
+  },
+  // Willard extendable dish rack (47 x 30 x 13, white)
+  willard(o) {
+    const W = 47, D = 30, wm = matSolid(0xf4f4f2, 0.4);
+    const tray = new THREE.Shape(); const t0 = rrShape(W, D, 3); const hole = new THREE.Path(rrShape(W - 2, D - 2, 2.5).getPoints(24)); t0.holes.push(hole);
+    G.add(mk(new THREE.ExtrudeGeometry(t0, { depth: 2.6, bevelEnabled: false, curveSegments: 24 }).rotateX(-Math.PI / 2), wm));
+    G.add(mk(ext(rrShape(W - 0.5, D - 0.5, 3), 0.5, 0, 0), wm));
+    for (let z = -11; z <= 11.01; z += 2.2) G.add(rod([-W / 2 + 2, 4.0, z], [W / 2 - 2, 4.0, z], 0.22, wm, 6));
+    for (let x = -W / 2 + 2; x <= W / 2 - 1.9; x += 5.2) G.add(rod([x, 4.0, -11.4], [x, 4.0, 11.4], 0.25, wm, 6));
+    for (const x of [-W / 2 + 2, W / 2 - 2]) { G.add(rod([x, 2.5, -11.4], [x, 4.0, -11.4], 0.25, wm, 6)); G.add(rod([x, 2.5, 11.4], [x, 4.0, 11.4], 0.25, wm, 6)); }
+    for (let i = 0; i < 7; i++) { const x = -W / 2 + 4.5 + i * 3.6; for (const z of [-8.5, 8.5]) G.add(rod([x, 4.0, z], [x, 12.4, z], 0.22, wm, 6)); G.add(rod([x, 12.4, -8.5], [x, 12.4, 8.5], 0.22, wm, 6)); }
+    const cut = new THREE.Shape(); const c0 = rrShape(10, 10, 1); c0.holes.push(new THREE.Path(rrShape(9.2, 9.2, 0.8).getPoints(16)));
+    const cup = mk(new THREE.ExtrudeGeometry(c0, { depth: 11, bevelEnabled: false }).rotateX(-Math.PI / 2), wm); cup.position.set(W / 2 - 7.2, 2.6, -D / 2 + 7.2); G.add(cup);
+    const cbase = mk(ext(rrShape(9.4, 9.4, 1), 0.5, 0, 0), wm); cbase.position.set(W / 2 - 7.2, 2.6, -D / 2 + 7.2); G.add(cbase);
+  },
+  // Starlight 2-tier chrome rack (42.5 x 25 x 36.5) with clear tray
+  starlight(o) {
+    const W = 42.5, D = 25, H = 36.5, st = steel(), cl = matClear(0xdfeaf0, 10);
+    const t0 = rrShape(W, D, 1.5); t0.holes.push(new THREE.Path(rrShape(W - 1.2, D - 1.2, 1.2).getPoints(24)));
+    G.add(mk(new THREE.ExtrudeGeometry(t0, { depth: 2.2, bevelEnabled: false, curveSegments: 24 }).rotateX(-Math.PI / 2), cl));
+    G.add(mk(ext(rrShape(W - 0.4, D - 0.4, 1.5), 0.4, 0, 0), cl));
+    const shelf = (y, zs) => { for (let z = -zs; z <= zs + 0.01; z += 2.0) G.add(rod([-W / 2 + 1.5, y, z], [W / 2 - 1.5, y, z], 0.2, st, 6)); for (let x = -W / 2 + 1.5; x <= W / 2 - 1.4; x += 4.1) G.add(rod([x, y, -zs], [x, y, zs], 0.22, st, 6)); };
+    shelf(3.6, 11.2); shelf(17.8, 11.2);
+    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) G.add(rod([x * (W / 2 - 1.2), 3.6, z * 11.3], [x * (W / 2 - 1.2), 33.5, z * 11.3], 0.3, st));
+    for (const y of [17.8, 33.5]) { G.add(rod([-W / 2 + 1.2, y, -11.3], [W / 2 - 1.2, y, -11.3], 0.28, st)); G.add(rod([-W / 2 + 1.2, y, 11.3], [W / 2 - 1.2, y, 11.3], 0.28, st)); G.add(rod([-W / 2 + 1.2, y, -11.3], [-W / 2 + 1.2, y, 11.3], 0.28, st)); G.add(rod([W / 2 - 1.2, y, -11.3], [W / 2 - 1.2, y, 11.3], 0.28, st)); }
+    for (let i = 0; i < 8; i++) { const x = -W / 2 + 5 + i * 3.2; G.add(rod([x, 17.8, -9.5], [x, 24.5, -9.5], 0.2, st, 6)); G.add(rod([x, 17.8, 9.5], [x, 24.5, 9.5], 0.2, st, 6)); G.add(rod([x, 24.5, -9.5], [x, 24.5, 9.5], 0.2, st, 6)); }
+    for (let i = 0; i < 5; i++) { const x = W / 2 - 6 - i * 3.4; G.add(rod([x, 3.6, -9.5], [x, 8.5, -9.5], 0.2, st, 6)); G.add(rod([x, 8.5, -9.5], [x, 8.5, 9.5], 0.2, st, 6)); G.add(rod([x, 3.6, 9.5], [x, 8.5, 9.5], 0.2, st, 6)); }
+    for (const x of [-W / 2 + 4, -W / 2 + 9, -W / 2 + 14]) { G.add(rod([x, 33.5, -11.3], [x, H - 0.4, -11.3], 0.25, st, 6)); const b = mk(new THREE.SphereGeometry(0.45, 12, 10), st); b.position.set(x, H - 0.4, -11.3); G.add(b); }
+  },
+};
+
+function makeSku(cfg) {
+  const o = Object.assign({}, cfg);
+  for (const k of Object.keys(o)) if (typeof o[k] === 'string' && o[k][0] === '#') o[k] = new THREE.Color(o[k]).getHex();
+  G = new THREE.Group();
+  builders[o.model](o);
+  const out = new THREE.Group(); out.add(G); G = null; return out;
+}
+
+/* ===== Preview racking: susun SKU di fixture (logika Planogram Generator) ===== */
+const DATA = {"skus":{"10587677":{"nm":"PITCHER TAVIA WHITE 1L","pr":"P1","code":"S1","cfg":{"model":"tavia","lid":"#e8e8e3"},"stack":null,"dim":null},"10587678":{"nm":"PITCHER TAVIA GRAY 1L","pr":"P1","code":"S1","cfg":{"model":"tavia","lid":"#9da3a9"},"stack":null,"dim":null},"10566440":{"nm":"PITCHER SET HALLI 1L W/4 GLASS 220ML(5)","pr":"P1","code":"S1","cfg":{"model":"halli"},"stack":null,"dim":null},"10560521":{"nm":"VACUUM FLASK KIRBY GREEN 420ML","pr":"P1","code":"S2","cfg":{"model":"kirby","body":"#b9dcc8","lid":"#b9dcc8","tab":"#f3f1e6"},"stack":null,"dim":null},"10560523":{"nm":"VACUUM FLASK KIRBY GREY 420ML","pr":"P1","code":"S2","cfg":{"model":"kirby","body":"#9aa3ab","lid":"#9aa3ab","tab":"#5f666d"},"stack":null,"dim":null},"10560524":{"nm":"VACUUM FLASK KIRBY PEACH 420ML","pr":"P1","code":"S2","cfg":{"model":"kirby","body":"#f4a58b","lid":"#f4a58b","tab":"#f6f3ec"},"stack":null,"dim":null},"10560522":{"nm":"VACUUM FLASK KIRBY PURPLE 420ML","pr":"P1","code":"S2","cfg":{"model":"kirby","body":"#bba9dc","lid":"#bba9dc","tab":"#e9e2f5"},"stack":null,"dim":null},"10554839":{"nm":"BOWL SHINE WHITE 11.5CM","pr":"P1","code":"S3","cfg":{"model":"bowl","d":11.5,"h":6.0,"color":"#f7f7f4"},"stack":{"inc":0.9,"max":12},"dim":null},"10554840":{"nm":"BOWL SHINE WHITE 15.2CM","pr":"P1","code":"S3","cfg":{"model":"bowl","d":15.2,"h":6.5,"color":"#f7f7f4"},"stack":{"inc":0.9,"max":12},"dim":null},"10554842":{"nm":"SOUP PLATE SHINE WHITE 20CM","pr":"P1","code":"S3","cfg":{"model":"plate","d":20,"h":3.7,"deep":true,"color":"#f7f7f4"},"stack":{"inc":1.1,"max":16},"dim":null},"10581181":{"nm":"DINNER PLATE SHINE WHITE 23CM","pr":"P1","code":"S3","cfg":{"model":"plate","d":23,"h":1.7,"color":"#f7f7f4"},"stack":{"inc":0.8,"max":16},"dim":null},"10137002":{"nm":"STARLIGHT DISH RACK 2 TIER TRANSPARENT","pr":"P1","code":"S4","cfg":{"model":"starlight"},"stack":null,"dim":null},"10612063":{"nm":"NEW WILLARD EXTENDABLE DISH RACK WHITE","pr":"P1","code":"S4","cfg":{"model":"willard"},"stack":null,"dim":null},"10631044":{"nm":"THERMAL BOTTLE KAY GREY 880ML","pr":"P2","code":"S1","cfg":{"model":"kay","color":"#b9b6ad"},"stack":null,"dim":null},"10631045":{"nm":"THERMAL BOTTLE KAY BLUE 880ML","pr":"P2","code":"S1","cfg":{"model":"kay","color":"#b7cde2"},"stack":null,"dim":null},"10631046":{"nm":"THERMAL BOTTLE KAY YELLOW 880ML","pr":"P2","code":"S1","cfg":{"model":"kay","color":"#f3e39b"},"stack":null,"dim":null},"10631047":{"nm":"THERMAL BOTTLE KAY PINK 880ML","pr":"P2","code":"S1","cfg":{"model":"kay","color":"#e6217f"},"stack":null,"dim":null},"10542394":{"nm":"VACUUM FLASK DARYA BLACK 500ML","pr":"P2","code":"S2","cfg":{"model":"darya","color":"#222224"},"stack":null,"dim":null},"10542395":{"nm":"VACUUM FLASK DARYA GREY 500ML","pr":"P2","code":"S2","cfg":{"model":"darya","color":"#a8adb3"},"stack":null,"dim":null},"10542396":{"nm":"VACUUM FLASK DARYA PINK 500ML","pr":"P2","code":"S2","cfg":{"model":"darya","color":"#f0cbd7"},"stack":null,"dim":null},"10568378":{"nm":"BENNET DUO FLIP CANISTER SET OF 3 700ML","pr":"P2","code":"S3","cfg":{"model":"jars","n":3,"d":8,"h":14,"L":25,"lidH":2.4,"style":"flip","lidColor":"#f4f4f2"},"stack":null,"dim":null},"10568377":{"nm":"BENNET SPIN CANISTER SET OF 3 500ML","pr":"P2","code":"S3","cfg":{"model":"jars","n":3,"d":8,"h":13.5,"L":25,"lidH":2.4,"style":"spin","lidColor":"#9edbd0"},"stack":null,"dim":null},"10565042":{"nm":"LILY GLASS JAR SET OF 3 450ML","pr":"P2","code":"S3","cfg":{"model":"jars","n":3,"d":10.4,"h":12.3,"L":32,"lidH":2.2,"style":"glass","barrel":true},"stack":null,"dim":null},"10519116":{"nm":"WILMA GLASS JAR SET OF 3","pr":"P2","code":"S4","cfg":{"model":"jars","n":3,"d":12,"h":12.2,"L":36.2,"lidH":2.2,"style":"wood","barrel":true},"stack":null,"dim":null},"10100885":{"nm":"STAR STORAGE JAR SET 3","pr":"P2","code":"S4","cfg":{"model":"jars","n":3,"d":8.8,"h":23.5,"L":27.5,"lidH":3.6,"style":"handle","lidColor":"#f2f2f0","band":"#a9b6c4"},"stack":null,"dim":null},"10497060":{"nm":"WILEY GLASS JAR SET OF 3","pr":"P2","code":"S4","cfg":{"model":"jars","n":3,"d":10.2,"h":12,"L":31,"lidH":2.2,"style":"wood","barrel":true},"stack":null,"dim":null}},"fixtures":[{"id":"wall-p1","kind":"wall","tab":"Wall 1 · P1","title":"Wall ke-1 · SKU prioritas P1","size":{"w":120,"d":50,"h":270},"zones":[35,35,70,35,35],"label":"WALL 5 RACK","shelves":[{"code":"S1","items":[{"k":"10587677","qd":30},{"k":"10587678","qd":30},{"k":"10566440","qd":6}]},{"code":"S2","items":[{"k":"10560521","qd":48},{"k":"10560523","qd":48},{"k":"10560524","qd":48},{"k":"10560522","qd":48}]},{"code":"S3","items":[{"k":"10554839","qd":96},{"k":"10554840","qd":72},{"k":"10554842","qd":72},{"k":"10581181","qd":72}]},{"code":"S4","items":[{"k":"10137002","qd":12},{"k":"10612063","qd":12}]},{"code":"S5","items":[]}]},{"id":"wall-p2","kind":"wall","tab":"Wall 2 · P2","title":"Wall ke-2 · SKU prioritas P2","size":{"w":120,"d":50,"h":270},"zones":[35,35,70,35,35],"label":"WALL 5 RACK","shelves":[{"code":"S1","items":[{"k":"10631044","qd":24},{"k":"10631045","qd":24},{"k":"10631046","qd":24},{"k":"10631047","qd":24}]},{"code":"S2","items":[{"k":"10542394","qd":48},{"k":"10542395","qd":48},{"k":"10542396","qd":48}]},{"code":"S3","items":[{"k":"10568378","qd":12},{"k":"10568377","qd":12},{"k":"10565042","qd":12}]},{"code":"S4","items":[{"k":"10519116","qd":12},{"k":"10100885","qd":12},{"k":"10497060","qd":12}]},{"code":"S5","items":[]}]}]};
+setClearMode('lite');
+
+const $ = s => document.querySelector(s);
+const nf = n => Math.round(n).toLocaleString('id-ID');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- template tiap SKU (dinormalkan: alas di y=0, titik tengah di x/z=0) ---------- */
+const TPL = {};
+for (const [k, s] of Object.entries(DATA.skus)) {
+  const g = makeSku(s.cfg), b = new THREE.Box3().setFromObject(g), c = b.getCenter(new THREE.Vector3());
+  g.position.set(-c.x, -b.min.y, -c.z);
+  const piv = new THREE.Group(); piv.add(g);
+  const mats = []; piv.traverse(o => { if (o.isMesh && !mats.includes(o.material)) mats.push(o.material); });
+  TPL[k] = { piv, mats, w: b.max.x - b.min.x, d: b.max.z - b.min.z, h: b.max.y - b.min.y };
+}
+
+/* ---------- scene ---------- */
+const stage = $('#stage'), cv = $('#cv'), labelsEl = $('#labels');
+const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xffffff);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.6;
+scene.add(new THREE.HemisphereLight(0xffffff, 0xe6e6e6, 0.55));
+const key = new THREE.DirectionalLight(0xffffff, 1.25); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0006; key.shadow.radius = 4; key.shadow.intensity = 0.55;
+scene.add(key, key.target);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.ShadowMaterial({ opacity: 0.17 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+const camera = new THREE.PerspectiveCamera(28, 1, 5, 4000);
+const controls = new OrbitControls(camera, cv); controls.enableDamping = false; controls.maxPolarAngle = Math.PI * 0.52; controls.addEventListener('change', draw); controls.addEventListener('start', () => { moved = true; });
+
+/* ---------- bahan rak (ash dari MATS Planogram Generator, panel belakang diputihkan) ---------- */
+const ASH = { b: 0xcdae78, u: 0xcfb687, base: 0xb8955e, pallet: 0xb98d55 };
+const std = (c, r = 0.75) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: 0 });
+function canvasTex(w, h, fn, repeat) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); } return t;
+}
+function box(w, h, d, mat, x, y, z, shadow = true) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true; return m; }
+function textPlane(text, w, h, fg, bg) {
+  const t = canvasTex(1024, Math.round(1024 * h / w), (g, cw, ch) => { if (bg) { g.fillStyle = bg; g.fillRect(0, 0, cw, ch); } g.fillStyle = fg; g.font = `600 ${ch * 0.52}px "IBM Plex Sans", system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, cw / 2, ch / 2 + ch * 0.03); });
+  return new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, transparent: true }));
+}
+
+/* ---------- aturan susun ---------- */
+const LIP = 1.0, BOARD = 2.5, BASE = 10;
+function packShelf(sh, W, D, C) {
+  const rep = sh.items.map(it => {
+    const s = DATA.skus[it.k], t = TPL[it.k], r = { k: it.k, qd: it.qd, nm: s.nm, pr: s.pr, h: t.h, placed: 0, cols: 0, rows: 0, n: 1, rot: false, flag: '' };
+    if (t.h > C + 0.01) { r.flag = 'tinggi'; return r; }
+    r.n = s.stack ? Math.max(1, Math.min(s.stack.max, 1 + Math.floor((C - t.h) / s.stack.inc))) : 1; r.inc = s.stack ? s.stack.inc : 0;
+    let best = null;
+    for (const rot of [false, true]) {
+      const fw = rot ? t.d : t.w, fd = rot ? t.w : t.d, rows = Math.floor(D / fd);
+      if (rows < 1) continue;
+      const need = Math.ceil(Math.ceil(it.qd / r.n) / rows), wn = need * fw;
+      if (!best || wn < best.wn - 0.01) best = { rot, fw, fd, rows, need, wn };
+    }
+    if (!best) { r.flag = 'dalam'; return r; }
+    Object.assign(r, { rot: best.rot, fw: best.fw, fd: best.fd, rows: best.rows, need: best.need, cols: 0 });
+    return r;
+  });
+  const ok = rep.filter(r => !r.flag);
+  let used = 0; for (const r of ok) { if (used + r.fw <= W + 0.01) { r.cols = 1; used += r.fw; } else r.flag = 'lebar'; }
+  for (;;) {
+    let pick = null, rem = W - used;
+    for (const r of ok) { if (!r.cols || r.cols >= r.need || r.fw > rem + 0.01) continue; const un = 1 - (r.cols * r.rows * r.n) / r.qd; if (!pick || un > pick.un) pick = { r, un }; }
+    if (!pick) break; pick.r.cols++; used += pick.r.fw;
+  }
+  for (const r of ok) if (r.cols) r.placed = Math.min(r.qd, r.cols * r.rows * r.n);
+  const m = ok.filter(r => r.cols).length, gap = m ? (W - used) / (m + 1) : 0;
+  let x = -W / 2 + gap;
+  for (const r of ok) if (r.cols) { r.x0 = x; x += r.cols * r.fw + gap; }
+  rep.forEach(r => { if (!r.flag) r.flag = r.placed >= r.qd ? 'muat' : 'sebagian'; });
+  return { rep, used };
+}
+
+/* ---------- membangun fixture ---------- */
+let group = null, cur = 0, labels = [];
+function buildWall(fx, g) {
+  const { w: W, d: D, h: H } = fx.size, UP = 3.4, hs = fx.zones, sum = hs.reduce((a, b) => a + b, 0), topBlank = H - BASE - sum;
+  g.add(box(W + UP * 2, BASE, D, std(ASH.base), 0, BASE / 2, 0));
+  const groove = canvasTex(8, 75, (c, w, h) => { c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(0,0,0,.14)'; c.fillRect(0, h - 3, w, 3); }, [1, (H - BASE) / 7.5]);
+  g.add(box(W, H - BASE, 1.2, new THREE.MeshStandardMaterial({ color: 0xffffff, map: groove, roughness: 0.9 }), 0, BASE + (H - BASE) / 2, -D / 2 + 0.6));
+  const dots = canvasTex(34, 50, (c, w, h) => { c.fillStyle = '#dcc59c'; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(0,0,0,.35)'; c.beginPath(); c.arc(w / 2, h / 2, 3, 0, 7); c.fill(); }, [1, (H - BASE) / 5]);
+  for (const sx of [-1, 1]) g.add(box(UP, H - BASE, 6, new THREE.MeshStandardMaterial({ color: 0xffffff, map: dots, roughness: 0.7 }), sx * (W / 2 + UP / 2), BASE + (H - BASE) / 2, -D / 2 + 3));
+  const head = box(W + UP * 2, 7.5, 6, std(ASH.u), 0, H + 3.75, -D / 2 + 3); g.add(head);
+  const sign = textPlane(fx.label, 70, 5, '#4a3a22'); sign.position.set(0, H + 3.75, -D / 2 + 6.05); g.add(sign);
+  let y = BASE; const bands = [];
+  for (let i = hs.length - 1; i >= 0; i--) { bands[i] = { yb: y, h: hs[i] }; y += hs[i]; }
+  bands.forEach((b, i) => {
+    g.add(box(W, BOARD, D, std(ASH.b, 0.65), 0, b.yb + BOARD / 2, 0));
+    g.add(box(W, 2, LIP, std(0xffffff, 0.5), 0, b.yb + BOARD + 1, D / 2 - LIP / 2));
+    b.top = b.yb + BOARD; b.clear = b.h - BOARD;
+  });
+  return { bands, W, D, H: H + 7.5 };
+}
+function buildPallet(fx, g) {
+  const { w: W, d: D, h: H } = fx.size, wood = std(ASH.pallet, 0.8), dark = std(0xa9804d, 0.85);
+  for (let i = 0; i < 7; i++) g.add(box(W, 1.8, 11.5, wood, 0, 10.2 + 0.9, -D / 2 + 5.75 + i * ((D - 11.5) / 6)));
+  for (const x of [-W / 2 + 6, 0, W / 2 - 6]) for (const z of [-D / 2 + 6, 0, D / 2 - 6]) g.add(box(12, 8.4, 12, dark, x, 1.8 + 4.2, z));
+  for (const x of [-W / 2 + 6, 0, W / 2 - 6]) g.add(box(12, 1.8, D, wood, x, 0.9, 0));
+  return { bands: [{ top: 12, clear: H, h: H }], W, D, H: 12 + H };
+}
+function place(fx, geo, g) {
+  const reps = [];
+  fx.shelves.forEach((sh, si) => {
+    const band = geo.bands[si], lip = fx.kind === 'wall' ? LIP : 0, D = geo.D - lip;
+    const { rep, used } = packShelf(sh, geo.W, D, band.clear);
+    const zFront = geo.D / 2 - lip;
+    rep.forEach(r => {
+      if (!r.placed) return;
+      const slots = Math.ceil(r.placed / r.n);
+      for (let s = 0; s < slots; s++) {
+        const row = Math.floor(s / r.cols), col = s % r.cols, units = Math.min(r.n, r.placed - s * r.n);
+        const x = r.x0 + col * r.fw + r.fw / 2, z = zFront - r.fd / 2 - row * r.fd;
+        for (let u = 0; u < units; u++) { const c = TPL[r.k].piv.clone(true); c.position.set(x, band.top + u * (r.inc || 0), z); if (r.rot) c.rotation.y = Math.PI / 2; c.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); g.add(c); }
+      }
+    });
+    if (fx.kind === 'wall' && !sh.items.length) { const p = textPlane('S T O C K', 60, 7, 'rgba(40,50,66,.55)'); p.position.set(0, band.top + band.clear / 2, -geo.D / 2 + 1.3); g.add(p); }
+    reps.push({ code: sh.code, band, rep, used, qty: sh.items.reduce((a, b) => a + b.qd, 0) });
+  });
+  return reps;
+}
+
+function frame(view, geo) {
+  const fov = camera.fov * Math.PI / 180, asp = camera.aspect, L = Math.max(geo.W, geo.H);
+  let dist, ty;
+  if (geo.fit) {                                    // pallet: pas ke ukuran isi sebenarnya
+    const fh = 2 * Math.atan(Math.tan(fov / 2) * asp), fe = Math.min(fov, fh);
+    dist = geo.fit.r / Math.sin(fe / 2) * 0.98; ty = geo.fit.cy;
+  } else {
+    const dH = (geo.H * 1.1 / 2) / Math.tan(fov / 2), dW = (geo.W * 1.5 / 2) / (Math.tan(fov / 2) * asp); dist = Math.max(dH, dW) + geo.D; ty = geo.H * 0.5;
+  }
+  controls.target.set(0, ty, 0);
+  const el = view === 'front' ? (geo.fit ? 0.32 : 0.05) : (geo.fit ? 0.5 : 0.2), az = view === 'front' ? 0 : 0.62;
+  camera.position.set(Math.sin(az) * Math.cos(el) * dist, ty + Math.sin(el) * dist, Math.cos(az) * Math.cos(el) * dist);
+  camera.lookAt(controls.target); controls.update();
+  key.position.set(-L * 0.55, geo.H * 1.1, L * 0.9); key.target.position.set(0, geo.H * 0.45, 0);
+  const sc = key.shadow.camera; sc.left = -L * 0.8; sc.right = L * 0.8; sc.top = L * 0.8; sc.bottom = -L * 0.8; sc.near = 1; sc.far = L * 4; sc.updateProjectionMatrix();
+}
+
+function draw() { renderer.render(scene, camera); updateLabels(); }
+function updateLabels() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  labels.forEach(l => { const v = l.pos.clone().project(camera), x = Math.max((v.x * 0.5 + 0.5) * w, l.el.offsetWidth + 8); l.el.style.transform = `translate(${x}px,${(-v.y * 0.5 + 0.5) * h}px) translate(-100%,-50%)`; l.el.style.opacity = v.z < 1 ? 1 : 0; });
+}
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); draw(); }
+
+let view = 'front', geoCur = null, repsCur = null, moved = false;
+function show(i) {
+  cur = i; const fx = DATA.fixtures[i];
+  if (group) { scene.remove(group); group.traverse(o => { if (o.isMesh && o.geometry && !o.userData.shared) { /* geometri model dipakai bersama; hanya rak yang dibuang */ } }); }
+  group = new THREE.Group(); scene.add(group);
+  geoCur = fx.kind === 'wall' ? buildWall(fx, group) : buildPallet(fx, group);
+  repsCur = place(fx, geoCur, group);
+  if (fx.kind === 'pallet') { const bb = new THREE.Box3().setFromObject(group), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3()); geoCur.fit = { r: sz.length() / 2, cy: c.y }; geoCur.H = sz.y; }
+  labelsEl.innerHTML = ''; labels = [];
+  repsCur.forEach((r, si) => {
+    const el = document.createElement('div'); el.className = 'lab'; const pl = r.rep.reduce((a, b) => a + b.placed, 0);
+    el.innerHTML = fx.kind === 'wall' ? `<b>Shelving ${si + 1}</b><span>${r.code} · ${r.qty ? nf(r.qty) + ' pcs' : 'stock'}</span>` : `<b>${esc(fx.label)}</b><span>${r.code} · ${nf(r.qty)} pcs</span>`;
+    labelsEl.appendChild(el);
+    labels.push({ el, pos: new THREE.Vector3(-geoCur.W / 2 - (fx.kind === 'wall' ? 6 : 4), r.band.top + Math.min(r.band.clear, 40) / 2, geoCur.D / 2) });
+  });
+  moved = false; resize(); frame(view, geoCur); renderer.shadowMap.needsUpdate = true; draw(); renderPanel(fx); setTabs();
+}
+
+/* ---------- panel keterangan ---------- */
+const STATUS = { muat: ['Muat', 'ok'], sebagian: ['Sebagian', 'warn'], tinggi: ['Terlalu tinggi', 'bad'], lebar: ['Tidak muat', 'bad'], dalam: ['Terlalu dalam', 'bad'] };
+function renderPanel(fx) {
+  const tot = repsCur.reduce((a, r) => a + r.qty, 0), pl = repsCur.reduce((a, r) => a + r.rep.reduce((x, y) => x + y.placed, 0), 0);
+  $('#sum').innerHTML = `<div><span>Rencana qty</span><b>${nf(tot)}</b><i>pcs</i></div><div><span>Muat di rak</span><b>${nf(pl)}</b><i>pcs</i></div><div><span>Terisi</span><b>${tot ? Math.round(pl / tot * 100) : 0}%</b><i>dari rencana</i></div>`;
+  $('#ttl').textContent = fx.title; $('#dim').textContent = `${fx.size.w} × ${fx.size.d} × ${fx.size.h} cm` + (fx.kind === 'wall' ? ' · tinggi shelving 35 / 35 / 70 / 35 / 35 cm' : '');
+  $('#shelves').innerHTML = repsCur.map((r, si) => {
+    const p = r.rep.reduce((a, b) => a + b.placed, 0), pct = r.qty ? Math.round(p / r.qty * 100) : 0;
+    const head = fx.kind === 'wall' ? `Shelving ${si + 1} <i>${r.code}</i>` : `Pallet <i>${r.code}</i>`;
+    if (!r.rep.length) return `<section class="sh"><header><h3>${head}</h3><span class="mut">Kosong · area STOCK</span></header></section>`;
+    return `<section class="sh"><header><h3>${head}</h3><span class="mut">${nf(p)} / ${nf(r.qty)} pcs</span></header>
+      <div class="bar" role="img" aria-label="Terisi ${pct}%"><u style="width:${pct}%"></u></div>
+      <p class="clr">Tinggi bebas ${r.band.clear.toFixed(1)} cm · lebar terpakai ${r.used.toFixed(0)} dari ${geoCur.W} cm</p>
+      <ul>${r.rep.map(x => { const st = STATUS[x.flag]; return `<li data-k="${x.k}"><code>${x.k}</code><span class="nm">${esc(x.nm)}</span><span class="q">${nf(x.placed)}<small> / ${nf(x.qd)}</small></span><em class="chip ${st[1]}">${st[0]}</em>${x.flag === 'tinggi' ? `<p class="note">Tinggi ${x.h.toFixed(1)} cm melebihi ${r.band.clear.toFixed(1)} cm</p>` : x.flag === 'lebar' ? '<p class="note">Lebar rak habis, SKU ini tidak kebagian tempat</p>' : x.n > 1 ? `<p class="note">Ditumpuk sampai ${x.n} unit</p>` : ''}</li>`; }).join('')}</ul></section>`;
+  }).join('');
+  document.querySelectorAll('#shelves li').forEach(li => { const k = li.dataset.k; li.addEventListener('mouseenter', () => hi(k, true)); li.addEventListener('mouseleave', () => hi(k, false)); li.addEventListener('focusin', () => hi(k, true)); li.addEventListener('focusout', () => hi(k, false)); li.tabIndex = 0; });
+}
+function hi(k, on) { TPL[k].mats.forEach(m => { if (m.emissive) { m.emissive.set(on ? 0x2a86ff : 0x000000); m.emissiveIntensity = on ? 0.55 : 0; } }); draw(); }
+
+/* ---------- kontrol ---------- */
+function setTabs() { document.querySelectorAll('[data-fx]').forEach(b => b.setAttribute('aria-selected', String(+b.dataset.fx === cur))); document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view))); }
+$('#tabs').innerHTML = DATA.fixtures.map((f, i) => `<button role="tab" data-fx="${i}" aria-selected="false">${esc(f.tab)}</button>`).join('');
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-fx]'); if (b) { location.hash = DATA.fixtures[+b.dataset.fx].id; } });
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { view = b.dataset.view; moved = false; frame(view, geoCur); setTabs(); draw(); }));
+const fromHash = () => { const i = DATA.fixtures.findIndex(f => f.id === location.hash.slice(1)); return i < 0 ? 0 : i; };
+addEventListener('hashchange', () => show(fromHash()));
+new ResizeObserver(() => { resize(); if (!moved && geoCur) { frame(view, geoCur); draw(); } }).observe(stage);
+const q = new URLSearchParams(location.search);
+if (q.get('shot')) { document.body.classList.add('shot'); view = q.get('shot'); }
+show(fromHash());
+window.__ready = true;
+
+</script>
+
+</body></html>
