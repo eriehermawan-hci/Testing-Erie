@@ -25,7 +25,11 @@ fixtures=[
  {'id':'pallet-2','kind':'pallet','tab':'Pallet 2 · P2','title':'Pallet ke-2 · SKU prioritas P2','size':{'w':90,'d':90,'h':100},'zones':[100],'label':'PALLET 90x90',
   'shelves':shelves('PALLET','P2',['PLT2'],'pallet')},
 ]
-fixtures=[f for f in fixtures if f['kind']=='wall']
+ORDER=['10566440','10587677','10587678','10560521','10560522','10560523','10560524','10554839','10554840','10554842','10581181','10137002','10612063',
+ '10631044','10631045','10631046','10631047','10542394','10542395','10542396','10565042','10568377','10568378','10100885','10497060','10519116',
+ '10559641','10559642','10559812','10590319','10590320']          # urutan baris di tabel pengguna (sheet)
+for f in fixtures:
+    for sh in f['shelves']: sh['items'].sort(key=lambda i: ORDER.index(i['k']))
 used={i['k'] for f in fixtures for sh in f['shelves'] for i in sh['items']}
 skus={k:v for k,v in skus.items() if k in used}
 
@@ -61,4 +65,4 @@ for k,v in skus.items():
    # Pallet & Dumbin dikecualikan dulu, fokus Wall
 for f in fixtures:
     for s in f['shelves']: print(f['id'],s['code'],[ (i['k'],i['qd']) for i in s['items']])
-json.dump({'skus':skus,'fixtures':fixtures,'ditarik':D['meta']['ditarik']},open('rack_data.json','w'),ensure_ascii=False)
+json.dump({'skus':skus,'fixtures':fixtures,'trayMax':10,'ditarik':D['meta']['ditarik']},open('rack_data.json','w'),ensure_ascii=False)

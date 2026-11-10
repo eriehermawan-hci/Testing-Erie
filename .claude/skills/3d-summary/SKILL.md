@@ -10,7 +10,7 @@ Dua keluaran dari satu pipeline:
 1. **PNG per SKU**: produk saja, latar putih, 1200×1200, nama file = kode artikel.
 2. **Preview racking**: SKU diletakkan di Wall sesuai posisi shelving dan qty display, halaman HTML interaktif (three.js) + PNG depan/miring.
 
-Status terakhir: grup **MAKAN & MINUM** selesai (31 SKU, Wall P1 dan P2, dengan mode display dari kolom Display w/Packing). Grup Tidur, Penyimpanan, Dekorasi belum. **Pallet dan Dumbin sengaja dikecualikan dulu**, prioritas di Wall. Kodenya untuk Pallet sudah ada di `viewer.js` (`buildPallet`) tapi fixture-nya dimatikan di `build_data.py`.
+Status terakhir: grup **MAKAN & MINUM** selesai (31 SKU, Wall P1 dan P2, dengan mode display dari kolom Display w/Packing). Grup Tidur, Penyimpanan, Dekorasi belum. Pallet sudah dirender (Dumbin belum).
 
 ## Sumber data
 
@@ -61,6 +61,15 @@ Pola isi tray PDQ: **12 = 4×3**, **54 = 3×3 tumpuk 6 pcs**, **32 = 4×4 tumpuk
 Dimensi kotak diambil dari data kemasan ruparupa/SAP (`product_length/width/height`). Foto depan kotak dipilih manual per SKU (`BOXIMG`, thumbnail 300 px di-embed sebagai data URI).
 
 Asumsi yang perlu dikonfirmasi: jumlah tray = qty display ÷ N (mis. Kirby 48 pcs = 4 tray PDQ 12).
+
+## Logika isi penuh dan feedback Excel
+
+- **Shelving harus penuh, tanpa celah.** Qty sheet dipenuhi dulu (SKU yang paling kurang didahulukan). Sisa lebar diisi dengan **menggandakan SKU bergiliran** (facing tambahan) sampai tidak ada kolom lagi yang muat. Kedalaman shelving diisi penuh; tumpukan dipakai bila perlu. Hasil tampil bisa lebih besar dari qty sheet.
+- **Kotak packing antar pcs harus terlihat berbeda:** tiap kotak diberi garis tepi tegas (`LineSegments2`, lebar 2,2 px) dan jarak 0,35 cm antar kotak/kolom, sisi kotak berwarna kraft sedikit gelap, foto produk di sisi depan.
+- **Perbandingan qty sheet vs shelving** dihitung di `viewer.js` (`window.__report()`, memakai `packShelf` yang sama dengan render). Status per SKU: CUKUP (kapasitas ≥ qty sheet), KURANG, TIDAK MUAT (lebar/tinggi/dalam). Per shelving: FIT bila semua SKU CUKUP; kolom kekurangan lebar = lebar yang dibutuhkan qty sheet dikurangi lebar shelving.
+- **Excel feedback:** `node report.js report.json` (ambil laporan lewat Playwright) lalu `python3 build_excel.py report.json Feedback_Fit_Shelving.xlsx`. Sheet: Ringkasan Shelving, Rekomendasi, Detail SKU, Asumsi.
+- **Pallet ikut dirender** (Pallet ke-1 untuk P1 dan ke-2 untuk P2). Tinggi susun maks 100 cm, tray maks 10 tingkat (`trayMax` di data).
+- **Urutan SKU di shelving mengikuti urutan baris di tabel pengguna** (`ORDER` di `build_data.py`), bukan urutan dashboard.
 
 ## Hal yang sudah diputuskan / perlu diingat
 

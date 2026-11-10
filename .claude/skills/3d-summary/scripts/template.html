@@ -79,7 +79,7 @@ body.shot .grid{display:block}body.shot .stagebox{border:0;border-radius:0}body.
     <div>
       <div class="eyebrow">Makan &amp; Minum · Dept Homeware</div>
       <h1>Preview racking Summary Accs</h1>
-      <p>Setiap SKU diletakkan di Wall 6 shelving (0–5) sesuai posisi dan qty display dari sheet. Shelving 0 dikosongkan untuk Media Komunikasi. Pallet dan Dumbin belum dimasukkan. Ukuran produk dari ruparupa, ukuran rak dari layout Planogram Generator.</p>
+      <p>Setiap SKU diletakkan di Wall 6 shelving (0–5) sesuai posisi dan qty display dari sheet. Shelving 0 dikosongkan untuk Media Komunikasi. Pallet ikut ditampilkan, Dumbin belum. Ukuran produk dari ruparupa, ukuran rak dari layout Planogram Generator.</p>
     </div>
     <div id="tabs" role="tablist" aria-label="Pilih fixture"></div>
   </div>
@@ -95,9 +95,9 @@ body.shot .grid{display:block}body.shot .stagebox{border:0;border-radius:0}body.
     </div>
   </div>
   <div class="notes">
-    <p><b>Cara membaca.</b> Angka “muat / rencana” membandingkan qty display di sheet dengan jumlah yang benar-benar muat di rak berukuran asli. Arahkan kursor ke baris SKU untuk menyorot produknya di gambar.</p>
+    <p><b>Cara membaca.</b> Angka “tampil / sheet” membandingkan jumlah yang tampil di shelving penuh dengan qty display di sheet. Status Cukup berarti kapasitas rak mencapai qty sheet, Kurang berarti rak tidak cukup. Arahkan kursor ke baris SKU untuk menyorot produknya di gambar.</p>
     <p><b>Cara display.</b> Mengikuti kolom Display w/Packing di sheet. <em>Display only</em>: produk terbuka penuh tanpa kotak. <em>Display + packing</em>: 1 unit terbuka di depan, kotak packing berfoto produk di belakangnya (flat pack berdiri menghadap depan). <em>PDQ N</em>: tray putih berisi N pcs (4×3, 3×3 tumpuk 6, 4×4 tumpuk 2, 6×5, 5×5), jumlah tray = qty ÷ N.</p>
-    <p><b>Aturan susun.</b> SKU diisi dari kiri ke kanan sesuai urutan sheet, deret ke belakang sampai kedalaman rak habis. Piring, mangkuk, gelas, dan tray boleh ditumpuk selama tinggi rak cukup. Set yang lebih lebar dari rak diputar 90° bila itu menghemat lebar.</p>
+    <p><b>Aturan susun.</b> Shelving diisi penuh: lebar dan kedalaman terisi tanpa celah. Qty sheet dipenuhi dulu, sisa lebar diisi dengan menggandakan SKU (facing tambahan) bergiliran. Produk berderet ke belakang sampai kedalaman habis; piring, mangkuk, gelas, dan tray ditumpuk bila perlu. Set yang lebih lebar dari rak diputar 90° bila itu menghemat lebar.</p>
     <p><b>Bentuk produk.</b> Model 3D dibuat dari dimensi ruparupa, jadi bentuk detail (tutup, gagang, rangka kawat) berupa perkiraan. Panel belakang rak diputihkan. Data sheet ditarik {{DITARIK}}.</p>
   </div>
 </div>
@@ -106,6 +106,9 @@ body.shot .grid{display:block}body.shot .stagebox{border:0;border-radius:0}body.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 {{MODELS}}
 {{VIEWER}}
 </script>
