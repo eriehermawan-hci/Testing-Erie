@@ -10,7 +10,7 @@ Dua keluaran dari satu pipeline:
 1. **PNG per SKU**: produk saja, latar putih, 1200×1200, nama file = kode artikel.
 2. **Preview racking**: SKU diletakkan di Wall sesuai posisi shelving dan qty display, halaman HTML interaktif (three.js) + PNG depan/miring.
 
-Status terakhir: grup **MAKAN & MINUM** selesai (31 SKU, Wall P1 dan P2). Grup Tidur, Penyimpanan, Dekorasi belum. **Pallet dan Dumbin sengaja dikecualikan dulu**, prioritas di Wall. Kodenya untuk Pallet sudah ada di `viewer.js` (`buildPallet`) tapi fixture-nya dimatikan di `build_data.py`.
+Status terakhir: grup **MAKAN & MINUM** selesai (31 SKU, Wall P1 dan P2, dengan mode display dari kolom Display w/Packing). Grup Tidur, Penyimpanan, Dekorasi belum. **Pallet dan Dumbin sengaja dikecualikan dulu**, prioritas di Wall. Kodenya untuk Pallet sudah ada di `viewer.js` (`buildPallet`) tapi fixture-nya dimatikan di `build_data.py`.
 
 ## Sumber data
 
@@ -43,6 +43,24 @@ Matriks: Makan & Minum memakai S1–S4 di Wall (S0 = Media Komunikasi, S5 kosong
 - Piring/mangkuk/gelas boleh ditumpuk (`stack.inc` = tambahan tinggi per unit, `max` = batas), selebihnya 1 lapis.
 - SKU lebih tinggi dari zona → tidak dirender, status "Terlalu tinggi". Lebar habis → "Tidak muat".
 - Sisa lebar dibagi ke SKU yang paling kurang terpenuhi. Hasil dilaporkan sebagai **muat / rencana** per SKU dan per shelving.
+
+## Mode display (kolom "Display w/Packing" di data pengguna)
+
+Data pengguna memuat kolom ini per SKU; petanya ada di `DW` pada `build_data.py`. Mode menentukan cara SKU ditampilkan di racking:
+
+| Mode | Arti | Cara dirender |
+|---|---|---|
+| `DISPLAY ONLY` | Produk terbuka penuh, tanpa kotak packing | Seperti biasa (deret, tumpuk bila piring/mangkuk/gelas) |
+| `DISPLAY + PACKING` | Produk terbuka di paling depan, kotak packing di belakangnya | Per kolom: 1 unit terbuka + kotak di belakang (baris ke belakang, tumpuk maks 3 sesuai tinggi). **Setiap kotak punya foto produk di sisi depan** |
+| `PDQ N` | Tampilan dalam tray; 1 tray berisi N pcs sesuai pola; jumlah tray = qty ÷ N | Tray kardus putih berdinding rendah berisi produk, boleh ditumpuk (maks 6) selama tinggi cukup |
+
+Pola isi tray PDQ: **12 = 4×3**, **54 = 3×3 tumpuk 6 pcs**, **32 = 4×4 tumpuk 2 pcs**, **30 = 6×5**, **25 = 5×5** (kolom × baris ke belakang). Rujukan foto: tray kardus putih bertumpuk berisi gelas.
+
+**Aturan flat pack:** produk flat pack (kotak tipis, contoh rak piring Starlight dan Willard) harus **berdiri menghadap depan, tidak tidur**. Implementasi: sisi paling tipis jadi kedalaman, sisi terlebar jadi lebar, sisi sisanya jadi tinggi (`standing()` di `build_data.py`); foto produk di sisi depan kotak. Tandai dengan `flat=True` pada `BOXRAW`.
+
+Dimensi kotak diambil dari data kemasan ruparupa/SAP (`product_length/width/height`). Foto depan kotak dipilih manual per SKU (`BOXIMG`, thumbnail 300 px di-embed sebagai data URI).
+
+Asumsi yang perlu dikonfirmasi: jumlah tray = qty display ÷ N (mis. Kirby 48 pcs = 4 tray PDQ 12).
 
 ## Hal yang sudah diputuskan / perlu diingat
 

@@ -16,6 +16,41 @@ for (const [k, s] of Object.entries(DATA.skus)) {
   TPL[k] = { piv, mats, w: b.max.x - b.min.x, d: b.max.z - b.min.z, h: b.max.y - b.min.y };
 }
 
+/* ---------- unit tampilan: tray PDQ dan kotak packing (foto produk di sisi depan) ---------- */
+const BOX = {}, TRAY = {};
+const stdM = (c, r = 0.85) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: 0 });
+function makeBox(k) {
+  const b = DATA.skus[k].box, side = stdM(0xe9e3d6), front = stdM(0xffffff, 0.55);
+  const img = new Image();
+  img.onload = () => {
+    const cw = 512, ch = Math.max(64, Math.round(512 * b.h / b.w)), c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cw, ch); g.strokeStyle = '#d6d0c4'; g.lineWidth = 6; g.strokeRect(3, 3, cw - 6, ch - 6);
+    const sc = Math.min(cw * 0.92 / img.width, ch * 0.92 / img.height); g.drawImage(img, (cw - img.width * sc) / 2, (ch - img.height * sc) / 2, img.width * sc, img.height * sc);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; front.map = t; front.needsUpdate = true; if (window.__ready) draw(); else window.__texPending = (window.__texPending || 0) - 1;
+  };
+  window.__texPending = (window.__texPending || 0) + 1; img.src = b.img;
+  const m = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, b.d), [side, side, side, side, front, side]);
+  m.position.y = b.h / 2; m.castShadow = true; m.receiveShadow = true;
+  const piv = new THREE.Group(); piv.add(m);
+  return { piv, mats: [side, front], w: b.w, d: b.d, h: b.h };
+}
+function makeTray(k) {
+  const s = DATA.skus[k], P = s.pdq, t = TPL[k], inc = s.stack ? s.stack.inc : 0;
+  const cw = t.w + 0.6, cd = t.d + 0.6, mg = 0.5, wt = 0.35, base = 0.3;
+  const iw = P.gx * cw + 2 * mg, id = P.gy * cd + 2 * mg, ih = t.h + (P.s - 1) * inc, wallH = Math.min(8, Math.max(3, 0.4 * ih));
+  const mat = stdM(0xf2f0ea, 0.9), piv = new THREE.Group(), W2 = iw + 2 * wt, D2 = id + 2 * wt;
+  const add = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; piv.add(m); };
+  add(W2, base, D2, 0, base / 2, 0);
+  add(W2, wallH, wt, 0, base + wallH / 2, D2 / 2 - wt / 2); add(W2, wallH, wt, 0, base + wallH / 2, -D2 / 2 + wt / 2);
+  add(wt, wallH, D2, W2 / 2 - wt / 2, base + wallH / 2, 0); add(wt, wallH, D2, -W2 / 2 + wt / 2, base + wallH / 2, 0);
+  for (let i = 0; i < P.gx; i++) for (let j = 0; j < P.gy; j++) for (let u = 0; u < P.s; u++) { const c = t.piv.clone(true); c.position.set(-iw / 2 + mg + cw * (i + 0.5), base + u * inc, -id / 2 + mg + cd * (j + 0.5)); piv.add(c); }
+  return { piv, mats: [mat], w: W2, d: D2, h: base + ih, pitch: base + ih + 0.2 };
+}
+for (const [k, s] of Object.entries(DATA.skus)) {
+  if (s.mode === 'pack') { BOX[k] = makeBox(k); BOX[k].mats.forEach(m => TPL[k].mats.push(m)); }
+  if (s.mode === 'pdq') { TRAY[k] = makeTray(k); TRAY[k].mats.forEach(m => TPL[k].mats.push(m)); }
+}
+
 /* ---------- scene ---------- */
 const stage = $('#stage'), cv = $('#cv'), labelsEl = $('#labels');
 const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
@@ -50,28 +85,42 @@ function textPlane(text, w, h, fg, bg) {
 const LIP = 1.0, BOARD = 2.5, BASE = 10;
 function packShelf(sh, W, D, C) {
   const rep = sh.items.map(it => {
-    const s = DATA.skus[it.k], t = TPL[it.k], r = { k: it.k, qd: it.qd, nm: s.nm, pr: s.pr, h: t.h, placed: 0, cols: 0, rows: 0, n: 1, rot: false, flag: '' };
-    if (t.h > C + 0.01) { r.flag = 'tinggi'; return r; }
-    r.n = s.stack ? Math.max(1, Math.min(s.stack.max, 1 + Math.floor((C - t.h) / s.stack.inc))) : 1; r.inc = s.stack ? s.stack.inc : 0;
+    const s = DATA.skus[it.k], t = TPL[it.k];
+    const r = { k: it.k, qd: it.qd, nm: s.nm, pr: s.pr, mode: s.mode, dw: s.dw, h: t.h, placed: 0, cols: 0, rows: 0, n: 1, rot: false, flag: '', unitPcs: 1, inc: 0, tp: t };
+    if (s.mode === 'pack') {                                   // 1 unit terbuka di depan, kotak packing di belakangnya
+      const bx = BOX[it.k]; r.h = Math.max(t.h, bx.h);
+      if (r.h > C + 0.01) { r.flag = 'tinggi'; return r; }
+      if (D < t.d - 0.01) { r.flag = 'dalam'; return r; }
+      const L = Math.max(1, Math.min(3, Math.floor(C / bx.h))), kmax = Math.max(0, Math.floor((D - t.d) / bx.d)), cap = 1 + kmax * L;
+      Object.assign(r, { fw: Math.max(t.w, bx.w), L, cap, need: Math.ceil(it.qd / cap), bx });
+      return r;
+    }
+    let tp = t, qdU = it.qd, maxStack = s.stack ? s.stack.max : 1;
+    r.inc = s.stack ? s.stack.inc : 0;
+    if (s.mode === 'pdq') { tp = TRAY[it.k]; r.unitPcs = s.pdq.n; qdU = Math.ceil(it.qd / s.pdq.n); r.inc = tp.pitch; maxStack = 6; }
+    r.tp = tp; r.h = tp.h;
+    if (tp.h > C + 0.01) { r.flag = 'tinggi'; return r; }
+    r.n = r.inc > 0 ? Math.max(1, Math.min(maxStack, 1 + Math.floor((C - tp.h) / r.inc))) : 1;
     let best = null;
     for (const rot of [false, true]) {
-      const fw = rot ? t.d : t.w, fd = rot ? t.w : t.d, rows = Math.floor(D / fd);
+      const fw = rot ? tp.d : tp.w, fd = rot ? tp.w : tp.d, rows = Math.floor(D / fd);
       if (rows < 1) continue;
-      const need = Math.ceil(Math.ceil(it.qd / r.n) / rows), wn = need * fw;
+      const need = Math.ceil(Math.ceil(qdU / r.n) / rows), wn = need * fw;
       if (!best || wn < best.wn - 0.01) best = { rot, fw, fd, rows, need, wn };
     }
     if (!best) { r.flag = 'dalam'; return r; }
-    Object.assign(r, { rot: best.rot, fw: best.fw, fd: best.fd, rows: best.rows, need: best.need, cols: 0 });
+    Object.assign(r, { rot: best.rot, fw: best.fw, fd: best.fd, rows: best.rows, need: best.need });
     return r;
   });
+  const capPcs = r => r.mode === 'pack' ? r.cols * r.cap : r.cols * r.rows * r.n * r.unitPcs;
   const ok = rep.filter(r => !r.flag);
   let used = 0; for (const r of ok) { if (used + r.fw <= W + 0.01) { r.cols = 1; used += r.fw; } else r.flag = 'lebar'; }
   for (;;) {
     let pick = null, rem = W - used;
-    for (const r of ok) { if (!r.cols || r.cols >= r.need || r.fw > rem + 0.01) continue; const un = 1 - (r.cols * r.rows * r.n) / r.qd; if (!pick || un > pick.un) pick = { r, un }; }
+    for (const r of ok) { if (!r.cols || r.cols >= r.need || r.fw > rem + 0.01) continue; const un = 1 - capPcs(r) / r.qd; if (!pick || un > pick.un) pick = { r, un }; }
     if (!pick) break; pick.r.cols++; used += pick.r.fw;
   }
-  for (const r of ok) if (r.cols) r.placed = Math.min(r.qd, r.cols * r.rows * r.n);
+  for (const r of ok) if (r.cols) r.placed = Math.min(r.qd, capPcs(r));
   const m = ok.filter(r => r.cols).length, gap = m ? (W - used) / (m + 1) : 0;
   let x = -W / 2 + gap;
   for (const r of ok) if (r.cols) { r.x0 = x; x += r.cols * r.fw + gap; }
@@ -108,17 +157,26 @@ function buildPallet(fx, g) {
 }
 function place(fx, geo, g) {
   const reps = [];
+  const put = (tpl, x, y, z, ry) => { const c = tpl.piv.clone(true); c.position.set(x, y, z); if (ry) c.rotation.y = ry; c.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); g.add(c); };
   fx.shelves.forEach((sh, si) => {
     const band = geo.bands[si], lip = fx.kind === 'wall' ? LIP : 0, D = geo.D - lip;
-    const { rep, used } = packShelf(sh, geo.W, D, band.clear);
-    const zFront = geo.D / 2 - lip;
+    const { rep, used } = packShelf(sh, geo.W, D, band.clear), zFront = geo.D / 2 - lip;
     rep.forEach(r => {
       if (!r.placed) return;
-      const slots = Math.ceil(r.placed / r.n);
+      if (r.mode === 'pack') {                                  // kolom: 1 unit terbuka di depan + kotak di belakang
+        let rem = r.placed; const o = TPL[r.k];
+        for (let c = 0; c < r.cols && rem > 0; c++) {
+          const u = Math.min(r.cap, rem); rem -= u; const x = r.x0 + c * r.fw + r.fw / 2;
+          put(o, x, band.top, zFront - o.d / 2, 0);
+          for (let j = 0; j < u - 1; j++) { const row = Math.floor(j / r.L), layer = j % r.L; put(r.bx, x, band.top + layer * r.bx.h, zFront - o.d - r.bx.d / 2 - row * r.bx.d, 0); }
+        }
+        return;
+      }
+      const units = Math.ceil(r.placed / r.unitPcs), slots = Math.ceil(units / r.n);
       for (let s = 0; s < slots; s++) {
-        const row = Math.floor(s / r.cols), col = s % r.cols, units = Math.min(r.n, r.placed - s * r.n);
+        const row = Math.floor(s / r.cols), col = s % r.cols, cnt = Math.min(r.n, units - s * r.n);
         const x = r.x0 + col * r.fw + r.fw / 2, z = zFront - r.fd / 2 - row * r.fd;
-        for (let u = 0; u < units; u++) { const c = TPL[r.k].piv.clone(true); c.position.set(x, band.top + u * (r.inc || 0), z); if (r.rot) c.rotation.y = Math.PI / 2; c.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); g.add(c); }
+        for (let u = 0; u < cnt; u++) put(r.tp, x, band.top + u * r.inc, z, r.rot ? Math.PI / 2 : 0);
       }
     });
     if (fx.kind === 'wall' && !sh.items.length) { const p = textPlane(sh.media ? 'MEDIA KOMUNIKASI' : 'S T O C K', sh.media ? 80 : 60, 7, 'rgba(40,50,66,.55)'); p.position.set(0, band.top + Math.min(band.clear, 32) / 2, -geo.D / 2 + 1.3); g.add(p); }
@@ -170,6 +228,16 @@ function show(i) {
 }
 
 /* ---------- panel keterangan ---------- */
+function modeNote(x, r) {
+  const s = DATA.skus[x.k], tag = { open: 'Display only', pack: 'Display + packing', pdq: 'PDQ ' + (s.pdq ? s.pdq.n : '') }[x.mode];
+  if (x.flag === 'tinggi') return `${tag} · tinggi ${x.h.toFixed(1)} cm melebihi tinggi bebas ${r.band.clear.toFixed(1)} cm`;
+  if (x.flag === 'lebar') return `${tag} · lebar rak habis${x.mode === 'pdq' ? `, tray ${x.tp.w.toFixed(0)} cm` : ''}, SKU ini tidak kebagian tempat`;
+  if (x.flag === 'dalam') return `${tag} · lebih dalam dari rak (${geoCur.D} cm)`;
+  if (x.mode === 'pack') { const cols = Math.ceil(x.placed / x.cap); return `${tag} · ${cols} kolom: 1 unit terbuka di depan + kotak packing di belakang${s.box.flat ? ' (flat pack berdiri menghadap depan)' : ''}`; }
+  if (x.mode === 'pdq') { const P = s.pdq, tr = Math.ceil(x.placed / P.n); return `${tag} · ${tr} tray × ${P.n} pcs (${P.gx}×${P.gy}${P.s > 1 ? ', tumpuk ' + P.s : ''})${x.n > 1 ? ', tray ditumpuk ' + x.n : ''}`; }
+  return `${tag}${x.n > 1 ? ' · ditumpuk sampai ' + x.n + ' unit' : ''}`;
+}
+
 const STATUS = { muat: ['Muat', 'ok'], sebagian: ['Sebagian', 'warn'], tinggi: ['Terlalu tinggi', 'bad'], lebar: ['Tidak muat', 'bad'], dalam: ['Terlalu dalam', 'bad'] };
 function renderPanel(fx) {
   const tot = repsCur.reduce((a, r) => a + r.qty, 0), pl = repsCur.reduce((a, r) => a + r.rep.reduce((x, y) => x + y.placed, 0), 0);
@@ -182,7 +250,7 @@ function renderPanel(fx) {
     return `<section class="sh"><header><h3>${head}</h3><span class="mut">${nf(p)} / ${nf(r.qty)} pcs</span></header>
       <div class="bar" role="img" aria-label="Terisi ${pct}%"><u style="width:${pct}%"></u></div>
       <p class="clr">Tinggi bebas ${r.band.clear.toFixed(1)} cm · lebar terpakai ${r.used.toFixed(0)} dari ${geoCur.W} cm</p>
-      <ul>${r.rep.map(x => { const st = STATUS[x.flag]; return `<li data-k="${x.k}"><code>${x.k}</code><span class="nm">${esc(x.nm)}</span><span class="q">${nf(x.placed)}<small> / ${nf(x.qd)}</small></span><em class="chip ${st[1]}">${st[0]}</em>${x.flag === 'tinggi' ? `<p class="note">Tinggi ${x.h.toFixed(1)} cm melebihi ${r.band.clear.toFixed(1)} cm</p>` : x.flag === 'lebar' ? '<p class="note">Lebar rak habis, SKU ini tidak kebagian tempat</p>' : x.n > 1 ? `<p class="note">Ditumpuk sampai ${x.n} unit</p>` : ''}</li>`; }).join('')}</ul></section>`;
+      <ul>${r.rep.map(x => { const st = STATUS[x.flag]; return `<li data-k="${x.k}"><code>${x.k}</code><span class="nm">${esc(x.nm)}</span><span class="q">${nf(x.placed)}<small> / ${nf(x.qd)}</small></span><em class="chip ${st[1]}">${st[0]}</em><p class="note">${esc(modeNote(x, r))}</p></li>`; }).join('')}</ul></section>`;
   }).join('');
   document.querySelectorAll('#shelves li').forEach(li => { const k = li.dataset.k; li.addEventListener('mouseenter', () => hi(k, true)); li.addEventListener('mouseleave', () => hi(k, false)); li.addEventListener('focusin', () => hi(k, true)); li.addEventListener('focusout', () => hi(k, false)); li.tabIndex = 0; });
 }
