@@ -1,8 +1,190 @@
 {
-  "10587677": {"model": "tavia", "lid": "#e8e8e3"},
-  "10587678": {"model": "tavia", "lid": "#9da3a9"},
-  "10566440": {"model": "halli"},
-  "10560521": {"model": "kirby", "body": "#b9dcc8", "lid": "#b9dcc8", "tab": "#f3f1e6"},
-  "10560523": {"model": "kirby", "body": "#9aa3ab", "lid": "#9aa3ab", "tab": "#5f666d"},
-  "10560524": {"model": "kirby", "body": "#f4a58b", "lid": "#f4a58b", "tab": "#f6f3ec"}
+ "10587677": {
+  "model": "tavia",
+  "lid": "#e8e8e3"
+ },
+ "10587678": {
+  "model": "tavia",
+  "lid": "#9da3a9"
+ },
+ "10566440": {
+  "model": "halli"
+ },
+ "10560521": {
+  "model": "kirby",
+  "body": "#b9dcc8",
+  "lid": "#b9dcc8",
+  "tab": "#f3f1e6"
+ },
+ "10560523": {
+  "model": "kirby",
+  "body": "#9aa3ab",
+  "lid": "#9aa3ab",
+  "tab": "#5f666d"
+ },
+ "10560524": {
+  "model": "kirby",
+  "body": "#f4a58b",
+  "lid": "#f4a58b",
+  "tab": "#f6f3ec"
+ },
+ "10560522": {
+  "model": "kirby",
+  "body": "#bba9dc",
+  "lid": "#bba9dc",
+  "tab": "#e9e2f5"
+ },
+ "10554839": {
+  "model": "bowl",
+  "d": 11.5,
+  "h": 6.0,
+  "color": "#f7f7f4"
+ },
+ "10554840": {
+  "model": "bowl",
+  "d": 15.2,
+  "h": 6.5,
+  "color": "#f7f7f4"
+ },
+ "10554842": {
+  "model": "plate",
+  "d": 20,
+  "h": 3.7,
+  "deep": true,
+  "color": "#f7f7f4"
+ },
+ "10581181": {
+  "model": "plate",
+  "d": 23,
+  "h": 1.7,
+  "color": "#f7f7f4"
+ },
+ "10137002": {
+  "model": "starlight"
+ },
+ "10612063": {
+  "model": "willard"
+ },
+ "10631044": {
+  "model": "kay",
+  "color": "#b9b6ad"
+ },
+ "10631045": {
+  "model": "kay",
+  "color": "#b7cde2"
+ },
+ "10631046": {
+  "model": "kay",
+  "color": "#f3e39b"
+ },
+ "10631047": {
+  "model": "kay",
+  "color": "#e6217f"
+ },
+ "10542394": {
+  "model": "darya",
+  "color": "#222224"
+ },
+ "10542395": {
+  "model": "darya",
+  "color": "#a8adb3"
+ },
+ "10542396": {
+  "model": "darya",
+  "color": "#f0cbd7"
+ },
+ "10568378": {
+  "model": "jars",
+  "n": 3,
+  "d": 8,
+  "h": 14,
+  "L": 25,
+  "lidH": 2.4,
+  "style": "flip",
+  "lidColor": "#f4f4f2"
+ },
+ "10568377": {
+  "model": "jars",
+  "n": 3,
+  "d": 8,
+  "h": 13.5,
+  "L": 25,
+  "lidH": 2.4,
+  "style": "spin",
+  "lidColor": "#9edbd0"
+ },
+ "10565042": {
+  "model": "jars",
+  "n": 3,
+  "d": 10.4,
+  "h": 12.3,
+  "L": 32,
+  "lidH": 2.2,
+  "style": "glass",
+  "barrel": true
+ },
+ "10519116": {
+  "model": "jars",
+  "n": 3,
+  "d": 12,
+  "h": 12.2,
+  "L": 36.2,
+  "lidH": 2.2,
+  "style": "wood",
+  "barrel": true
+ },
+ "10100885": {
+  "model": "jars",
+  "n": 3,
+  "d": 8.8,
+  "h": 23.5,
+  "L": 27.5,
+  "lidH": 3.6,
+  "style": "handle",
+  "lidColor": "#f2f2f0",
+  "band": "#a9b6c4"
+ },
+ "10497060": {
+  "model": "jars",
+  "n": 3,
+  "d": 10.2,
+  "h": 12,
+  "L": 31,
+  "lidH": 2.2,
+  "style": "wood",
+  "barrel": true
+ },
+ "10559642": {
+  "model": "bowl",
+  "d": 20,
+  "h": 5.0,
+  "color": "#9ba3a9"
+ },
+ "10559641": {
+  "model": "plate",
+  "d": 26,
+  "h": 2.3,
+  "color": "#9ba3a9"
+ },
+ "10559812": {
+  "model": "mug",
+  "d": 8.6,
+  "h": 10,
+  "hand": 3.4,
+  "color": "#8f979d"
+ },
+ "10590319": {
+  "model": "glass",
+  "rt": 3.5,
+  "rb": 2.5,
+  "h": 12,
+  "facets": 8
+ },
+ "10590320": {
+  "model": "glass",
+  "rt": 4.3,
+  "rb": 3.3,
+  "h": 12.5,
+  "facets": 10
+ }
 }

@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const pg = await b.newPage({ viewport: { width: 1200, height: 1200 } });
   pg.on('pageerror', e => console.log('ERR', e.message));
-  const skus = Object.keys(JSON.parse(fs.readFileSync(path.join(root, 'products.json'))));
+  let skus = Object.keys(JSON.parse(fs.readFileSync(path.join(root, 'products.json')))); if (process.argv[3]) skus = process.argv[3].split(',');
   fs.mkdirSync(outDir, { recursive: true });
   for (const s of skus) {
     await pg.goto(`http://localhost:${port}/render.html?sku=${s}`);
