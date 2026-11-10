@@ -20,11 +20,21 @@ fixtures=[
   'shelves':shelves('WALL','P1',['S0','S1','S2','S3','S4','S5'],'wall')},
  {'id':'wall-p2','kind':'wall','tab':'Wall 2 · P2','title':'Wall ke-2 · SKU prioritas P2','size':{'w':120,'d':50,'h':270},'zones':[45,45,45,45,45,45],'label':'WALL 5 RACK',
   'shelves':shelves('WALL','P2',['S0','S1','S2','S3','S4','S5'],'wall')},
- {'id':'pallet-1','kind':'pallet','tab':'Pallet 1 · P1','title':'Pallet ke-1 · SKU prioritas P1','size':{'w':90,'d':90,'h':100},'zones':[100],'label':'PALLET 90x90',
+ {'id':'pallet-1','kind':'pallet','tab':'Pallet 1 · P1','title':'Pallet ke-1 · SKU prioritas P1','size':{'w':90,'d':90,'h':120},'zones':[100],'label':'PALLET 90x90',
   'shelves':shelves('PALLET','P1',['PLT1'],'pallet')},
- {'id':'pallet-2','kind':'pallet','tab':'Pallet 2 · P2','title':'Pallet ke-2 · SKU prioritas P2','size':{'w':90,'d':90,'h':100},'zones':[100],'label':'PALLET 90x90',
+ {'id':'pallet-2','kind':'pallet','tab':'Pallet 2 · P2','title':'Pallet ke-2 · SKU prioritas P2','size':{'w':90,'d':90,'h':120},'zones':[100],'label':'PALLET 90x90',
   'shelves':shelves('PALLET','P2',['PLT2'],'pallet')},
 ]
+
+# ---------- label Excel, grup tab, dan 3 opsi Arvid pada Pallet ke-1 ----------
+XL={'wall-p1':'Wall ke-1 (P1)','wall-p2':'Wall ke-2 (P2)','pallet-1':'Pallet ke-1 (P1)','pallet-2':'Pallet ke-2 (P2)'}
+for f in fixtures: f['xl']=XL[f['id']]; f['group']=f['id']
+p1=[f for f in fixtures if f['id']=='pallet-1'][0]; pos=fixtures.index(p1); fixtures.remove(p1)
+OPT=[('piring','Piring','10559641'),('mangkuk','Mangkuk','10559642'),('mug','Mug','10559812')]
+for n,(oid,ol,sku) in enumerate(OPT):
+    f=json.loads(json.dumps(p1)); f['id']='pallet-1-'+oid; f['group']='pallet-1'; f['opt']=ol
+    f['title']=f'Pallet ke-1 · SKU prioritas P1 · Opsi {ol} Arvid'; f['xl']=f'Pallet ke-1 (P1) · Opsi {ol}'
+    f['shelves'][0]['items']=[i for i in f['shelves'][0]['items'] if i['k']==sku]; fixtures.insert(pos+n,f)
 ORDER=['10566440','10587677','10587678','10560521','10560522','10560523','10560524','10554839','10554840','10554842','10581181','10137002','10612063',
  '10631044','10631045','10631046','10631047','10542394','10542395','10542396','10565042','10568377','10568378','10100885','10497060','10519116',
  '10559641','10559642','10559812','10590319','10590320']          # urutan baris di tabel pengguna (sheet)
@@ -65,4 +75,4 @@ for k,v in skus.items():
    # Pallet & Dumbin dikecualikan dulu, fokus Wall
 for f in fixtures:
     for s in f['shelves']: print(f['id'],s['code'],[ (i['k'],i['qd']) for i in s['items']])
-json.dump({'skus':skus,'fixtures':fixtures,'trayMax':10,'ditarik':D['meta']['ditarik']},open('rack_data.json','w'),ensure_ascii=False)
+json.dump({'skus':skus,'fixtures':fixtures,'trayMax':20,'ditarik':D['meta']['ditarik']},open('rack_data.json','w'),ensure_ascii=False)

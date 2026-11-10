@@ -29,6 +29,8 @@ h1{font-size:22px;line-height:1.2;font-weight:600;margin:0;text-wrap:balance}
 #tabs button,.seg button{font:inherit;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
 #tabs button[aria-selected="true"],.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
 #tabs button:hover:not([aria-selected="true"]),.seg button:hover:not([aria-pressed="true"]){background:var(--accent-soft)}
+#opts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}#opts button{font:inherit;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}#opts button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.lab.lim{border-color:#d04b4b;color:#8f2323}.lab.lim span{color:#8f2323}
 button:focus-visible,li:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;align-items:start}
 .stagebox{position:relative;border:1px solid var(--stage-line);border-radius:10px;overflow:hidden;background:var(--stage)}
@@ -68,7 +70,7 @@ button:focus-visible,li:focus-visible{outline:2px solid var(--accent);outline-of
 .notes{font-size:12.5px;color:var(--muted);display:grid;gap:4px}.notes p{margin:0;max-width:78ch}.notes b{color:var(--ink);font-weight:500}
 @media (max-width:980px){.grid{grid-template-columns:minmax(0,1fr)}#stage{height:70vh;min-height:360px}}
 @media (max-width:480px){.sh li{grid-template-columns:minmax(0,1fr) auto}.sh li code{grid-column:1/-1}.sh li .chip{grid-column:1/-1;justify-self:start}.note{grid-column:1/-1}.lab{font-size:11px;padding:3px 6px}}
-body.shot{padding:0;background:#fff}body.shot .wrap{max-width:none;gap:0}body.shot .top,body.shot .panel,body.shot .seg,body.shot .hint,body.shot .notes{display:none}
+body.shot{padding:0;background:#fff}body.shot .wrap{max-width:none;gap:0}body.shot #opts,body.shot .opts,body.shot .top,body.shot .panel,body.shot .seg,body.shot .hint,body.shot .notes{display:none}
 body.shot .grid{display:block}body.shot .stagebox{border:0;border-radius:0}body.shot #stage{height:100vh;min-height:0}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style>
@@ -83,6 +85,7 @@ body.shot .grid{display:block}body.shot .stagebox{border:0;border-radius:0}body.
     </div>
     <div id="tabs" role="tablist" aria-label="Pilih fixture"></div>
   </div>
+  <div id="opts" class="opts" hidden></div>
   <div class="grid">
     <div class="stagebox">
       <div id="stage"><canvas id="cv" aria-label="Tampilan 3D racking, geser untuk memutar"></canvas><div id="labels"></div>
@@ -97,7 +100,8 @@ body.shot .grid{display:block}body.shot .stagebox{border:0;border-radius:0}body.
   <div class="notes">
     <p><b>Cara membaca.</b> Angka “tampil / sheet” membandingkan jumlah yang tampil di shelving penuh dengan qty display di sheet. Status Cukup berarti kapasitas rak mencapai qty sheet, Kurang berarti rak tidak cukup. Arahkan kursor ke baris SKU untuk menyorot produknya di gambar.</p>
     <p><b>Cara display.</b> Mengikuti kolom Display w/Packing di sheet. <em>Display only</em>: produk terbuka penuh tanpa kotak. <em>Display + packing</em>: 1 unit terbuka di depan, kotak packing berfoto produk di belakangnya (flat pack berdiri menghadap depan). <em>PDQ N</em>: tray putih berisi N pcs (4×3, 3×3 tumpuk 6, 4×4 tumpuk 2, 6×5, 5×5), jumlah tray = qty ÷ N.</p>
-    <p><b>Aturan susun.</b> Shelving diisi penuh: lebar dan kedalaman terisi tanpa celah. Qty sheet dipenuhi dulu, sisa lebar diisi dengan menggandakan SKU (facing tambahan) bergiliran. Produk berderet ke belakang sampai kedalaman habis; piring, mangkuk, gelas, dan tray ditumpuk bila perlu. Set yang lebih lebar dari rak diputar 90° bila itu menghemat lebar.</p>
+    <p><b>Aturan susun.</b> Shelving diisi penuh: lebar dan kedalaman terisi tanpa celah. Qty sheet dipenuhi dulu, sisa lebar diisi dengan menggandakan SKU (facing tambahan) bergiliran. Produk berderet ke belakang sampai kedalaman habis; piring, mangkuk, gelas, dan tray ditumpuk bila perlu. Set yang lebih lebar dari rak diputar 90° bila itu menghemat lebar. Produk Display only diberi jarak 0,5 cm. Baris ke belakang dibagi rata sampai menyentuh sisi belakang shelving.</p>
+    <p><b>Pallet.</b> Batas tinggi display 120 cm dari dasar pallet (garis merah putus-putus), sisanya untuk stock. Arvid punya tiga opsi tampilan pada pallet yang sama: Piring, Mangkuk, atau Mug. Tray Greta 360 dan 440 berukuran sama, tinggi gelas dibedakan 1 cm.</p>
     <p><b>Bentuk produk.</b> Model 3D dibuat dari dimensi ruparupa, jadi bentuk detail (tutup, gagang, rangka kawat) berupa perkiraan. Panel belakang rak diputihkan. Data sheet ditarik {{DITARIK}}.</p>
   </div>
 </div>

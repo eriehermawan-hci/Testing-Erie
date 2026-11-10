@@ -5,7 +5,6 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 R = json.load(open(sys.argv[1])); out = sys.argv[2]
-FX = {'wall-p1': 'Wall ke-1 (P1)', 'wall-p2': 'Wall ke-2 (P2)', 'pallet-1': 'Pallet ke-1 (P1)', 'pallet-2': 'Pallet ke-2 (P2)'}
 MODE = {'open': 'DISPLAY ONLY', 'pack': 'DISPLAY + PACKING', 'pdq': 'PDQ'}
 ST = {'cukup': 'CUKUP', 'kurang': 'KURANG', 'lebar': 'TIDAK MUAT (lebar)', 'tinggi': 'TIDAK MUAT (tinggi)', 'dalam': 'TIDAK MUAT (dalam)'}
 HEAD = PatternFill('solid', fgColor='1F2A37'); thin = Side(style='thin', color='D5DBE3'); BORDER = Border(left=thin, right=thin, top=thin, bottom=thin)
@@ -41,7 +40,7 @@ for f in R:
         for i in sh['items']:
             n += 1
             sel = i['cap'] - i['qd'] if i['cap'] else -i['qd']
-            ws.append([n, i['k'], i['nm'], FX[f['id']], ('Shelving %d' % sh['no']) if f['kind'] == 'wall' else 'Pallet', sh['code'], i['pr'], i['dw'], i['qd'], round(i['fw'], 1) if i['fw'] else None,
+            ws.append([n, i['k'], i['nm'], f['xl'], ('Shelving %d' % sh['no']) if f['kind'] == 'wall' else 'Pallet', sh['code'], i['pr'], i['dw'], i['qd'], round(i['fw'], 1) if i['fw'] else None,
                        i['need'] or None, i['cols'], i['extra'], i['disp'], i['cap'], sel, ST[i['flag']], i['disp'], note(i, sh, f['W'])])
 for c in range(1, len(cols) + 1):
     h = ws.cell(1, c); h.font = Font(bold=True, color='FFFFFF'); h.fill = HEAD; h.alignment = Alignment(wrap_text=True, vertical='center', horizontal='center')
@@ -61,13 +60,13 @@ for f in R:
     for sh in f['shelves']:
         it = sh['items']; label = ('Shelving %d' % sh['no']) if f['kind'] == 'wall' else 'Pallet'
         if not it:
-            ss.append([FX[f['id']], label, sh['code'], 0, 0, 0, 0, 0, None, f['W'], 0, 0, round(sh['clear'], 1), 'KOSONG', 'Media Komunikasi' if sh['media'] else 'Area STOCK'])
+            ss.append([f['xl'], label, sh['code'], 0, 0, 0, 0, 0, None, f['W'], 0, 0, round(sh['clear'], 1), 'KOSONG', 'Media Komunikasi' if sh['media'] else 'Area STOCK'])
             continue
         qty = sum(i['qd'] for i in it); disp = sum(i['disp'] for i in it); cap = sum(i['cap'] for i in it); met = sum(min(i['qd'], i['cap']) for i in it)
         fit = all(i['flag'] == 'cukup' for i in it); lack = max(0, sh['wNeed'] - f['W'])
         bad = [i['k'] for i in it if i['flag'] not in ('cukup', 'kurang')]
         txt = 'Semua SKU cukup.' if fit else ('SKU tidak muat sama sekali: ' + ', '.join(bad) + '. ' if bad else '') + ('Lebar yang dibutuhkan qty sheet melebihi shelving.' if lack else 'Kapasitas tumpuk/kedalaman kurang.')
-        ss.append([FX[f['id']], label, sh['code'], len(it), qty, disp, cap, met, round(met / qty, 3), f['W'], round(sh['wNeed'], 1), round(lack, 1), round(sh['clear'], 1), 'FIT' if fit else 'TIDAK FIT', txt])
+        ss.append([f['xl'], label, sh['code'], len(it), qty, disp, cap, met, round(met / qty, 3), f['W'], round(sh['wNeed'], 1), round(lack, 1), round(sh['clear'], 1), 'FIT' if fit else 'TIDAK FIT', txt])
 for c in range(1, len(c2) + 1):
     h = ss.cell(1, c); h.font = Font(bold=True, color='FFFFFF'); h.fill = HEAD; h.alignment = Alignment(wrap_text=True, vertical='center', horizontal='center')
 for row in ss.iter_rows(min_row=2):
@@ -85,7 +84,7 @@ for f in R:
         it = sh['items']
         if not it: continue
         lack = max(0, sh['wNeed'] - f['W'])
-        lab = FX[f['id']] + (' / Shelving %d (%s)' % (sh['no'], sh['code']) if f['kind'] == 'wall' else ' / ' + sh['code'])
+        lab = f['xl'] + (' / Shelving %d (%s)' % (sh['no'], sh['code']) if f['kind'] == 'wall' else ' / ' + sh['code'])
         for i in it:
             if i['flag'] in ('lebar', 'tinggi', 'dalam'):
                 rec.append((lab, f"{i['k']} {i['nm']} tidak muat sama sekali ({ST[i['flag']]}). {note(i, sh, f['W'])}",
@@ -107,11 +106,13 @@ for i, w in enumerate([5, 34, 80, 70], 1): rs.column_dimensions[get_column_lette
 # ---------------- Asumsi ----------------
 a = wb.create_sheet('Asumsi')
 A = [('Fixture', 'Wall 120 x 50 x 270 cm, plinth 10 cm, 6 shelving (0-5), jarak antar papan 45 cm, tinggi bebas 42,5 cm. Shelving 0 untuk Media Komunikasi (kosong).'),
-     ('Pallet', 'Pallet 90 x 90 cm, tinggi susun maks 100 cm di atas pallet 12 cm.'),
+     ('Pallet', 'Pallet 90 x 90 cm, tinggi pallet 12 cm. Batas tinggi display 120 cm dari dasar pallet (jadi 108 cm di atas pallet), sisanya untuk stock.'),
+     ('Opsi Arvid', 'Pallet ke-1 tetap satu, bisa tampil tiga opsi: Piring, Mangkuk, atau Mug (satu SKU per opsi). Tiap opsi dihitung sendiri.'),
+     ('Tray Greta', 'Tray Greta 360 dan 440 berukuran sama (memakai ukuran gelas kecil). Tinggi gelas 440 dibuat 1 cm lebih tinggi dari 360.'),
      ('Dimensi produk', 'Dari ruparupa.com per SKU; bila tidak tersedia memakai data kemasan SAP ruparupa atau diameter dari nama produk (lihat _manifest.csv).'),
-     ('PDQ', 'Tray berisi N pcs sesuai pola (12=4x3, 54=3x3 tumpuk 6, 32=4x4 tumpuk 2, 30=6x5, 25=5x5). Jumlah tray = qty / N. Tray boleh ditumpuk, maks 10 tingkat.'),
+     ('PDQ', 'Tray berisi N pcs sesuai pola (12=4x3, 54=3x3 tumpuk 6, 32=4x4 tumpuk 2, 30=6x5, 25=5x5). Jumlah tray = qty / N. Tray boleh ditumpuk sampai batas tinggi (maks 20 tingkat).'),
      ('Display + packing', '1 unit terbuka di depan, kotak packing di belakangnya (ukuran kotak dari data kemasan). Flat pack berdiri menghadap depan. Kotak boleh ditumpuk sesuai tinggi bebas.'),
-     ('Logika isi penuh', 'Qty sheet dipenuhi dulu; sisa lebar diisi dengan menggandakan SKU bergiliran (facing tambahan) sampai shelving penuh. Kedalaman shelving diisi penuh.'),
+     ('Logika isi penuh', 'Qty sheet dipenuhi dulu; sisa lebar diisi dengan menggandakan SKU bergiliran (facing tambahan) sampai shelving penuh. Kedalaman shelving diisi penuh sampai sisi belakang. Produk Display only diberi jarak 0,5 cm.'),
      ('Kapasitas maks', 'Kolom x baris ke belakang x tumpukan maksimum sesuai tinggi bebas.'),
      ('Qty saran', 'Jumlah yang tampil saat shelving penuh. Untuk SKU yang tidak muat sama sekali nilainya 0.'),
      ('Batasan', 'Bentuk 3D produk berupa perkiraan dari dimensi; hasil fit bergantung pada dimensi tersebut.')]

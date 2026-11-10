@@ -19,9 +19,10 @@ for (const [k, s] of Object.entries(DATA.skus)) {
 /* ---------- unit tampilan: tray PDQ dan kotak packing (foto produk di sisi depan) ---------- */
 const BOX = {}, TRAY = {}, LINEMATS = [];
 const BOXLINE = new LineMaterial({ color: 0x1b2230, linewidth: 2.2 }), TRAYLINE = new LineMaterial({ color: 0x77726a, linewidth: 1.3 });
-LINEMATS.push(BOXLINE, TRAYLINE);
+const GUIDELINE = new LineMaterial({ color: 0xd04b4b, linewidth: 1.6, dashed: true, dashSize: 3, gapSize: 2.5 });
+LINEMATS.push(BOXLINE, TRAYLINE, GUIDELINE);
 function outline(mesh, lm) { const lg = new LineSegmentsGeometry().fromEdgesGeometry(new THREE.EdgesGeometry(mesh.geometry, 20)); mesh.add(new LineSegments2(lg, lm)); }
-const STEP = 0.35, LSTEP = 0.25;            // jarak kecil antar kotak supaya tiap pcs terlihat terpisah
+const STEP = 0.35, LSTEP = 0.25, OGAP = 0.5;   // OGAP: jarak antar produk pada Display only            // jarak kecil antar kotak supaya tiap pcs terlihat terpisah
 const stdM = (c, r = 0.85) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: 0 });
 function makeBox(k) {
   const b = DATA.skus[k].box, side = stdM(0xd9d0bd), front = stdM(0xffffff, 0.55);
@@ -107,14 +108,15 @@ function packShelf(sh, W, D, C) {
     if (tp.h > C + 0.01) { r.flag = 'tinggi'; return r; }
     r.n = r.inc > 0 ? Math.max(1, Math.min(maxStack, 1 + Math.floor((C - tp.h) / r.inc))) : 1;
     let best = null;
+    const gw = s.mode === 'open' ? OGAP : 0;
     for (const rot of [false, true]) {
-      const fw = rot ? tp.d : tp.w, fd = rot ? tp.w : tp.d, rows = Math.floor(D / fd);
+      const fwA = rot ? tp.d : tp.w, fdA = rot ? tp.w : tp.d, fw = fwA + gw, rows = Math.floor((D + gw) / (fdA + gw));
       if (rows < 1) continue;
       const need = Math.ceil(Math.ceil(qdU / r.n) / rows), wn = need * fw;
-      if (!best || wn < best.wn - 0.01) best = { rot, fw, fd, rows, need, wn };
+      if (!best || wn < best.wn - 0.01) best = { rot, fw, fdA, rows, need, wn };
     }
     if (!best) { r.flag = 'dalam'; return r; }
-    Object.assign(r, { rot: best.rot, fw: best.fw, fd: best.fd, rows: best.rows, need: best.need });
+    Object.assign(r, { rot: best.rot, fw: best.fw, fdA: best.fdA, rows: best.rows, need: best.need });
     return r;
   });
   const capPcs = r => r.mode === 'pack' ? r.cols * r.cap : r.cols * r.rows * r.n * r.unitPcs;
@@ -147,14 +149,14 @@ function packShelf(sh, W, D, C) {
 
 /* ---------- laporan kecocokan qty sheet dengan shelving (dipakai untuk Excel feedback) ---------- */
 function bandsOf(fx) {
-  if (fx.kind === 'pallet') return [{ top: 12, clear: fx.size.h, h: fx.size.h }];
+  if (fx.kind === 'pallet') return [{ top: 12, clear: fx.size.h - 12, h: fx.size.h - 12 }];
   const hs = fx.zones, bands = []; let y = BASE;
   for (let i = hs.length - 1; i >= 0; i--) { bands[i] = { h: hs[i], top: y + BOARD, clear: hs[i] - BOARD }; y += hs[i]; }
   return bands;
 }
 window.__report = () => DATA.fixtures.map(fx => {
   const bands = bandsOf(fx), W = fx.size.w, D = fx.size.d - (fx.kind === 'wall' ? LIP : 0);
-  return { id: fx.id, title: fx.title, kind: fx.kind, W, D, shelves: fx.shelves.map((sh, si) => {
+  return { id: fx.id, title: fx.title, xl: fx.xl, kind: fx.kind, W, D, shelves: fx.shelves.map((sh, si) => {
     const { rep, used, wNeed } = packShelf(sh, W, D, bands[si].clear);
     return { code: sh.code, no: si, media: !!sh.media, clear: bands[si].clear, used, wNeed, qty: sh.items.reduce((a, b) => a + b.qd, 0),
       items: rep.map(r => ({ k: r.k, nm: r.nm, pr: r.pr, mode: r.mode, dw: r.dw, qd: r.qd, flag: r.flag, fw: r.fw || 0, cols: r.cols, need: r.need, extra: r.extra, rows: r.rows || r.kmax || 0, n: r.n || r.L || 1, unitPcs: r.unitPcs, h: r.h, disp: r.disp || 0, cap: r.capPcs || 0 })) };
@@ -186,7 +188,8 @@ function buildPallet(fx, g) {
   for (let i = 0; i < 7; i++) g.add(box(W, 1.8, 11.5, wood, 0, 10.2 + 0.9, -D / 2 + 5.75 + i * ((D - 11.5) / 6)));
   for (const x of [-W / 2 + 6, 0, W / 2 - 6]) for (const z of [-D / 2 + 6, 0, D / 2 - 6]) g.add(box(12, 8.4, 12, dark, x, 1.8 + 4.2, z));
   for (const x of [-W / 2 + 6, 0, W / 2 - 6]) g.add(box(12, 1.8, D, wood, x, 0.9, 0));
-  return { bands: [{ top: 12, clear: H, h: H }], W, D, H: 12 + H };
+  const hw = W / 2 + 3, hd = D / 2 + 3, ls = new LineSegments2(new LineSegmentsGeometry().setPositions([-hw, H, -hd, hw, H, -hd, hw, H, -hd, hw, H, hd, hw, H, hd, -hw, H, hd, -hw, H, hd, -hw, H, -hd]), GUIDELINE); ls.computeLineDistances(); g.add(ls);
+  return { bands: [{ top: 12, clear: H - 12, h: H - 12 }], W, D, H };
 }
 function place(fx, geo, g) {
   const reps = [];
@@ -201,14 +204,16 @@ function place(fx, geo, g) {
         for (let c = 0; c < r.cols; c++) {
           const u = Math.floor(r.disp / r.cols) + (c < r.disp % r.cols ? 1 : 0), x = r.x0 + c * r.fw + r.fw / 2;
           put(o, x, band.top, zFront - o.d / 2, 0);
-          for (let j = 0; j < u - 1; j++) { const row = r.kmax ? j % r.kmax : 0, layer = r.kmax ? Math.floor(j / r.kmax) : 0; put(bx, x, band.top + layer * (bx.h + LSTEP), zFront - o.d - STEP - bx.d / 2 - row * (bx.d + STEP), 0); }
+          const gapEq = r.kmax ? (D - o.d - r.kmax * bx.d) / r.kmax : 0;      // sisa kedalaman dibagi rata, kotak terakhir menempel ke belakang
+          for (let j = 0; j < u - 1; j++) { const row = r.kmax ? j % r.kmax : 0, layer = r.kmax ? Math.floor(j / r.kmax) : 0; put(bx, x, band.top + layer * (bx.h + LSTEP), zFront - o.d - gapEq * (row + 1) - row * bx.d - bx.d / 2, 0); }
         }
         return;
       }
       const slots = r.cols * r.rows;
       for (let s = 0; s < slots; s++) {
         const row = Math.floor(s / r.cols), col = s % r.cols, cnt = Math.floor(r.dispUnits / slots) + (s < r.dispUnits % slots ? 1 : 0);
-        const x = r.x0 + col * r.fw + r.fw / 2, z = zFront - r.fd / 2 - row * r.fd;
+        const stepZ = r.rows > 1 ? (D - r.fdA) / (r.rows - 1) : 0;          // baris merata sampai belakang shelving
+        const x = r.x0 + col * r.fw + r.fw / 2, z = zFront - r.fdA / 2 - row * stepZ;
         for (let u = 0; u < cnt; u++) put(r.tp, x, band.top + u * r.inc, z, r.rot ? Math.PI / 2 : 0);
       }
     });
@@ -257,6 +262,7 @@ function show(i) {
     labelsEl.appendChild(el);
     labels.push({ el, pos: new THREE.Vector3(-geoCur.W / 2 - (fx.kind === 'wall' ? 6 : 4), r.band.top + Math.min(r.band.clear, 40) / 2, geoCur.D / 2) });
   });
+  if (fx.kind === 'pallet') { const el = document.createElement('div'); el.className = 'lab lim'; el.innerHTML = `<b>Batas display ${fx.size.h} cm</b><span>dari dasar pallet, untuk stock</span>`; labelsEl.appendChild(el); labels.push({ el, pos: new THREE.Vector3(-geoCur.W / 2 - 4, fx.size.h, geoCur.D / 2 + 3) }); }
   moved = false; resize(); frame(view, geoCur); renderer.shadowMap.needsUpdate = true; draw(); renderPanel(fx); setTabs();
 }
 
@@ -276,7 +282,7 @@ const STATUS = { cukup: ['Cukup', 'ok'], kurang: ['Kurang', 'warn'], tinggi: ['T
 function renderPanel(fx) {
   const tot = repsCur.reduce((a, r) => a + r.qty, 0), pl = repsCur.reduce((a, r) => a + r.rep.reduce((x, y) => x + y.placed, 0), 0), ok = repsCur.reduce((a, r) => a + r.rep.reduce((x, y) => x + Math.min(y.qd, y.capPcs), 0), 0);
   $('#sum').innerHTML = `<div><span>Qty sheet</span><b>${nf(tot)}</b><i>pcs</i></div><div><span>Tampil (shelving penuh)</span><b>${nf(pl)}</b><i>pcs</i></div><div><span>Qty sheet terpenuhi</span><b>${tot ? Math.round(ok / tot * 100) : 0}%</b><i>muat di rak</i></div>`;
-  $('#ttl').textContent = fx.title; $('#dim').textContent = `${fx.size.w} × ${fx.size.d} × ${fx.size.h} cm` + (fx.kind === 'wall' ? ' · 6 shelving (0–5) · jarak antarshelving 45 cm' : '');
+  $('#ttl').textContent = fx.title; $('#dim').textContent = `${fx.size.w} × ${fx.size.d} × ${fx.size.h} cm` + (fx.kind === 'wall' ? ' · 6 shelving (0–5) · jarak antarshelving 45 cm' : ' · batas tinggi display 120 cm dari dasar pallet');
   $('#shelves').innerHTML = repsCur.map((r, si) => {
     const p = r.rep.reduce((a, b) => a + b.placed, 0);
     const head = fx.kind === 'wall' ? `Shelving ${si} <i>${r.code}</i>` : `Pallet <i>${r.code}</i>`;
@@ -291,10 +297,18 @@ function renderPanel(fx) {
 function hi(k, on) { TPL[k].mats.forEach(m => { if (m.emissive) { m.emissive.set(on ? 0x2a86ff : 0x000000); m.emissiveIntensity = on ? 0.55 : 0; } }); draw(); }
 
 /* ---------- kontrol ---------- */
-function setTabs() { document.querySelectorAll('[data-fx]').forEach(b => b.setAttribute('aria-selected', String(+b.dataset.fx === cur))); document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view))); }
-$('#tabs').innerHTML = DATA.fixtures.map((f, i) => `<button role="tab" data-fx="${i}" aria-selected="false">${esc(f.tab)}</button>`).join('');
-$('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-fx]'); if (b) { location.hash = DATA.fixtures[+b.dataset.fx].id; } });
-document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { view = b.dataset.view; moved = false; frame(view, geoCur); setTabs(); draw(); }));
+const groups = [];
+DATA.fixtures.forEach((f, i) => { const gid = f.group || f.id; let G = groups.find(x => x.id === gid); if (!G) groups.push(G = { id: gid, tab: f.tab, idx: [] }); G.idx.push(i); });
+function setTabs() {
+  const g = groups.find(x => x.idx.includes(cur)), o = $('#opts');
+  document.querySelectorAll('[data-grp]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.grp === g.id)));
+  o.hidden = g.idx.length < 2;
+  o.innerHTML = g.idx.length < 2 ? '' : '<span class="eyebrow">Opsi tampilan</span>' + g.idx.map(i => `<button data-fx="${i}" aria-pressed="${i === cur}">${esc(DATA.fixtures[i].opt)}</button>`).join('');
+  document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+}
+$('#tabs').innerHTML = groups.map(g => `<button role="tab" data-grp="${g.id}" aria-selected="false">${esc(g.tab)}</button>`).join('');
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-grp]'); if (b) location.hash = DATA.fixtures[groups.find(x => x.id === b.dataset.grp).idx[0]].id; });
+$('#opts').addEventListener('click', e => { const b = e.target.closest('[data-fx]'); if (b) location.hash = DATA.fixtures[+b.dataset.fx].id; });
 const fromHash = () => { const i = DATA.fixtures.findIndex(f => f.id === location.hash.slice(1)); return i < 0 ? 0 : i; };
 addEventListener('hashchange', () => show(fromHash()));
 new ResizeObserver(() => { resize(); if (!moved && geoCur) { frame(view, geoCur); draw(); } }).observe(stage);

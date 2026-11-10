@@ -68,7 +68,11 @@ Asumsi yang perlu dikonfirmasi: jumlah tray = qty display ÷ N (mis. Kirby 48 pc
 - **Kotak packing antar pcs harus terlihat berbeda:** tiap kotak diberi garis tepi tegas (`LineSegments2`, lebar 2,2 px) dan jarak 0,35 cm antar kotak/kolom, sisi kotak berwarna kraft sedikit gelap, foto produk di sisi depan.
 - **Perbandingan qty sheet vs shelving** dihitung di `viewer.js` (`window.__report()`, memakai `packShelf` yang sama dengan render). Status per SKU: CUKUP (kapasitas ≥ qty sheet), KURANG, TIDAK MUAT (lebar/tinggi/dalam). Per shelving: FIT bila semua SKU CUKUP; kolom kekurangan lebar = lebar yang dibutuhkan qty sheet dikurangi lebar shelving.
 - **Excel feedback:** `node report.js report.json` (ambil laporan lewat Playwright) lalu `python3 build_excel.py report.json Feedback_Fit_Shelving.xlsx`. Sheet: Ringkasan Shelving, Rekomendasi, Detail SKU, Asumsi.
-- **Pallet ikut dirender** (Pallet ke-1 untuk P1 dan ke-2 untuk P2). Tinggi susun maks 100 cm, tray maks 10 tingkat (`trayMax` di data).
+- **Pallet ikut dirender.** Batas tinggi display **120 cm dari dasar pallet** (garis merah putus-putus di 3D; pallet setinggi 12 cm, jadi tinggi bebas 108 cm), sisanya untuk stock. Tray boleh ditumpuk sampai batas itu (`trayMax` 20 di data).
+- **Pallet ke-1 (Arvid) punya 3 opsi tampilan pada pallet yang sama:** Piring, Mangkuk, Mug (satu SKU per opsi, fixture `pallet-1-piring/-mangkuk/-mug` dengan `group: pallet-1`). Tiap opsi dihitung sendiri. Di viewer muncul tombol "Opsi tampilan".
+- **Jarak antar produk Display only: 0,5 cm** (`OGAP` di `viewer.js`).
+- **Isi penuh sampai belakang:** baris ke belakang dibagi rata sehingga baris terakhir menempel ke sisi belakang shelving (kotak packing juga: sisa kedalaman dibagi rata antar kotak).
+- **Greta:** tray SKU 360 dan 440 dibuat sama; ukuran gelas memakai yang kecil (360), tinggi gelas 440 dibuat 1 cm lebih tinggi (`products.json`).
 - **Urutan SKU di shelving mengikuti urutan baris di tabel pengguna** (`ORDER` di `build_data.py`), bukan urutan dashboard.
 
 ## Hal yang sudah diputuskan / perlu diingat
